@@ -1,0 +1,13 @@
+**.pyc
+__pychache__
+
+.DS_Store
+
+.idea
+.vagrant
+
+**.vdi
+
+**.h5
+**.log
+**.tar.gz
