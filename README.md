@@ -1,46 +1,27 @@
 # Sapsan
 
-
- - name='test'
->> Name of the run, as it will show up in the scores.dat and stats.dat
- - parameters=None
->> parameters (e.g. features) to train on. The last one in the array will be the target feature.
- - path='/raid1/JHTDB'
->> path to the data
- - dataset='iso'
->> which data set to use; options are 'iso' for HD turbulence, and 'mhd' for MHD turbulence
- - savepath='Figures'
->> where to save the data
- - test=False
->> set to True if want to randomly split the same data into training and testing set.
- - alpha=None
->> will use the default KRR alpha
- - gamma=None
->> will use the default KRR gamma
- - dim=128
->> dimension of the training set
- - max_dim=512
->> initial dimension of the data file, from which training and testing sets will be extracted
- - step=None
->> spatial separation between each data point used for training
- - t=[0]
->> training timestep
- - ttest=[0]
->> testing timestep
- - dt=2.5e-3
->> numeral value for dt to calculate the actual time of each timestep
- - fm=15
->> number of modes to filter down to
- - filtname='spectral'
->> filter to use; available options also include 'boxfilt'
- - tnc=2
->> which tensor component to predict; can be set to 0, 1, or 2
- - axis=2
->> dimensionality; either 2 or 3
- - from3D=False
->> extracts 2D slice from 3D data; only relevant if axis=2
- - outliers=False
->> only include outliers when adding consecutive steps, thus the data from additional timesteps won't be sampled in the same way as the 1st timestep.
+| Parameter                             | Description                                | Default                                         |
+| ------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| `name` | name of the run, as it will show up in the scores.dat and stats.dat | 'test' |
+| `parameters` | parameters (e.g. features) to train on. The last one in the array will be the target feature | None |
+| `path` | path to the data | '/raid1/JHTDB' |
+| `dataset` | which data set to use; options are 'iso' for HD turbulence, and 'mhd' for MHD turbulence | 'iso' |
+| `savepath` | where to save the data | 'Figures' |
+| `test` | set to True if want to randomly split the same data into training and testing set | False |
+| `alpha` | will use the default KRR alpha | None |
+| `gamma` |  will use the default KRR gamma | None |
+| `dim` |  dimension of the training set | 128 |
+| `max_dim` |  initial dimension of the data file, from which training and testing sets will be extracted | 512 |
+| `step` | spatial separation between each data point used for training | None |
+| `t` | training timestep | [0] |
+| `ttest` | testing timestep | [0] |
+| `dt` |  numeral value for dt to calculate the actual time of each timestep | 2.5e-3 |
+| `fm` | number of modes to filter down to | 15 |
+| `filtname` |  filter to use; available options also include 'boxfilt' | 'spectral' |
+| `tnc` | which tensor component to predict; can be set to 0, 1, or 2 | 2 |
+| `axis` |  dimensionality; either 2 or 3 | 2 |
+| `from3D` |  extracts 2D slice from 3D data; only relevant if axis=2 | False |
+| `outliers` |  only include outliers when adding consecutive steps, thus the data from additional timesteps won't be sampled in the same way as the 1st timestep | False |
 
 
 
