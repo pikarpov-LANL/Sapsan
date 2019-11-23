@@ -6,7 +6,7 @@ import time
 import torch
 import torch.utils.data as Tdata
 
-from filters import Filters
+from sapsan.filters import Filters
 
 class Data:
 
