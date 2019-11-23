@@ -1,4 +1,4 @@
-from Sapsan import Sapsan
+from sapsan.Sapsan import Sapsan
 
 pars = {'name':'16','ttrain':[0]}
 

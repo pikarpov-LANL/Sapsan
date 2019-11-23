@@ -17,10 +17,10 @@ from catalyst.dl import SupervisedRunner
 
 import mlflow
 
-from DataAnalysis import Data
-from ResultAnalysis import Results
-from parameters import parameters
-from CNN import SpacialConvolutionsModel
+from sapsan.DataAnalysis import Data
+from sapsan.ResultAnalysis import Results
+from sapsan.parameters import parameters
+from sapsan.CNN import SpacialConvolutionsModel
 
 class Sapsan:
 

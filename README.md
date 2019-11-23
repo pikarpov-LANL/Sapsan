@@ -1,5 +1,19 @@
 # Sapsan
 
+### TODO
+
+- [ ] configuration via env vars
+- [ ] general code refactor to PEP8
+- [ ] tests
+- [ ] CI using Github actions
+- [ ] version relase
+- [ ] docker images
+- [ ] pipeline to kubeflow
+- [ ] documentation
+
+
+### Configuration
+
 | Parameter                             | Description                                | Default                                         |
 | ------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
 | `name` | name of the run, as it will show up in the scores.dat and stats.dat | 'test' |
