@@ -17,10 +17,10 @@ from catalyst.dl import SupervisedRunner
 
 import mlflow
 
-from sapsan.DataAnalysis import Data
-from sapsan.ResultAnalysis import Results
-from sapsan.parameters import parameters
-from sapsan.CNN import SpacialConvolutionsModel
+from DataAnalysis import Data
+from ResultAnalysis import Results
+from parameters import parameters
+from CNN import SpacialConvolutionsModel
 
 class Sapsan:
 
@@ -132,6 +132,8 @@ class Sapsan:
         exp_id = mlflow.set_experiment(self.experiment_name+' test')
         with mlflow.start_run(experiment_id=exp_id, nested=True, run_name=self.name):
             for key, value in self.__dict__.items(): 
+                self.data.__dict__[key]=value
+                self.results.__dict__[key]=value
                 if key not in ['experiment_name','name','mlflow_url','data','results','device']: 
                     mlflow.log_param(key,value)
             
