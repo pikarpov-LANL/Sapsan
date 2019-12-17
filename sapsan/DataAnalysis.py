@@ -6,7 +6,7 @@ import time
 import torch
 import torch.utils.data as Tdata
 
-from sapsan.filters import Filters
+from filters import Filters
 
 class Data:
 
@@ -216,18 +216,56 @@ class Data:
 
         print('SHAPES', X_3d.shape, y_3d.shape)
 
-        X_3d_tensor, y_3d_tensor = self.form_3d_tensors(X_3d, y_3d, size=self.dim*len(self.ttrain))
-        X_torch_tensor = torch.from_numpy(X_3d_tensor).float()
-        y_torch_tensor = torch.from_numpy(y_3d_tensor).float()
+        if dataset == 'train':
+            #train/valid split is 50/50
+            
+            train_size = int(self.dim*len(self.ttrain))
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)
+            
+            X_3d_in = torch.from_numpy(X_3d_in).float()
+            y_3d_in = torch.from_numpy(y_3d_in).float()
 
-        print('Shapes of train tensors', np.shape(X_torch_tensor), np.shape(y_torch_tensor))
-        loader = Tdata.DataLoader(
-	    dataset = Tdata.TensorDataset(X_torch_tensor, y_torch_tensor),
-	    batch_size = self.batch_size,
-	    shuffle = True,
-	    num_workers = 2)
+            print('Shapes of train tensors', np.shape(X_3d_in), np.shape(y_3d_in))
+            
+            train = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
+                                        batch_size = self.batch_size,
+                                        shuffle = False,
+                                        num_workers = 4)
+            
+            
+            train_size = 0
+            
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[train_size:,:,:,:], y_3d[train_size:,:,:,:], 
+                                                    size=self.dim*len(self.ttrain)-train_size)
+            
+            X_3d_in = torch.from_numpy(X_3d_in).float()
+            y_3d_in = torch.from_numpy(y_3d_in).float()
 
-        loaders = {dataset: loader, "valid": loader}
+            print('Shapes of valid tensors', np.shape(X_3d_in), np.shape(y_3d_in))
+            
+            valid = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
+                                        batch_size = self.batch_size,
+                                        shuffle = False,
+                                        num_workers = 4)
+
+            loaders = {dataset: train, "valid": valid}
+        
+        
+        elif dataset == 'test':
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d, y_3d, size=self.dim*len(self.ttrain))
+            
+            X_3d_in = torch.from_numpy(X_3d_in).float()
+            y_3d_in = torch.from_numpy(y_3d_in).float()
+
+            print('Shapes of test tensors', np.shape(X_3d_in), np.shape(y_3d_in))
+            
+            train = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
+                                        batch_size = self.batch_size,
+                                        shuffle = True,
+                                        num_workers = 4)
+            loaders = {"test": train}
+            
+        #Tdata.random_split()
 
         return loaders
 
@@ -236,6 +274,12 @@ class Data:
         """ Form cubes size CUBE_SIZE**3 for 3d convolutions"""
         res_train_X = []
         res_train_y = []
+        
+        print('form 3d tensor shapes', X.shape, y.shape)
+        
+        size = int(size/self.cube_size)*self.cube_size
+        print('SIZE', size)
+        
         for i in range(0, size, self.cube_size):
             for j in range(0, self.dim, self.cube_size):
                 for k in range(0, self.dim, self.cube_size):
@@ -246,7 +290,7 @@ class Data:
                                                      j:j+self.cube_size, 
                                                      k:k+self.cube_size, :], -1, 0).reshape(self.cube_size**3))
 
-        return np.array(res_train_X), np.array(res_train_y) 
+        return np.array(res_train_X), np.array(res_train_y)
 
 
     def filtvar(self, var, dim):
@@ -260,7 +304,8 @@ class Data:
         else:
             varfilt = np.array(self.filt(self, var, dim))
         return varfilt
-    
+ 
+
     def defaults(self, var, kwargs):
         default = {'vmin':min(var.flatten()), 
            'vmax':max(var.flatten()), 
@@ -271,6 +316,7 @@ class Data:
             if key not in kwargs:
                 kwargs[key]=default[key]
         return kwargs
+        
         
     def plotim(self, var, **kwargs): 
         #Makes a suite of subplots with adjusted colorbars
