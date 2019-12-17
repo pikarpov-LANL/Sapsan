@@ -153,6 +153,7 @@ class Results:
         plt.show()
         plt.clf()
         
+        mlflow.log_metric('ks_stat', ks_stat)
         mlflow.log_artifact(self.savepath+'cdf.png')
 
         try:
@@ -289,9 +290,9 @@ class Results:
             pass
         return
 
-    def output(self, vals, target, out=None):
+    def output(self, vals, target, out_format=None):
         import xlsxwriter
-        
+        '''
         if self.path==None:
             inpath = '%s.h5'%var  
         elif '@' in self.path:
@@ -305,10 +306,10 @@ class Results:
                 inpath = self.path.replace(self.path[i:i+3], '%.*f' % (n, self.ttrain[0]*self.dt))
                 
         else: inpath = self.path
-        
+        '''
         vals = np.concatenate((vals, target), axis=1)
 
-        savename = '%s%dd_dim%d_t%.4f'%(inpath, self.axis, self.dim, self.ttrain[0]*self.dt)
+        savename = self.savepath+'output'#'%s%dd_dim%d_t%.4f'%(inpath, self.axis, self.dim, self.ttrain[0]*self.dt)
         
         #>>>Fix pars to be read automatically from parameters<<<
         pars=['u0', 'u1','u2',
@@ -318,7 +319,7 @@ class Results:
               'db00', 'db01','db02','db10','db11','db12', 'db20','db21','db22',
               'da00', 'da01','da02','da10','da11','da12', 'da20','da21','da22','tn0','tn1','tn2']
         
-        if out=='xlsx':
+        if out_format=='xlsx':
             workbook = xlsxwriter.Workbook(savename+'.xlsx')
             worksheet = workbook.add_worksheet()
 
@@ -339,3 +340,4 @@ class Results:
         mlflow.log_artifact(savename+'.txt')
     
     #careful with boundaries when selecting train and test in regards to gradient
+
