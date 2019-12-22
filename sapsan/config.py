@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from sapsan.Sapsan import Sapsan
 
 pars = {'name':'16','ttrain':[0]}
@@ -28,3 +30,4 @@ sps = Sapsan()
 model = sps.fit(pars)
 
 #sps.test(model, ttest=[1])
+
