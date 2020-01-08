@@ -37,3 +37,14 @@ class Estimator(ABC):
         @return:
         """
         pass
+
+
+class Dataset(ABC):
+    """ Abstract class for sapsan dataset loader """
+    @abstractmethod
+    def load(self):
+        """
+        Loads dataset
+        @return:
+        """
+        pass
