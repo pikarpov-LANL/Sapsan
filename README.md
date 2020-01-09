@@ -1,5 +1,29 @@
 # Sapsan
 
+### Example
+
+```python
+from sapsan.general.experiment import MlflowExperiment
+from sapsan.general.data.dataset import JHTDBDataset
+from sapsan.general.estimator.krr import KrrEstimatorConfiguration, KrrEstimator
+from sapsan.utils.plot import PlotUtils
+
+# create dataset
+dataset = JHTDBDataset('somepath')
+# create model
+estimator = KrrEstimator(KrrEstimatorConfiguration(0.001, 1.789))
+#create experiment
+experiment = MlflowExperiment(estimator=estimator, dataset=dataset, callbacks=[
+    PlotUtils.plot_histograms,
+    PlotUtils.plot_slices
+])
+# run experiment
+experiment.run()
+# get report on experiment run
+experiment.get_report()
+```
+
+
 ### TODO
 
 - [ ] configuration via env vars

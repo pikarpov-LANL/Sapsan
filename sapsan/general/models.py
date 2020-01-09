@@ -48,3 +48,14 @@ class Dataset(ABC):
         @return:
         """
         pass
+
+
+class Experiment(ABC):
+    """ Abstract class for sapsan experiments """
+    @abstractmethod
+    def run(self):
+        pass
+
+    @abstractmethod
+    def get_report(self):
+        pass
