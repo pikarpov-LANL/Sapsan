@@ -28,6 +28,7 @@
 | `max_dim` |  initial dimension of the data file, from which training and testing sets will be extracted | 512 |
 | `step` | spatial separation between each data point used for training; default is to choose the step to cover the whole domain with equidistent point separation | None |
 | `ttrain` | training timestep | [0] |
+| `target_fraction` | fraction of the data to be used for training; the rest will be used for validation (if target_fraction = 1, then the same data will be used for validation as well) | 1 |
 | `dt` |  numeral value for dt to calculate the actual time of each timestep | 1 |
 | `fm` | number of modes to filter down to | 15 |
 | `filtname` |  filter to use; available options also include 'boxfilt' | 'spectral' |
