@@ -11,3 +11,5 @@ __pychache__
 **.h5
 **.log
 **.tar.gz
+
+.ipynb_checkpoints
