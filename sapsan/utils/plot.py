@@ -63,7 +63,6 @@ def slice_plot(data: np.ndarray,
 
     plt.title("Slice" if name is None else name)
     plt.imshow(slice_to_plot)
-    plt.show()
 
     return plt
 
@@ -72,6 +71,10 @@ class PlotUtils(object):
     @classmethod
     def plot_histograms(cls):
         pass
+
+    @classmethod
+    def plot_pdf(cls, data):
+        return pdf_plot(data)
 
     @classmethod
     def plot_slices(cls):
