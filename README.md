@@ -48,7 +48,6 @@ experiment.get_report()
 - [ ] documentation
 
 
-
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved.
 This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos
 National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S.
