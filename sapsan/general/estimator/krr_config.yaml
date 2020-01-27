@@ -1,0 +1,3 @@
+config:
+  gamma: 1.778
+  alpha: 0.001
