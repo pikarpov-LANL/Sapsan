@@ -1,11 +1,20 @@
-# Sapsan
+Sapsan
+======
 
+* [Intro](#intro)
+* [Configuration](#configuration)
+* [Kubeflow](#kubeflow)
+* [Todos](#todos)
 
 
 ### Intro
 
 TODO
 
+
+### Configuration
+
+Docs for configuration -> [here](./docs/config.md)
 
 ### Kubeflow
 
