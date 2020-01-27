@@ -13,3 +13,5 @@ __pychache__
 **.tar.gz
 
 .ipynb_checkpoints
+
+tmp/*
