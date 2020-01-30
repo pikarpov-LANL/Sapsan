@@ -9,6 +9,7 @@ Configuration
 | `name` | name of the run, as it will show up in the scores.dat and stats.dat | 'test' |
 | `parameters` | parameters (e.g. features) to train on | None |
 | `target` | target parameter to train against and to predict | None |
+| `targetComp` | target component to train against and to predict, in case target is a multi-D quantity | 0 |
 | `path` | path to the data | '/raid1/JHTDB' |
 | `dataset` | which data set to use; options are 'iso' for HD turbulence, and 'mhd' for MHD turbulence | 'iso' |
 | `savepath` | where to save the data | 'Figures' |
