@@ -5,6 +5,7 @@ import numpy as np
 import time
 import torch
 import torch.utils.data as Tdata
+from skimage.util.shape import view_as_blocks
 
 from filters import Filters
 
@@ -216,12 +217,9 @@ class Data:
 
         print('SHAPES', X_3d.shape, y_3d.shape)
 
-        if dataset == 'train':
-            #train/valid split is 50/50
-            
-            train_size = int(self.dim*len(self.ttrain))
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)
-            
+        if dataset == 'train':            
+            train_size = int(self.dim*len(self.ttrain)*self.train_fraction)
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)            
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
 
@@ -233,10 +231,11 @@ class Data:
                                         num_workers = 4)
             
             
-            train_size = 0
+            if self.train_fraction == 1: valid_size = 0
+            else: valid_size = train_size
             
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[train_size:,:,:,:], y_3d[train_size:,:,:,:], 
-                                                    size=self.dim*len(self.ttrain)-train_size)
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[valid_size:,:,:,:], y_3d[valid_size:,:,:,:], 
+                                                    size=self.dim*len(self.ttrain)-valid_size)
             
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
@@ -252,45 +251,46 @@ class Data:
         
         
         elif dataset == 'test':
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d, y_3d, size=self.dim*len(self.ttrain))
+            train_size = int(self.dim*len(self.ttrain)*self.train_fraction)
+            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)
             
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
 
             print('Shapes of test tensors', np.shape(X_3d_in), np.shape(y_3d_in))
             
-            train = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
+            test = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
                                         batch_size = self.batch_size,
                                         shuffle = True,
                                         num_workers = 4)
-            loaders = {"test": train}
-            
-        #Tdata.random_split()
+            loaders = {dataset: test}
 
         return loaders
 
 
-    def form_3d_tensors(self, X, y, size):
+    def form_3d_tensors(self, X, y, size):        
         """ Form cubes size CUBE_SIZE**3 for 3d convolutions"""
-        res_train_X = []
-        res_train_y = []
-        
-        print('form 3d tensor shapes', X.shape, y.shape)
-        
-        size = int(size/self.cube_size)*self.cube_size
-        print('SIZE', size)
-        
-        for i in range(0, size, self.cube_size):
-            for j in range(0, self.dim, self.cube_size):
-                for k in range(0, self.dim, self.cube_size):
-                    res_train_X.append(np.moveaxis(X[i:i+self.cube_size, 
-                                                     j:j+self.cube_size, 
-                                                     k:k+self.cube_size, :], -1, 0))
-                    res_train_y.append(np.moveaxis(y[i:i+self.cube_size, 
-                                                     j:j+self.cube_size, 
-                                                     k:k+self.cube_size, :], -1, 0).reshape(self.cube_size**3))
 
-        return np.array(res_train_X), np.array(res_train_y)
+        train_X = np.moveaxis(X, -1, 0)
+        train_y = np.moveaxis(y,-1, 0)[0]
+        
+        #combine nx with cubex?
+        batch = self.batch_size
+        n = np.ones(3, int)
+        while batch>=2:
+            n[0] *= 2; batch /= 2
+            if batch>=2: n[1] *= 2; batch /= 2
+            if batch>=2: n[2] *= 2; batch /= 2
+        for i in range(len(n)): n[i] = int(X.shape[i]/n[i])
+        
+        train_X = view_as_blocks(train_X,(train_X.shape[0], n[0], n[1], n[2]))[0]
+        train_y = view_as_blocks(train_y,(n[0], n[1], n[2]))
+
+        train_X = np.reshape(train_X, (train_X.shape[0]*train_X.shape[1]*train_X.shape[2], 
+                                       train_X.shape[3], n[0], n[1], n[2]))
+        train_y = np.reshape(train_y, (train_y.shape[0]*train_y.shape[1]*train_y.shape[2], n[0]*n[1]*n[2]))
+         
+        return np.array(train_X), np.array(train_y)
 
 
     def filtvar(self, var, dim):

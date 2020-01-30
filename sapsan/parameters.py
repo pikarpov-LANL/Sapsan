@@ -28,6 +28,7 @@ class ParameterHandler:
         self.cube_size=8 
         self.method='krr'
         self.experiment_name='demo'
+        self.train_fraction = 1
     
     def LoadParameters(self, pars):
         print('Running parameters: ', pars)
@@ -39,8 +40,8 @@ class ParameterHandler:
             #>>>make sure the savepaths are generalized and input<<<
             #need to adjust savefile path for correct formatting in my case
             if key=='savepath' and self.savepath!=None:
-                self.savepath = self.savepath+'%s/'%pars['name']
-
+                self.savepath = self.savepath+'%s/'%self.name
+        
         return self.__dict__
 
 parameters = ParameterHandler()

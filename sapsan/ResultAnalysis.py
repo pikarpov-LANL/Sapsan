@@ -36,8 +36,8 @@ class Results:
         if self.axis==2: pred = np.reshape(pred, (self.dim,self.dim)); var = np.reshape(var, (self.dim,self.dim)) 
         if self.axis==3: 
             print('3d plotting prediction')
-            pred = np.reshape(pred, (self.dim,self.dim,self.dim))[:,:,0]
-            var = np.reshape(var, (self.dim,self.dim,self.dim))[:,:,0]
+            pred = np.reshape(pred, (int(self.dim*self.train_fraction),self.dim,self.dim))[:,:,0]
+            var = np.reshape(var, (int(self.dim*self.train_fraction),self.dim,self.dim))[:,:,0]
         
         fig = plt.figure(figsize = (16, 6))
         a = fig.add_subplot(121)
@@ -76,7 +76,10 @@ class Results:
 
         if len(np.shape(var))>1:
             func = []
-            val = np.zeros((np.shape(var)[0],self.dim**self.axis))    
+            
+            #>>>>FIX UP!
+            #val = np.zeros((np.shape(var)[0],self.dim**self.axis))    
+            val = np.zeros((np.shape(var)))    
             for i in range(len(var)):
                 val[i] = np.sort(var[i])
                 count = 0
@@ -115,7 +118,8 @@ class Results:
         
         plt.figure('cdf', figsize=(6,6))
         func = []
-        val = np.zeros((np.shape(var)[0],self.dim**self.axis))    
+        #val = np.zeros((np.shape(var)[0],self.dim**self.axis))
+        val = np.zeros((np.shape(var)))
         for i in range(len(var)):
             val[i] = np.sort(var[i])
 
