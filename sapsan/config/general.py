@@ -51,7 +51,7 @@ class SapsanConfig(object):
     def from_yaml(cls, path):
         with open(path, 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
-            return cls(**cfg['general'])
+            return cls(**cfg['config'])
 
     def __repr__(self):
         return "SapsanConfig(name={0})".format(self.name)

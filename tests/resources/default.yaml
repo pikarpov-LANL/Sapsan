@@ -1,4 +1,4 @@
-general:
+config:
   name: '16'
   ttrain: [0]
   dim: 16
