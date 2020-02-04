@@ -17,7 +17,6 @@ class Data:
         
         print('Features to use: ',params)
 
-
         for tnum in range(len(self.ttrain)):
             self.first_var = True
 

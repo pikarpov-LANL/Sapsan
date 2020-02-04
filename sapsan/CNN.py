@@ -31,23 +31,24 @@ class SpacialConvolutionsModel(torch.nn.Module):
         p3 = self.pooling3(c3)
         v1 = p3.view(p3.size(0), -1)
         
-        l1 = self.relu(self.linear(v1))
-        l2 = self.linear2(l1)
-        
         '''
         print('original', x.shape)
         print('conv3d', c1.shape)
         print('pooling', p1.shape)
         print('conv3d2', c2.shape)
         print('pooling2', p2.shape)
-
         print('conv3d3', c3.shape)
         print('pooling3', p3.shape)
         print('pooled size', p3.size(), p3.size(0))
-        print('reshape based on pooling', v1.shape)
-
-        print('ReLU linear', l1.shape)
-        print('linear2', l2.shape)
-        sys.exit()
+        print('reshape based on pooling', v1.shape) 
+        print('cv', ct.shape)
         '''
+        
+        l1 = self.relu(self.linear(v1))
+        l2 = self.linear2(l1)
+
+        #print('ReLU linear', l1.shape)
+        #print('linear2', l2.shape)
+        #sys.exit()
+        
         return l2

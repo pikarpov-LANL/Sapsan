@@ -26,13 +26,12 @@ import h5py as h5
 
 class Sapsan:
 
-    def __init__(self, pars):
+    def __init__(self, pars):        
+        self.__dict__ = parameters.LoadParameters(pars)
         self.data = Data()
         self.results = Results()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.mlflow_url = 'http://localhost:9999'
-        
-        self.allpars = parameters.LoadParameters(pars)
     
     def fit(self):
         #the functions trains and outputs the model
@@ -40,10 +39,9 @@ class Sapsan:
         
         mlflow.set_tracking_uri(self.mlflow_url)
                 
-        exp_id = mlflow.set_experiment(self.allpars['experiment_name'])
-        with mlflow.start_run(experiment_id=exp_id, nested=True, run_name=self.allpars['name']):
-            for key, value in self.allpars.items(): 
-                self.__dict__[key]=value
+        exp_id = mlflow.set_experiment(self.experiment_name)
+        with mlflow.start_run(experiment_id=exp_id, nested=True, run_name=self.name):
+            for key, value in self.__dict__.items(): 
                 self.data.__dict__[key]=value
                 self.results.__dict__[key]=value
                 if key not in ['experiment_name','name','mlflow_url','data','results','device']: 
@@ -134,12 +132,12 @@ class Sapsan:
         return model
     
     
-    def test(self, model, ttest):        
+    def test(self, model, ttest):    
+        
         mlflow.set_tracking_uri(self.mlflow_url)
-        exp_id = mlflow.set_experiment(self.allpars['experiment_name']+' test')
-        with mlflow.start_run(experiment_id=exp_id, nested=True, run_name=self.allpars['name']):
-            for key, value in self.allpars.items():
-                self.__dict__[key]=value
+        exp_id = mlflow.set_experiment(self.experiment_name+' test')
+        with mlflow.start_run(experiment_id=exp_id, nested=True, run_name=self.name):
+            for key, value in self.__dict__.items():
                 self.data.__dict__[key]=value
                 self.results.__dict__[key]=value
                 if key not in ['experiment_name','name','mlflow_url','data','results','device']: 
