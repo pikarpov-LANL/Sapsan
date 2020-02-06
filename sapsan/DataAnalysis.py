@@ -212,13 +212,20 @@ class Data:
 
     def format_data_to_device(self, dataset, vals, var):
         X_3d = vals.reshape(self.dim*len(self.ttrain),self.dim,self.dim,vals.shape[-1])
-        y_3d = var.reshape(self.dim*len(self.ttrain),self.dim,self.dim,1)
+        y_3d = var.reshape(self.dim*len(self.ttrain),self.dim,self.dim)
 
-        print('SHAPES', X_3d.shape, y_3d.shape)
+        print('SHAPES_to_device', X_3d.shape, y_3d.shape)
 
         if dataset == 'train':            
             train_size = int(self.dim*len(self.ttrain)*self.train_fraction)
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)            
+            if self.batch_size==1:
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:])
+            else:
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d, y_3d)
+                X_3d_in, y_3d_in = (X_3d_in[:int(X_3d_in.shape[0]*self.train_fraction)],
+                                    y_3d_in[:int(y_3d_in.shape[0]*self.train_fraction)])
+            
+            if len(self.ttrain)>1: y_3d_in = y_3d_in[:,int(self.cube_size**3*len(self.ttrain)*self.train_fraction):]
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
 
@@ -232,10 +239,16 @@ class Data:
             
             if self.train_fraction == 1: valid_size = 0
             else: valid_size = train_size
+                
+            if self.batch_size==1:            
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d[valid_size:,:,:,:], y_3d[valid_size:,:,:])
+            else:
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d, y_3d)
+                X_3d_in, y_3d_in = (X_3d_in[int(X_3d_in.shape[0]*self.train_fraction):], 
+                                    y_3d_in[int(y_3d_in.shape[0]*self.train_fraction):])
             
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[valid_size:,:,:,:], y_3d[valid_size:,:,:,:], 
-                                                    size=self.dim*len(self.ttrain)-valid_size)
-            
+            if len(self.ttrain)>1: y_3d_in = y_3d_in[:,int(self.cube_size**3*len(self.ttrain)*self.train_fraction):]
+                
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
 
@@ -244,14 +257,24 @@ class Data:
             valid = Tdata.DataLoader(dataset = Tdata.TensorDataset(X_3d_in, y_3d_in),
                                         batch_size = self.batch_size,
                                         shuffle = False,
-                                        num_workers = 4)
-
-            loaders = {dataset: train, "valid": valid}
-        
+                                        num_workers = 4)            
+            
+            loaders = {dataset: train, "valid": valid}        
         
         elif dataset == 'test':
             train_size = int(self.dim*len(self.ttrain)*self.train_fraction)
-            X_3d_in, y_3d_in = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:,:], size=train_size)
+            
+            if self.batch_size==1: 
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d[:train_size,:,:,:], y_3d[:train_size,:,:])
+            else:
+                X_3d_in, y_3d_in, block, block_size = self.form_3d_tensors(X_3d, y_3d)
+                X_3d_in, y_3d_in = (X_3d_in[int(X_3d_in.shape[0]*self.train_fraction):], 
+                                    y_3d_in[int(y_3d_in.shape[0]*self.train_fraction):])
+            
+            if len(self.ttrain)>1: 
+                y_3d_in = y_3d_in[:,int(self.cube_size**3*len(self.ttrain)*self.train_fraction):]
+                block_size[0] = int(block_size[0]/len(self.ttrain))
+                block[0] = int(block[0]*self.train_fraction)
             
             X_3d_in = torch.from_numpy(X_3d_in).float()
             y_3d_in = torch.from_numpy(y_3d_in).float()
@@ -264,32 +287,40 @@ class Data:
                                         num_workers = 4)
             loaders = {dataset: test}
 
-        return loaders
+        return loaders, block, block_size
 
 
-    def form_3d_tensors(self, X, y, size):        
-        """ Form cubes size CUBE_SIZE**3 for 3d convolutions"""
-
+    def form_3d_tensors(self, X, y):        
+        """ Form cubes size CUBE_SIZE**3 for 3d convolutions """
+        
+        import matplotlib.pyplot as plt
+        
         train_X = np.moveaxis(X, -1, 0)
-        train_y = np.moveaxis(y,-1, 0)[0]
+        train_y = y
         
         #combine nx with cubex?
         batch = self.batch_size
-        n = np.ones(3, int)
+        block_size = np.ones(3, int)
         while batch>=2:
-            n[0] *= 2; batch /= 2
-            if batch>=2: n[1] *= 2; batch /= 2
-            if batch>=2: n[2] *= 2; batch /= 2
-        for i in range(len(n)): n[i] = int(X.shape[i]/n[i])
+            block_size[0] *= 2; batch /= 2
+            if batch>=2: block_size[1] *= 2; batch /= 2
+            if batch>=2: block_size[2] *= 2; batch /= 2
+        for i in range(len(block_size)): block_size[i] = int(X.shape[i]/block_size[i])
         
-        train_X = view_as_blocks(train_X,(train_X.shape[0], n[0], n[1], n[2]))[0]
-        train_y = view_as_blocks(train_y,(n[0], n[1], n[2]))
+        print('form_3d_tensors, pre_blocks', np.shape(train_X), np.shape(train_y))
+        train_X = view_as_blocks(train_X,(train_X.shape[0], block_size[0], block_size[1], block_size[2]))[0]
+        train_y = view_as_blocks(train_y,(block_size[0], block_size[1], block_size[2]))
 
+        print('form_3d_tensors', np.shape(train_X), np.shape(train_y))
+        
+        block = [train_y.shape[0], train_y.shape[1], train_y.shape[2]]
         train_X = np.reshape(train_X, (train_X.shape[0]*train_X.shape[1]*train_X.shape[2], 
-                                       train_X.shape[3], n[0], n[1], n[2]))
-        train_y = np.reshape(train_y, (train_y.shape[0]*train_y.shape[1]*train_y.shape[2], n[0]*n[1]*n[2]))
-         
-        return np.array(train_X), np.array(train_y)
+                                       train_X.shape[3], block_size[0], block_size[1], block_size[2]))
+        temp = train_y
+        train_y = np.reshape(train_y, (train_y.shape[0]*train_y.shape[1]*train_y.shape[2], 
+                                       block_size[0]*block_size[1]*block_size[2]))
+        
+        return np.array(train_X), np.array(train_y), block, block_size
 
 
     def filtvar(self, var, dim):

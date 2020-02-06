@@ -29,19 +29,26 @@ class Results:
                 kwargs[key]=default[key]
         return kwargs
         
-    def prediction(self, var, pred,**kwargs):  
+    def prediction(self, var, pred,block, block_size, **kwargs):  
         #reformats prediction; topology comparison plots
         kwargs = self.defaults(var, kwargs)
+        
+        print('---Prediction---')
+        print('var, pred in', np.shape(var), np.shape(pred), self.dim, self.ttrain)
         
         if self.axis==2: pred = np.reshape(pred, (self.dim,self.dim)); var = np.reshape(var, (self.dim,self.dim)) 
         if self.axis==3: 
             print('3d plotting prediction')
-            pred = np.reshape(pred, (int(self.dim*self.train_fraction),self.dim,self.dim))[:,:,0]
-            var = np.reshape(var, (int(self.dim*self.train_fraction),self.dim,self.dim))[:,:,0]
-        
+            pred = np.reshape(pred, (block[0],block[1],block[2],block_size[0],block_size[1],block_size[2]))
+            pred = pred.transpose(0,3,1,4,2,5)
+            #print('ERROR:', pred.shape)int(self.dim*len(self.ttrain)*self.train_fraction),self.dim,self.dim)
+            pred = pred.reshape(int(self.dim*self.train_fraction),self.dim,self.dim)
+            var = np.reshape(var, (block[0],block[1],block[2],block_size[0],block_size[1],block_size[2]))
+            var = var.transpose(0,3,1,4,2,5).reshape(int(self.dim*self.train_fraction),self.dim,self.dim)
+        print('var, pred out', np.shape(var), np.shape(pred))
         fig = plt.figure(figsize = (16, 6))
         a = fig.add_subplot(121)
-        im = plt.imshow(var, cmap=kwargs['cmap'], vmin=kwargs['vmin'], vmax = kwargs['vmax'])
+        im = plt.imshow(var[0], cmap=kwargs['cmap'], vmin=kwargs['vmin'], vmax = kwargs['vmax'])
         plt.colorbar(im).ax.tick_params(labelsize=14)
         plt.title('Original %s'%kwargs['name'])
         #if self.savepath:
@@ -51,7 +58,7 @@ class Results:
         
         #fig = plt.figure(figsize = (8, 6))
         a = fig.add_subplot(122)
-        im = plt.imshow(pred, cmap=kwargs['cmap'], vmin=kwargs['vmin'], vmax = kwargs['vmax'])
+        im = plt.imshow(pred[0], cmap=kwargs['cmap'], vmin=kwargs['vmin'], vmax = kwargs['vmax'])
         plt.colorbar(im).ax.tick_params(labelsize=14)
         plt.title('Predicted %s'%kwargs['name'])
         if self.savepath:
@@ -150,7 +157,7 @@ class Results:
         plt.legend()
         plt.xlabel('data values')
         plt.ylabel('CDF')
-        plt.title('t = %.4f'%self.ttrain)
+        plt.title('t = %.4f'%self.ttest)
         if self.savepath:
             plt.tight_layout()
             plt.savefig(self.savepath+'cdf.png')

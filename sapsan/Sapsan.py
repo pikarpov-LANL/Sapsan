@@ -79,10 +79,14 @@ class Sapsan:
                 pred = model.predict(X_train)
 
             elif self.method=='cnn':
-                loaders = self.data.format_data_to_device("train",vals, var)
+                loaders, block, block_size = self.data.format_data_to_device("train",vals, var)
                 
                 train_size = int(self.dim*len(self.ttrain)*self.train_fraction)
-                model = SpacialConvolutionsModel(vals.shape[-1], int(self.cube_size**3*self.train_fraction))
+                
+                if self.batch_size==1: D_out = int(self.cube_size**3*self.train_fraction)
+                else: D_out = int(self.cube_size**3)
+                    
+                model = SpacialConvolutionsModel(vals.shape[-1], D_out)
                 model.to(self.device)
 
                 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -145,12 +149,13 @@ class Sapsan:
             #>>>>Check if sps.pars can be updated after training
             
             #loop over all the test timesteps to predict
-            for i in range(len(ttest)):
+            #for i in range(len(ttest)):
+            for i in range(1):
                 t1 = time.time() #begin timer
 
                 #get vars of the test timestep
                 print('>>>TEST TIME<<<', i, ttest, ttest[i], self.ttrain)
-                self.data.ttrain = [ttest[i]]
+                self.data.ttrain = ttest
 
                 #>>>Why self.step gets reset to 1??<<<
                 #self.dim = self.max_dim; self.step = 1 #int(self.max_dim/2)
@@ -164,11 +169,13 @@ class Sapsan:
                 if self.method=='krr':
                     pred_test = model.predict(test_vals)
                 elif self.method=='cnn':
-                    loaders = self.data.format_data_to_device("test", test_vals, target)
+                    loaders, block, block_size = self.data.format_data_to_device("test", test_vals, target)
                     todevice = loaders['test'].dataset.tensors[0].to(self.device)
                     print('------')
                     print('shape to device, ', np.shape(todevice), np.shape(model(todevice).cpu().data.numpy()))
                     pred_test = model(todevice).cpu().data.numpy().reshape(-1)
+
+                    print('-->>> Loaders[test] shape ',np.shape(loaders['test'].dataset.tensors[1].data.numpy()))
                     target = loaders['test'].dataset.tensors[1].data.numpy().reshape(-1)
 
                 print('SHAPES target, pred_test', np.shape(target), np.shape(pred_test))
@@ -182,10 +189,10 @@ class Sapsan:
 
                 self.results.Check_Directories()
 
-                self.results.ttrain = self.dt*ttest[i] #>>>could be an issue?<<<
+                self.results.ttest = self.dt*ttest[i] #>>>could be an issue?<<<
 
                 #plot various quntities 
-                self.results.prediction(target, pred_test, cmap='ocean', name=r'$\tau_{1%d}$'%self.targetComp)
+                self.results.prediction(target, pred_test, block, block_size, cmap='ocean', name=r'$\tau_{1%d}$'%self.targetComp)
                 #self.results.output(target, pred_test)
                 
                 #>>>Uncomment after fixing the dims!
@@ -210,5 +217,7 @@ class Sapsan:
                 scores[i] = [abserr_test, variance_test]
                 t2 = time.time()
                 print('Retrieval time: ', (t2-t1))
+                print('OUTPUT SHAPES target, pred_test', np.shape(target), np.shape(pred_test))
 
-        return scores, stats
+        #return scores, stats
+        return target, pred_test
