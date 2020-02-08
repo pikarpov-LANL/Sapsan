@@ -14,7 +14,7 @@ Usage:
     loaders = plugin.apply(ds)
 """
 
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, OrderedDict
 import numpy as np
 import h5py
 from skimage.util.shape import view_as_blocks
@@ -34,8 +34,7 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         self.train_size = train_size
         self.shuffle = shuffle
 
-    def apply(self, dataset: Dataset) -> Dict[str, DataLoader]:
-        x, y = dataset.load()
+    def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
         x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=self.train_size)
 
         train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train),
@@ -51,6 +50,10 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
                                 num_workers=4)
 
         return {"train": train_loader, "valid": val_loader}
+
+    def apply(self, dataset: Dataset) -> Dict[str, DataLoader]:
+        x, y = dataset.load()
+        return self.apply_on_x_y(x, y)
 
 
 class JHTDBDataset(Dataset):
@@ -83,6 +86,9 @@ class JHTDBDataset(Dataset):
                                                                     feature=feature)
         return "{0}/{1}".format(self.path, relative_path)
 
+    def _get_checkpoint_batch_size(self):
+        return int(self._CHECKPOINT_DATA_SIZE ** 3 / self._GRID_SIZE ** 3)
+
     def _get_checkpoint_data(self, checkpoint, columns):
         all_data = []
         # combine all features into cube with channels
@@ -97,7 +103,7 @@ class JHTDBDataset(Dataset):
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
-        checkpoint_batch_size = int(self._CHECKPOINT_DATA_SIZE ** 3 / self._GRID_SIZE ** 3)
+        checkpoint_batch_size = self._get_checkpoint_batch_size()
         # checkpoint_batch shape: (batch_size, channels, 128, 128, 128)
         checkpoint_batch = view_as_blocks(checkpoint_data,
                                           block_shape=(columns_length, self._GRID_SIZE,
@@ -116,4 +122,6 @@ class JHTDBDataset(Dataset):
             x.append(features_checkpoint_batch)
             y.append(labels_checkpoint_batch)
 
-        return np.vstack(x), np.vstack(y)
+        # todo: unhardcode shapes
+        return np.vstack(x), np.vstack(y).reshape(self._get_checkpoint_batch_size() * len(self.checkpoints),
+                                                  3 * self._GRID_SIZE**3)
