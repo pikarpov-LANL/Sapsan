@@ -59,3 +59,13 @@ class Experiment(ABC):
     @abstractmethod
     def get_report(self):
         pass
+
+
+class DatasetPlugin(ABC):
+    """ Plugin for dataset.
+    Example: convert dataset x, y to pytorch loaders
+    """
+    @abstractmethod
+    def apply(self, dataset: Dataset):
+        pass
+
