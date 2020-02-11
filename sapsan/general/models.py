@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Dict, List
 
 
 class EstimatorConfiguration(ABC):
@@ -11,6 +12,10 @@ class EstimatorConfiguration(ABC):
         @param path: path to yaml configuration
         @return: instance of configuration
         """
+        pass
+
+    def to_dict(self):
+        # TODO: to dict
         pass
 
 
@@ -38,6 +43,10 @@ class Estimator(ABC):
         """
         pass
 
+    @abstractmethod
+    def metrics(self) -> Dict[str, float]:
+        pass
+
 
 class Dataset(ABC):
     """ Abstract class for sapsan dataset loader """
@@ -50,14 +59,44 @@ class Dataset(ABC):
         pass
 
 
-class Experiment(ABC):
-    """ Abstract class for sapsan experiments """
+class ExperimentBackend(ABC):
+    """ Backend of experiment. """
     @abstractmethod
-    def run(self):
+    def log_metric(self, name: str, value: float):
         pass
 
     @abstractmethod
-    def get_report(self):
+    def log_parameter(self, name: str, value: str):
+        pass
+
+    @abstractmethod
+    def log_artifact(self, path: str):
+        pass
+
+
+class Experiment(ABC):
+    """ Abstract class for sapsan experiments """
+
+    def __init__(self,
+                 name: str,
+                 backend: ExperimentBackend):
+        self.name = name
+        self.backend = backend
+
+    @abstractmethod
+    def run(self) -> dict:
+        pass
+
+    @abstractmethod
+    def get_metrics(self) -> Dict[str, float]:
+        pass
+
+    @abstractmethod
+    def get_parameter(self) -> Dict[str, str]:
+        pass
+
+    @abstractmethod
+    def get_artifacts(self) -> List[str]:
         pass
 
 
@@ -68,4 +107,3 @@ class DatasetPlugin(ABC):
     @abstractmethod
     def apply(self, dataset: Dataset):
         pass
-
