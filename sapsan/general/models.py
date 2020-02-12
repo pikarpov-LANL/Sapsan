@@ -14,8 +14,8 @@ class EstimatorConfiguration(ABC):
         """
         pass
 
+    @abstractmethod
     def to_dict(self):
-        # TODO: to dict
         pass
 
 
@@ -61,6 +61,9 @@ class Dataset(ABC):
 
 class ExperimentBackend(ABC):
     """ Backend of experiment. """
+    def __init__(self, name: str):
+        self.name = name
+
     @abstractmethod
     def log_metric(self, name: str, value: float):
         pass
@@ -92,7 +95,7 @@ class Experiment(ABC):
         pass
 
     @abstractmethod
-    def get_parameter(self) -> Dict[str, str]:
+    def get_parameters(self) -> Dict[str, str]:
         pass
 
     @abstractmethod

@@ -2,13 +2,13 @@
 JHTDB dataset classes
 
 Usage:
-    ds = JHTDBDataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
+    ds = JHTDB128Dataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
                       features=['u', 'b', 'a',
                                 'du0', 'du1', 'du2',
                                 'db0', 'db1', 'db2',
                                 'da0', 'da1', 'da2'],
                       labels=['tn'],
-                      checkpoints=[0])
+                      checkpoints=[0.0, 0.01, 0.025, 0.25])
 
     plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
     loaders = plugin.apply(ds)
@@ -35,7 +35,9 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         self.shuffle = shuffle
 
     def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
-        x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=self.train_size)
+        x_train, x_test, y_train, y_test = train_test_split(x, y,
+                                                            train_size=self.train_size,
+                                                            shuffle=True)
 
         train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train),
                                                         from_numpy(y_train)),
@@ -56,26 +58,28 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         return self.apply_on_x_y(x, y)
 
 
-class JHTDBDataset(Dataset):
-    _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint}.0000/fm30/{feature}_dim128_fm30.h5"
+class JHTDB128Dataset(Dataset):
+    _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
     _CHECKPOINT_DATA_SIZE = 128
-    _GRID_SIZE = 64
 
     def __init__(self,
                  path: str,
                  features: List[str],
                  labels: List[str],
-                 checkpoints: List[int]):
+                 checkpoints: List[float],
+                 grid_size: int = 64):
         """
         @param path:
         @param features:
         @param labels:
         @param checkpoints:
+        @param grid_size: size of cube that will be used to separate checkpoint data
         """
         self.path = path
         self.features = features
         self.labels = labels
         self.checkpoints = checkpoints
+        self.grid_size = grid_size
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
@@ -87,7 +91,10 @@ class JHTDBDataset(Dataset):
         return "{0}/{1}".format(self.path, relative_path)
 
     def _get_checkpoint_batch_size(self):
-        return int(self._CHECKPOINT_DATA_SIZE ** 3 / self._GRID_SIZE ** 3)
+        return int(self._CHECKPOINT_DATA_SIZE ** 3 / self.grid_size ** 3)
+
+    def _get_dataset_size(self):
+        return self._get_checkpoint_batch_size() * len(self.checkpoints)
 
     def _get_checkpoint_data(self, checkpoint, columns):
         all_data = []
@@ -106,10 +113,10 @@ class JHTDBDataset(Dataset):
         checkpoint_batch_size = self._get_checkpoint_batch_size()
         # checkpoint_batch shape: (batch_size, channels, 128, 128, 128)
         checkpoint_batch = view_as_blocks(checkpoint_data,
-                                          block_shape=(columns_length, self._GRID_SIZE,
-                                                       self._GRID_SIZE, self._GRID_SIZE)
+                                          block_shape=(columns_length, self.grid_size,
+                                                       self.grid_size, self.grid_size)
                                           ).reshape(checkpoint_batch_size, columns_length,
-                                                    self._GRID_SIZE, self._GRID_SIZE, self._GRID_SIZE)
+                                                    self.grid_size, self.grid_size, self.grid_size)
 
         return checkpoint_batch
 
@@ -122,6 +129,4 @@ class JHTDBDataset(Dataset):
             x.append(features_checkpoint_batch)
             y.append(labels_checkpoint_batch)
 
-        # todo: unhardcode shapes
-        return np.vstack(x), np.vstack(y).reshape(self._get_checkpoint_batch_size() * len(self.checkpoints),
-                                                  3 * self._GRID_SIZE**3)
+        return np.vstack(x), np.vstack(y).reshape(self._get_dataset_size(), -1)

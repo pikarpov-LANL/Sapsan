@@ -1,5 +1,5 @@
 import yaml
-from typing import Optional
+from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
 from sapsan.general.models import EstimatorConfiguration, Estimator
 
@@ -16,6 +16,12 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
         with open(path, 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
             return cls(**cfg['config'])
+
+    def to_dict(self):
+        return {
+            "alpha": self.alpha,
+            "gamma": self.gamma
+        }
 
 
 class KrrEstimator(Estimator):
@@ -34,3 +40,6 @@ class KrrEstimator(Estimator):
     def train(self, inputs, targets=None):
         model = self.model.fit(inputs, targets)
         self.model = model
+
+    def metrics(self) -> Dict[str, float]:
+        pass

@@ -17,3 +17,4 @@ __pychache__
 tmp/*
 
 dataset/*
+logs/*
