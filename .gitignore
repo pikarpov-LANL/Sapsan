@@ -15,3 +15,6 @@ __pychache__
 .ipynb_checkpoints
 
 tmp/*
+
+dataset/*
+logs/*

@@ -26,7 +26,7 @@ TODO
 
 ```python
 from sapsan.general.experiment import MlflowExperiment
-from sapsan.general.data.dataset import JHTDBDataset
+from sapsan.general.data.jhtdb_dataset import JHTDBDataset
 from sapsan.general.estimator.krr import KrrEstimatorConfiguration, KrrEstimator
 from sapsan.utils.plot import PlotUtils
 
