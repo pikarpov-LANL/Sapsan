@@ -110,3 +110,10 @@ class DatasetPlugin(ABC):
     @abstractmethod
     def apply(self, dataset: Dataset):
         pass
+
+
+class Callback(ABC):
+    """ Utility class for callbacks implementations. """
+    @abstractmethod
+    def call(self):
+        pass
