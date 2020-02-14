@@ -14,7 +14,7 @@ Usage:
     loaders = plugin.apply(ds)
 """
 
-from typing import List, Tuple, Dict, OrderedDict
+from typing import List, Tuple, Dict, OrderedDict, Optional
 import numpy as np
 import h5py
 from skimage.util.shape import view_as_blocks
@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
-from sapsan.general.models import Dataset, DatasetPlugin
+from sapsan.general.models import Dataset, DatasetPlugin, Sampling
 
 
 class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
@@ -58,16 +58,34 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         return self.apply_on_x_y(x, y)
 
 
+class Equidistance3dSampling(Sampling):
+    def __init__(self, original_dim: int, target_dim: int):
+        self.original_dim = original_dim
+        self.target_dim = target_dim
+
+    @property
+    def scale(self):
+        return int(self.original_dim / self.target_dim)
+
+    @property
+    def sample_dim(self):
+        return self.target_dim
+
+    def sample(self, data: np.ndarray):
+        return data[:, ::self.scale, ::self.scale, ::self.scale]
+
+
 class JHTDB128Dataset(Dataset):
     _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
-    _CHECKPOINT_DATA_SIZE = 128
 
     def __init__(self,
                  path: str,
                  features: List[str],
                  labels: List[str],
                  checkpoints: List[float],
-                 grid_size: int = 64):
+                 grid_size: int = 64,
+                 checkpoint_data_size: int = 128,
+                 sampler: Optional[Sampling] = None):
         """
         @param path:
         @param features:
@@ -80,6 +98,8 @@ class JHTDB128Dataset(Dataset):
         self.labels = labels
         self.checkpoints = checkpoints
         self.grid_size = grid_size
+        self.sampler = sampler
+        self.checkpoint_data_size = checkpoint_data_size
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
@@ -91,7 +111,7 @@ class JHTDB128Dataset(Dataset):
         return "{0}/{1}".format(self.path, relative_path)
 
     def _get_checkpoint_batch_size(self):
-        return int(self._CHECKPOINT_DATA_SIZE ** 3 / self.grid_size ** 3)
+        return int(self.checkpoint_data_size ** 3 / self.grid_size ** 3)
 
     def _get_dataset_size(self):
         return self._get_checkpoint_batch_size() * len(self.checkpoints)
@@ -107,6 +127,10 @@ class JHTDB128Dataset(Dataset):
             all_data.append(data)
         # checkpoint_data shape: (features, 128, 128, 128)
         checkpoint_data = np.vstack(all_data)
+        # downsample if needed
+        if self.sampler:
+            checkpoint_data = self.sampler.sample(checkpoint_data)
+            self.checkpoint_data_size = self.sampler.sample_dim
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
