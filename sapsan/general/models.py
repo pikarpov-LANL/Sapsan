@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
+import numpy as np
 
 
 class EstimatorConfiguration(ABC):
@@ -116,4 +117,15 @@ class Callback(ABC):
     """ Utility class for callbacks implementations. """
     @abstractmethod
     def call(self):
+        pass
+
+
+class Sampling(ABC):
+    @abstractmethod
+    def sample(self, data: np.ndarray):
+        pass
+
+    @property
+    @abstractmethod
+    def sample_dim(self):
         pass
