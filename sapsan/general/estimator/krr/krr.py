@@ -1,7 +1,9 @@
+import os
+
 import yaml
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
-from sapsan.general.models import EstimatorConfiguration, Estimator
+from sapsan.general.models import Estimator, EstimatorConfiguration
 
 
 class KrrEstimatorConfiguration(EstimatorConfiguration):
@@ -12,7 +14,12 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
         self.gamma = gamma
 
     @classmethod
-    def from_yaml(cls, path: str) -> 'KrrEstimatorConfiguration':
+    def from_yaml(cls, path: Optional[str] = None) -> 'KrrEstimatorConfiguration':
+        if not path:
+            path = "{}/krr_config.yaml".format(
+                os.path.dirname(os.path.realpath(__file__))
+            )
+
         with open(path, 'r') as f:
             cfg = yaml.load(f, Loader=yaml.FullLoader)
             return cls(**cfg['config'])
