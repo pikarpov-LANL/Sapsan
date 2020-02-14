@@ -1,22 +1,23 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import h5py
 import numpy as np
 from skimage.util import view_as_blocks
 
-from sapsan.general.models import Dataset
+from sapsan.general.models import Dataset, Sampling
 
 
 class Flatten3dDataset(Dataset):
     _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
-    _CHECKPOINT_DATA_SIZE = 128
 
     def __init__(self,
                  path: str,
                  features: List[str],
                  labels: List[str],
                  checkpoints: List[float],
-                 grid_size: int = 64):
+                 grid_size: int = 64,
+                 checkpoint_data_size: int = 128,
+                 sampler: Optional[Sampling] = None):
         """
         @param path:
         @param features:
@@ -29,6 +30,8 @@ class Flatten3dDataset(Dataset):
         self.labels = labels
         self.checkpoints = checkpoints
         self.grid_size = grid_size
+        self.sampler = sampler
+        self.checkpoint_data_size = checkpoint_data_size
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
@@ -40,7 +43,7 @@ class Flatten3dDataset(Dataset):
         return "{0}/{1}".format(self.path, relative_path)
 
     def _get_checkpoint_batch_size(self):
-        return int(self._CHECKPOINT_DATA_SIZE ** 3 / self.grid_size ** 3)
+        return int(self.checkpoint_data_size ** 3 / self.grid_size ** 3)
 
     def _get_dataset_size(self):
         return self._get_checkpoint_batch_size() * len(self.checkpoints)
@@ -53,9 +56,13 @@ class Flatten3dDataset(Dataset):
             key = list(data.keys())[-1]
             data = data[key]
             data = np.moveaxis(data, -1, 0)
-            all_data.append(data.reshape(len(self.features), -1))
+            all_data.append(data)
         # checkpoint_data shape: (features, 128, 128, 128)
         checkpoint_data = np.vstack(all_data)
+        # downsample if needed
+        if self.sampler:
+            checkpoint_data = self.sampler.sample(checkpoint_data)
+            self.checkpoint_data_size = self.sampler.sample_dim
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
@@ -67,7 +74,7 @@ class Flatten3dDataset(Dataset):
                                           ).reshape(checkpoint_batch_size, columns_length,
                                                     self.grid_size, self.grid_size, self.grid_size)
 
-        return checkpoint_batch
+        return checkpoint_data.reshape(len(columns)*3, -1)
 
     def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()
