@@ -28,12 +28,14 @@ from typing import List, Dict
 import mlflow
 import numpy as np
 import matplotlib.pyplot as plt
+from skimage.util import view_as_blocks
 
 from sapsan.general.data.jhtdb_dataset import JHTDB128Dataset
 from sapsan.general.estimator.cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, \
     Spacial3dEncoderNetworkEstimatorConfiguration
 from sapsan.general.models import Experiment, ExperimentBackend, Estimator
 from sapsan.utils.plot import pdf_plot, slice_of_cube
+from sapsan.utils.shapes import combine_cubes
 
 
 class FakeExperimentBackend(ExperimentBackend):
@@ -124,7 +126,9 @@ class EvaluationExperiment(Experiment):
                  inputs: np.ndarray,
                  targets: np.ndarray,
                  n_output_channels: int,
-                 grid_size: int):
+                 grid_size: int,
+                 checkpoint_data_size: int
+                 ):
         super().__init__(name, backend)
         self.model = model
         self.inputs = inputs
@@ -132,6 +136,7 @@ class EvaluationExperiment(Experiment):
         self.n_output_channels = n_output_channels
         self.grid_size = grid_size
         self.experiment_metrics = dict()
+        self.checkpoint_data_size = checkpoint_data_size
 
     def get_metrics(self) -> Dict[str, float]:
         return self.experiment_metrics
@@ -156,12 +161,15 @@ class EvaluationExperiment(Experiment):
 
         n_entries = self.inputs.shape[0]
 
-        cube_shape = (n_entries, self.n_output_channels, self.grid_size, self.grid_size, self.grid_size)
+        cube_shape = (n_entries, self.n_output_channels,
+                      self.grid_size, self.grid_size, self.grid_size)
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
 
-        pred_slice = slice_of_cube(pred_cube[0])
-        target_slice = slice_of_cube(target_cube[0])
+        pred_slice = slice_of_cube(combine_cubes(pred_cube,
+                                                 self.checkpoint_data_size, self.grid_size))
+        target_slice = slice_of_cube(combine_cubes(target_cube,
+                                                   self.checkpoint_data_size, self.grid_size))
 
         plt.title("Pred slice")
         plt.imshow(pred_slice)
