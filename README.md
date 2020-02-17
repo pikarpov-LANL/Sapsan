@@ -4,13 +4,11 @@ Sapsan
 * [Intro](#intro)
 * [Configuration](#configuration)
 * [Kubeflow](#kubeflow)
-* [Todos](#todos)
-
+* [Examples](#examples)
 
 ### Intro
 
 TODO
-
 
 ### Configuration
 
@@ -20,41 +18,10 @@ Docs for configuration -> [here](./docs/config.md)
 
 Docs for experiments in [kubeflow](./docs/kubeflow.md)
 
-### POC example
+### Examples
 
-TODO
-
-```python
-from sapsan.general.experiment import MlflowExperiment
-from sapsan.general.data.jhtdb_dataset import JHTDBDataset
-from sapsan.general.estimator.krr import KrrEstimatorConfiguration, KrrEstimator
-from sapsan.utils.plot import PlotUtils
-
-# create dataset
-dataset = JHTDBDataset('somepath')
-# create model
-estimator = KrrEstimator(KrrEstimatorConfiguration(0.001, 1.789))
-#create experiment
-experiment = MlflowExperiment(estimator=estimator, dataset=dataset, callbacks=[
-    PlotUtils.plot_histograms,
-    PlotUtils.plot_slices
-])
-# run experiment
-experiment.run()
-# get report on experiment run
-experiment.get_report()
-```
-
-
-### TODOs
-
-- [ ] implement refactored dataset loaders and estimators
-- [ ] tests
-- [ ] CI using Github actions
-- [ ] version relase
-- [ ] docker images
-- [ ] pipeline to kubeflow
-- [ ] documentation
+- CNN example -> [cnn_example.py](./examples/cnn_example.py)
+- KRR example -> [krr_example.py](./examples/krr_example.py)
 
 
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved.

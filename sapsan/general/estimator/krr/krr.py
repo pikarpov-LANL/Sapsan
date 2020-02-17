@@ -1,6 +1,8 @@
 import os
 
 import yaml
+
+import numpy as np
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
 from sapsan.general.models import Estimator, EstimatorConfiguration
@@ -40,13 +42,17 @@ class KrrEstimator(Estimator):
         self.model = KernelRidge(kernel='rbf')
         if config.gamma and config.alpha:
             self.model = KernelRidge(kernel='rbf', alpha=config.alpha, gamma=config.gamma)
+        self.model_metrics = dict()
+
+    def _move_axis_to_sklearn(self, inputs: np.ndarray) -> np.ndarray:
+        return np.moveaxis(inputs, 0, 1)
 
     def predict(self, inputs):
-        return self.model.predict(inputs)
+        return self.model.predict(self._move_axis_to_sklearn(inputs))
 
     def train(self, inputs, targets=None):
-        model = self.model.fit(inputs, targets)
+        model = self.model.fit(self._move_axis_to_sklearn(inputs), self._move_axis_to_sklearn(targets))
         self.model = model
 
     def metrics(self) -> Dict[str, float]:
-        pass
+        return self.model_metrics

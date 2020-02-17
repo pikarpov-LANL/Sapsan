@@ -129,3 +129,9 @@ class Sampling(ABC):
     @abstractmethod
     def sample_dim(self):
         pass
+
+
+class Shaper(ABC):
+    @abstractmethod
+    def apply(self, input: np.ndarray) -> np.ndarray:
+        pass

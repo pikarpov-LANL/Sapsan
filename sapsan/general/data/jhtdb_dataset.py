@@ -59,23 +59,6 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         return self.apply_on_x_y(x, y)
 
 
-class Equidistance3dSampling(Sampling):
-    def __init__(self, original_dim: int, target_dim: int):
-        self.original_dim = original_dim
-        self.target_dim = target_dim
-
-    @property
-    def scale(self):
-        return int(self.original_dim / self.target_dim)
-
-    @property
-    def sample_dim(self):
-        return self.target_dim
-
-    def sample(self, data: np.ndarray):
-        return data[:, ::self.scale, ::self.scale, ::self.scale]
-
-
 class JHTDB128Dataset(Dataset):
     _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
 
