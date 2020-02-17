@@ -23,6 +23,7 @@ from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
 from sapsan.general.models import Dataset, DatasetPlugin, Sampling
+from sapsan.utils.shapes import split_cube_by_grid
 
 
 class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
@@ -100,6 +101,8 @@ class JHTDB128Dataset(Dataset):
         self.grid_size = grid_size
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
+        if sampler:
+            self.checkpoint_data_size = self.sampler.sample_dim
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
@@ -130,19 +133,19 @@ class JHTDB128Dataset(Dataset):
         # downsample if needed
         if self.sampler:
             checkpoint_data = self.sampler.sample(checkpoint_data)
-            self.checkpoint_data_size = self.sampler.sample_dim
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
-        checkpoint_batch_size = self._get_checkpoint_batch_size()
+        # checkpoint_batch_size = self._get_checkpoint_batch_size()
         # checkpoint_batch shape: (batch_size, channels, 128, 128, 128)
-        checkpoint_batch = view_as_blocks(checkpoint_data,
-                                          block_shape=(columns_length, self.grid_size,
-                                                       self.grid_size, self.grid_size)
-                                          ).reshape(checkpoint_batch_size, columns_length,
-                                                    self.grid_size, self.grid_size, self.grid_size)
+        # checkpoint_batch = view_as_blocks(checkpoint_data,
+        #                                   block_shape=(columns_length, self.grid_size,
+        #                                                self.grid_size, self.grid_size)
+        #                                   ).reshape(checkpoint_batch_size, columns_length,
+        #                                             self.grid_size, self.grid_size, self.grid_size)
 
-        return checkpoint_batch
+        return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
+                                  self.grid_size, columns_length)
 
     def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()
