@@ -30,6 +30,9 @@ class Sapsan:
         self.__dict__ = parameters.LoadParameters(pars)
         self.data = Data()
         self.results = Results()
+        for key, value in self.__dict__.items(): 
+                self.data.__dict__[key]=value
+                self.results.__dict__[key]=value
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.mlflow_url = 'http://localhost:9999'
     

@@ -64,8 +64,7 @@ class Results:
         if self.savepath:
             fig.tight_layout()
             fig.savefig(self.savepath+'pred.png')
-
-        mlflow.log_artifact(self.savepath+'pred.png')
+            mlflow.log_artifact(self.savepath+'pred.png')
 
         return pred
     
@@ -106,8 +105,7 @@ class Results:
         if self.savepath:
             plt.tight_layout()
             plt.savefig(self.savepath+'pdf.png')
-
-        mlflow.log_artifact(self.savepath+'pdf.png')
+            mlflow.log_artifact(self.savepath+'pdf.png')
 
         return
 
@@ -160,12 +158,12 @@ class Results:
         plt.title('t = %.4f'%self.ttest)
         if self.savepath:
             plt.tight_layout()
-            plt.savefig(self.savepath+'cdf.png')
+            plt.savefig(self.savepath+'cdf.png')            
+            mlflow.log_artifact(self.savepath+'cdf.png')
         plt.show()
         plt.clf()
-        
         mlflow.log_metric('ks_stat', ks_stat)
-        mlflow.log_artifact(self.savepath+'cdf.png')
+        
 
         try:
             return pvalue, ks_stat, Dmax, Dpos
@@ -203,8 +201,7 @@ class Results:
         if self.savepath:
             plt.tight_layout()
             plt.savefig(self.savepath+'parity.png')
-
-        mlflow.log_artifact(self.savepath+'parity.png')
+            mlflow.log_artifact(self.savepath+'parity.png')
             
 
     def hyper3d(self, model, quantity):
