@@ -4,6 +4,8 @@ from typing import List, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
+from scipy.stats import ks_2samp
+from scipy.interpolate import interp1d
 
 def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str]] = None):
     """ PDF plot
@@ -13,6 +15,7 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
+    plt.figure()
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
 
@@ -26,6 +29,52 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
     return plt
 
 
+def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
+    """ CDF plot
+
+    @param series: series of numpy arrays to build pds plot from
+    @param names: name of series in case of multiseries plot
+    @return: pyplot object
+    """
+    plt.figure()
+    if not names:
+        names = ["Data {}".format(i) for i in range(len(series))]
+
+    func = []
+    print('shapes', np.shape(series))
+    val = np.zeros((np.shape(series)[0],np.shape(series)[1]*np.shape(series)[2]))
+    for idx, data in enumerate(series):
+        val[idx] = np.sort(data.flatten())
+
+        #cdf calculation via linear interpolation
+        length = len(val[idx])
+        yvals = np.linspace(0,length-1, length)/length
+        plt.plot(val[idx], yvals, label=names[idx])
+        func.append(interp1d(val[idx], yvals))  
+
+        if idx==1:
+            ks_stat, pvalue = ks_2samp(val[0], val[1])
+            minima = max([min(val[0]), min(val[1])])
+            maxima = min([max(val[0]), max(val[1])])
+
+            xtest = np.linspace(minima, maxima, length*10)
+            D = abs(func[0](xtest)-func[1](xtest))
+            Dmax = max(D)
+            Dpos = xtest[np.argmax(D)]
+            plt.axvline(x=Dpos, linewidth=1, color='tab:red', linestyle='--')
+
+            txt = ('pvalue = %.3e\n'%pvalue+
+                     r'$\rm ks_{stat}$'+' = %.3e\n'%ks_stat+
+                     r'$\rm ks_{line}$'+' = %.3e\n'%Dmax+
+                     r'$\rm line_{pos}$'+' = %.3e'%Dpos)
+
+            plt.figtext(0.17, 0.6, txt, fontsize=14)        
+
+    plt.legend()
+    plt.xlabel('Values')
+    plt.ylabel('CDF')        
+
+    
 def slice_of_cube(data: np.ndarray,
                   feature: Optional[int] = None,
                   n_slice: Optional[int] = None,
