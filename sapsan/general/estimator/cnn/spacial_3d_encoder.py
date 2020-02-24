@@ -22,7 +22,8 @@ from typing import Dict
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
-from sapsan.general.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, JHTDB128Dataset
+from sapsan.general.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, JHTDB128Dataset, \
+    OutputFlatterDatasetPlugin
 from sapsan.general.models import Estimator, EstimatorConfiguration
 
 
@@ -104,8 +105,10 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         return self.model_metrics
 
     def train(self, inputs, targets=None):
-        plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
-        loaders = plugin.apply_on_x_y(inputs, targets)
+        output_flatter = OutputFlatterDatasetPlugin()
+        splitter_pytorch = JHTDBDatasetPyTorchSplitterPlugin(4)
+        _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
+        loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
         model = self.model
         model.to(self.device)

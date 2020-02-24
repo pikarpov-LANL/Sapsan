@@ -1,26 +1,3 @@
-"""
-
-Example:
-    experiment_name = "Training experiment"
-    dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    estimator = Spacial3dEncoderNetworkEstimator(
-        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1)
-    )
-    x, y = JHTDB128Dataset(path=dataset_root_dir,
-                           features=['u', 'b', 'a',
-                                'du0', 'du1', 'du2',
-                                'db0', 'db1', 'db2',
-                                'da0', 'da1', 'da2'],
-                           labels=['tn'],
-                           checkpoints=[0.0]).load()
-
-    experiment = TrainingExperiment(name=experiment_name,
-                                    backend=FakeExperimentBackend(experiment_name),
-                                    model=estimator,
-                                    inputs=x, targets=y)
-    experiment.run()
-"""
-
 import time
 from typing import List, Dict
 import logging
@@ -34,7 +11,7 @@ from sapsan.utils.plot import pdf_plot, cdf_plot, slice_of_cube
 from sapsan.utils.shapes import combine_cubes
 
 
-class Evaluation3dExperiment(Experiment):
+class EvaluationAutoencoderExperiment(Experiment):
     def __init__(self,
                  name: str,
                  backend: ExperimentBackend,
@@ -87,16 +64,9 @@ class Evaluation3dExperiment(Experiment):
         except Exception as e:
             logging.warn(e)
 
-        n_entries = self.inputs.shape[0]
-
-        cube_shape = (n_entries, self.n_output_channels,
-                      self.grid_size, self.grid_size, self.grid_size)
-        pred_cube = pred.reshape(cube_shape)
-        target_cube = self.targets.reshape(cube_shape)
-
-        pred_slice = slice_of_cube(combine_cubes(pred_cube,
+        pred_slice = slice_of_cube(combine_cubes(pred,
                                                  self.checkpoint_data_size, self.grid_size))
-        target_slice = slice_of_cube(combine_cubes(target_cube,
+        target_slice = slice_of_cube(combine_cubes(self.targets,
                                                    self.checkpoint_data_size, self.grid_size))
 
         vmin = np.amin(target_slice)

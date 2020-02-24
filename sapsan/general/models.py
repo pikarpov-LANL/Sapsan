@@ -112,6 +112,10 @@ class DatasetPlugin(ABC):
     def apply(self, dataset: Dataset):
         pass
 
+    @abstractmethod
+    def apply_on_x_y(self, x: np.ndarray, y: np.ndarray):
+        pass
+
 
 class Callback(ABC):
     """ Utility class for callbacks implementations. """

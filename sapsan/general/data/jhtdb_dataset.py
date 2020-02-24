@@ -59,6 +59,20 @@ class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
         return self.apply_on_x_y(x, y)
 
 
+class OutputFlatterDatasetPlugin(DatasetPlugin):
+
+    @staticmethod
+    def _flatten_output(output: np.ndarray):
+        return output.reshape(output.shape[0], -1)
+
+    def apply(self, dataset: Dataset):
+        x, y = dataset.load()
+        return x, self._flatten_output(y)
+
+    def apply_on_x_y(self, x, y):
+        return x, self._flatten_output(y)
+
+
 class JHTDB128Dataset(Dataset):
     _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
 
@@ -96,12 +110,6 @@ class JHTDB128Dataset(Dataset):
                                                                     feature=feature)
         return "{0}/{1}".format(self.path, relative_path)
 
-    def _get_checkpoint_batch_size(self):
-        return int(self.checkpoint_data_size ** 3 / self.grid_size ** 3)
-
-    def _get_dataset_size(self):
-        return self._get_checkpoint_batch_size() * len(self.checkpoints)
-
     def _get_checkpoint_data(self, checkpoint, columns):
         all_data = []
         # combine all features into cube with channels
@@ -119,14 +127,6 @@ class JHTDB128Dataset(Dataset):
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
-        # checkpoint_batch_size = self._get_checkpoint_batch_size()
-        # checkpoint_batch shape: (batch_size, channels, 128, 128, 128)
-        # checkpoint_batch = view_as_blocks(checkpoint_data,
-        #                                   block_shape=(columns_length, self.grid_size,
-        #                                                self.grid_size, self.grid_size)
-        #                                   ).reshape(checkpoint_batch_size, columns_length,
-        #                                             self.grid_size, self.grid_size, self.grid_size)
-
         return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
                                   self.grid_size, columns_length)
 
@@ -139,4 +139,4 @@ class JHTDB128Dataset(Dataset):
             x.append(features_checkpoint_batch)
             y.append(labels_checkpoint_batch)
 
-        return np.vstack(x), np.vstack(y).reshape(self._get_dataset_size(), -1)
+        return np.vstack(x), np.vstack(y)
