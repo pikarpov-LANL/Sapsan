@@ -20,5 +20,4 @@ class MlFlowExperimentBackend(ExperimentBackend):
         mlflow.log_param(name, value)
 
     def log_artifact(self, path: str):
-        # TODO
-        pass
+        mlflow.log_artifact(path)
