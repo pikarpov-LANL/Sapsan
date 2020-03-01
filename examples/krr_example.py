@@ -18,8 +18,10 @@ def run():
     train_checkpoints = [0.0]
 
     sampler = Equidistance3dSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO)
+    experiment_name = "KRR experiment"
 
-    training_experiment_name = "Training experiment"
+    tracker_backend = FakeExperimentBackend(experiment_name)
+
     estimator = KrrEstimator(
         config=KrrEstimatorConfiguration().from_yaml()
     )
@@ -30,15 +32,14 @@ def run():
                                 sampler=sampler,
                                 label_channels=[0]).load()
 
-    training_experiment = TrainingExperiment(name=training_experiment_name,
-                                             backend=FakeExperimentBackend(training_experiment_name),
+    training_experiment = TrainingExperiment(name="{} train".format(experiment_name),
+                                             backend=tracker_backend,
                                              model=estimator,
                                              inputs=x, targets=y)
     training_experiment.run()
 
-    evaluation_experiment_name = "Evaluation experiment"
-    evaluation_experiment = EvaluationFlattenExperiment(name=evaluation_experiment_name,
-                                                        backend=FakeExperimentBackend(evaluation_experiment_name),
+    evaluation_experiment = EvaluationFlattenExperiment(name="{} evaluation".format(experiment_name),
+                                                        backend=tracker_backend,
                                                         model=training_experiment.model,
                                                         inputs=x, targets=y,
                                                         n_output_channels=3,

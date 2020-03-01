@@ -20,7 +20,7 @@ Example:
                                     inputs=x, targets=y)
     experiment.run()
 """
-
+import os
 import time
 from typing import List, Dict
 import logging
@@ -55,6 +55,8 @@ class Evaluation3dExperiment(Experiment):
         self.experiment_metrics = dict()
         self.checkpoint_data_size = checkpoint_data_size
         self.cmap = cmap
+
+        self.artifacts = []
         
         params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
                   'axes.titlesize':20, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
@@ -73,15 +75,22 @@ class Evaluation3dExperiment(Experiment):
         }
 
     def get_artifacts(self) -> List[str]:
-        # TODO:
-        return []
+        return self.artifacts
+
+    def _cleanup(self):
+        for artifact in self.artifacts:
+            os.remove(artifact)
+        return len(self.artifacts)
 
     def run(self) -> dict:
         start = time.time()
 
         pred = self.model.predict(self.inputs)
 
-        pdf_plot([pred, self.targets], names=['prediction', 'targets'])
+        pdf_plot_res = pdf_plot([pred, self.targets], names=['prediction', 'targets'])
+        pdf_plot_res.savefig("./pdf_plot.jpg")
+        self.artifacts.append("./pdf_plot.jpg")
+
         try:
             cdf_plot([pred, self.targets], names=['prediction', 'targets'])
         except Exception as e:
@@ -112,6 +121,8 @@ class Evaluation3dExperiment(Experiment):
         im = plt.imshow(pred_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
         plt.colorbar(im).ax.tick_params(labelsize=14)
         plt.title("Predicted slice")
+        plt.savefig("./slice.jpg")
+        self.artifacts.append("./slice.jpg")
         plt.show()
 
         end = time.time()
@@ -124,9 +135,12 @@ class Evaluation3dExperiment(Experiment):
         for param, value in self.get_parameters().items():
             self.backend.log_parameter(param, value)
 
-        # TODO: save image from plot and log artifact
+        for artifact in self.artifacts:
+            self.backend.log_artifact(artifact)
 
         self.backend.log_metric("runtime", runtime)
+
+        self._cleanup()
 
         return {
             'runtime': runtime

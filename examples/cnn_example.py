@@ -1,12 +1,19 @@
+import os
+
 from sapsan.general.backends.fake import FakeExperimentBackend
+from sapsan.general.backends.mlflow import MlFlowExperimentBackend
 from sapsan.general.data.jhtdb_dataset import JHTDB128Dataset
 from sapsan.general.data.sampling.equidistant_sampler import Equidistance3dSampling
 from sapsan.general.estimator.cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
 from sapsan.general.experiments.evaluation_3d import Evaluation3dExperiment
 from sapsan.general.experiments.training import TrainingExperiment
 
+os.environ["AWS_ACCESS_KEY_ID"] = "<AWS_ACCESS_KEY_ID>"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "<AWS_SECRET_ACCESS_KEY>"
 
 def run():
+    MLFLOW_BACKEND_HOST = "0.0.0.0"
+    MLFLOW_BACKEND_PORT = 9000
     dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
     CHECKPOINT_DATA_SIZE = 128
     SAMPLE_TO = 32
@@ -19,10 +26,15 @@ def run():
 
     sampler = Equidistance3dSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO)
 
-    training_experiment_name = "Training experiment"
+    experiment_name = "CNN experiment"
+
     estimator = Spacial3dEncoderNetworkEstimator(
-        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=100, grid_dim=GRID_SIZE)
+        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1, grid_dim=GRID_SIZE)
     )
+
+    # tracking_backend = FakeExperimentBackend(experiment_name)
+    tracking_backend = MlFlowExperimentBackend(experiment_name, MLFLOW_BACKEND_HOST, MLFLOW_BACKEND_PORT)
+
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
@@ -31,8 +43,8 @@ def run():
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()
 
-    training_experiment = TrainingExperiment(name=training_experiment_name,
-                                             backend=FakeExperimentBackend(training_experiment_name),
+    training_experiment = TrainingExperiment(name=experiment_name,
+                                             backend=tracking_backend,
                                              model=estimator,
                                              inputs=x, targets=y)
     training_experiment.run()
@@ -45,9 +57,8 @@ def run():
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()
 
-    evaluation_experiment_name = "Evaluation experiment"
-    evaluation_experiment = Evaluation3dExperiment(name=evaluation_experiment_name,
-                                                   backend=FakeExperimentBackend(evaluation_experiment_name),
+    evaluation_experiment = Evaluation3dExperiment(name=experiment_name,
+                                                   backend=tracking_backend,
                                                    model=training_experiment.model,
                                                    inputs=x, targets=y,
                                                    n_output_channels=3,
