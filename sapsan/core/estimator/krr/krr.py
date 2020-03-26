@@ -1,3 +1,4 @@
+import json
 import os
 
 import yaml
@@ -6,7 +7,7 @@ import numpy as np
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
 from sapsan.core.models import Estimator, EstimatorConfiguration
-
+from joblib import dump, load
 
 class KrrEstimatorConfiguration(EstimatorConfiguration):
     def __init__(self,
@@ -16,15 +17,10 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
         self.gamma = gamma
 
     @classmethod
-    def from_yaml(cls, path: Optional[str] = None) -> 'KrrEstimatorConfiguration':
-        if not path:
-            path = "{}/krr_config.yaml".format(
-                os.path.dirname(os.path.realpath(__file__))
-            )
-
+    def load(cls, path: Optional[str] = None) -> 'KrrEstimatorConfiguration':
         with open(path, 'r') as f:
-            cfg = yaml.load(f, Loader=yaml.FullLoader)
-            return cls(**cfg['config'])
+            cfg = json.load(f)
+            return cls(**cfg)
 
     def to_dict(self):
         return {
@@ -34,6 +30,9 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
 
 
 class KrrEstimator(Estimator):
+    _SAVE_PATH_MODEL_SUFFIX = "model"
+    _SAVE_PATH_PARAMS_SUFFIX = "params"
+
     def __init__(self, config: KrrEstimatorConfiguration):
         super().__init__(config)
 
@@ -56,3 +55,21 @@ class KrrEstimator(Estimator):
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
+
+    def save(self, path):
+        model_save_path = "{path}/{suffix}.json".format(path=path, suffix=self._SAVE_PATH_MODEL_SUFFIX)
+        params_save_path = "{path}/{suffix}.json".format(path=path, suffix=self._SAVE_PATH_PARAMS_SUFFIX)
+
+        dump(self.model, model_save_path)
+        self.config.save(params_save_path)
+
+    @classmethod
+    def load(cls, path):
+        model_save_path = "{path}/{suffix}.json".format(path=path, suffix=cls._SAVE_PATH_MODEL_SUFFIX)
+        params_save_path = "{path}/{suffix}.json".format(path=path, suffix=cls._SAVE_PATH_PARAMS_SUFFIX)
+
+        model = load(model_save_path)
+        config = KrrEstimatorConfiguration.load(params_save_path)
+        estimator = KrrEstimator(config)
+        estimator.model = model
+        return estimator

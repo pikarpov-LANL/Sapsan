@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from typing import Dict, List
 import numpy as np
@@ -7,7 +8,7 @@ class EstimatorConfiguration(ABC):
     """ Estimator configuration class """
     @classmethod
     @abstractmethod
-    def from_yaml(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str) -> 'EstimatorConfiguration':
         """
         Parse yaml file with configuration
         @param path: path to yaml configuration
@@ -18,6 +19,10 @@ class EstimatorConfiguration(ABC):
     @abstractmethod
     def to_dict(self):
         pass
+
+    def save(self, path):
+        with open(path, "w") as f:
+            json.dump(self.to_dict(), f)
 
 
 class Estimator(ABC):
@@ -46,6 +51,10 @@ class Estimator(ABC):
 
     @abstractmethod
     def metrics(self) -> Dict[str, float]:
+        pass
+
+    @abstractmethod
+    def save(self, path):
         pass
 
 

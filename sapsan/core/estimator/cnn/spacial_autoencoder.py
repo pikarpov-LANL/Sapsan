@@ -51,7 +51,7 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         self.logdir = logdir
 
     @classmethod
-    def from_yaml(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str) -> 'EstimatorConfiguration':
         pass
 
     def to_dict(self):

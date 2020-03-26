@@ -73,7 +73,7 @@ class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         self.logdir = logdir
 
     @classmethod
-    def from_yaml(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str) -> 'EstimatorConfiguration':
         pass
 
     def to_dict(self):
@@ -93,7 +93,7 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         self.config = config
 
         self.model = Spacial3dEncoderNetworkModel(self.config.n_input_channels,
-                                                  self.config.grid_dim**3*self.config.n_output_channels)
+                                                  self.config.grid_dim ** 3 * self.config.n_output_channels)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
@@ -132,3 +132,21 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
                           check=False)
 
         return model
+
+    def save(self, path):
+        torch.save(self.model.state_dict(), path)
+
+    @classmethod
+    def load(cls,
+             path: str,
+             n_input_channels: int,
+             n_output_channels: int,
+             grid_dim: int):
+        model = Spacial3dEncoderNetworkModel(n_input_channels, grid_dim * 3 * n_output_channels)
+        model.load_state_dict(torch.load(path))
+        model.eval()
+        estimator = Spacial3dEncoderNetworkEstimator(
+            config=Spacial3dEncoderNetworkEstimatorConfiguration(1, n_input_channels, n_output_channels, grid_dim)
+        )
+        estimator.model = model
+        return estimator
