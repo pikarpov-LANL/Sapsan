@@ -17,6 +17,7 @@ Example:
 
     model = estimator.train(x, y)
 """
+import json
 from typing import Dict
 
 import torch
@@ -73,8 +74,10 @@ class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         self.logdir = logdir
 
     @classmethod
-    def load(cls, path: str) -> 'EstimatorConfiguration':
-        pass
+    def load(cls, path: str):
+        with open(path, 'r') as f:
+            cfg = json.load(f)
+            return cls(**cfg)
 
     def to_dict(self):
         return {
@@ -134,19 +137,21 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         return model
 
     def save(self, path):
-        torch.save(self.model.state_dict(), path)
+        model_save_path = "{path}/model".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
+
+        torch.save(self.model.state_dict(), model_save_path)
+        self.config.save(params_save_path)
 
     @classmethod
-    def load(cls,
-             path: str,
-             n_input_channels: int,
-             n_output_channels: int,
-             grid_dim: int):
-        model = Spacial3dEncoderNetworkModel(n_input_channels, grid_dim * 3 * n_output_channels)
-        model.load_state_dict(torch.load(path))
-        model.eval()
-        estimator = Spacial3dEncoderNetworkEstimator(
-            config=Spacial3dEncoderNetworkEstimatorConfiguration(1, n_input_channels, n_output_channels, grid_dim)
-        )
+    def load(cls, path: str):
+        model_save_path = "{path}/model".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
+
+        config = Spacial3dEncoderNetworkEstimatorConfiguration.load(params_save_path)
+
+        estimator = Spacial3dEncoderNetworkEstimator(config)
+        model = estimator.model.load_state_dict(torch.load(model_save_path))
+        # model.eval()
         estimator.model = model
         return estimator

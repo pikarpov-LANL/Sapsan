@@ -8,7 +8,7 @@ class EstimatorConfiguration(ABC):
     """ Estimator configuration class """
     @classmethod
     @abstractmethod
-    def load(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str):
         """
         Parse yaml file with configuration
         @param path: path to yaml configuration

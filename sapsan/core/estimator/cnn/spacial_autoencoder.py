@@ -1,3 +1,4 @@
+import json
 from typing import Dict
 
 import torch
@@ -52,7 +53,9 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
 
     @classmethod
     def load(cls, path: str) -> 'EstimatorConfiguration':
-        pass
+        with open(path, 'r') as f:
+            cfg = json.load(f)
+            return cls(**cfg)
 
     def to_dict(self):
         return {
@@ -108,3 +111,23 @@ class SpacialAutoencoderNetworkEstimator(Estimator):
                           check=False)
 
         return model
+
+    def save(self, path):
+        model_save_path = "{path}/model".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
+
+        torch.save(self.model.state_dict(), model_save_path)
+        self.config.save(params_save_path)
+
+    @classmethod
+    def load(cls, path: str):
+        model_save_path = "{path}/model".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
+
+        config = SpacialAutoencoderNetworkEstimatorConfiguration.load(params_save_path)
+
+        estimator = SpacialAutoencoderNetworkEstimator(config)
+        model = estimator.model.load_state_dict(torch.load(model_save_path))
+        # model.eval()
+        estimator.model = model
+        return estimator
