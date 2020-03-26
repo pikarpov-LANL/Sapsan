@@ -32,13 +32,13 @@ def run():
         config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1, grid_dim=GRID_SIZE)
     )
 
-    # tracking_backend = FakeExperimentBackend(experiment_name)
-    tracking_backend = MlFlowExperimentBackend(experiment_name, MLFLOW_BACKEND_HOST, MLFLOW_BACKEND_PORT)
+    tracking_backend = FakeExperimentBackend(experiment_name)
+    # tracking_backend = MlFlowExperimentBackend(experiment_name, MLFLOW_BACKEND_HOST, MLFLOW_BACKEND_PORT)
 
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.0, 0.01, 0.25],
+                           checkpoints=[0, 4, 10],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()
@@ -52,7 +52,7 @@ def run():
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.025],
+                           checkpoints=[0],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()

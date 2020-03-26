@@ -15,7 +15,7 @@ def run():
                 'db0', 'db1', 'db2',
                 'da0', 'da1', 'da2']
     labels = ['tn']
-    train_checkpoints = [0.0]
+    train_checkpoints = [0]
 
     sampler = Equidistance3dSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO)
     experiment_name = "KRR experiment"
