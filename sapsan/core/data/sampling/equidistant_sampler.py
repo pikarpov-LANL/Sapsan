@@ -1,5 +1,5 @@
 import numpy as np
-from sapsan.general.models import Sampling
+from sapsan.core.models import Sampling
 
 
 class Equidistance3dSampling(Sampling):

@@ -1,26 +1,3 @@
-"""
-
-Example:
-    experiment_name = "Training experiment"
-    dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    estimator = Spacial3dEncoderNetworkEstimator(
-        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1)
-    )
-    x, y = JHTDB128Dataset(path=dataset_root_dir,
-                           features=['u', 'b', 'a',
-                                'du0', 'du1', 'du2',
-                                'db0', 'db1', 'db2',
-                                'da0', 'da1', 'da2'],
-                           labels=['tn'],
-                           checkpoints=[0.0]).load()
-
-    experiment = TrainingExperiment(name=experiment_name,
-                                    backend=FakeExperimentBackend(experiment_name),
-                                    model=estimator,
-                                    inputs=x, targets=y)
-    experiment.run()
-"""
-import os
 import time
 from typing import List, Dict
 import logging
@@ -29,12 +6,12 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sapsan.general.models import Experiment, ExperimentBackend, Estimator
+from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.utils.plot import pdf_plot, cdf_plot, slice_of_cube
 from sapsan.utils.shapes import combine_cubes
 
 
-class Evaluation3dExperiment(Experiment):
+class EvaluationAutoencoderExperiment(Experiment):
     def __init__(self,
                  name: str,
                  backend: ExperimentBackend,
@@ -55,8 +32,6 @@ class Evaluation3dExperiment(Experiment):
         self.experiment_metrics = dict()
         self.checkpoint_data_size = checkpoint_data_size
         self.cmap = cmap
-
-        self.artifacts = []
         
         params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
                   'axes.titlesize':20, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
@@ -75,37 +50,23 @@ class Evaluation3dExperiment(Experiment):
         }
 
     def get_artifacts(self) -> List[str]:
-        return self.artifacts
-
-    def _cleanup(self):
-        for artifact in self.artifacts:
-            os.remove(artifact)
-        return len(self.artifacts)
+        # TODO:
+        return []
 
     def run(self) -> dict:
         start = time.time()
 
         pred = self.model.predict(self.inputs)
 
-        pdf_plot_res = pdf_plot([pred, self.targets], names=['prediction', 'targets'])
-        pdf_plot_res.savefig("./pdf_plot.jpg")
-        self.artifacts.append("./pdf_plot.jpg")
-
+        pdf_plot([pred, self.targets], names=['prediction', 'targets'])
         try:
             cdf_plot([pred, self.targets], names=['prediction', 'targets'])
         except Exception as e:
             logging.warn(e)
 
-        n_entries = self.inputs.shape[0]
-
-        cube_shape = (n_entries, self.n_output_channels,
-                      self.grid_size, self.grid_size, self.grid_size)
-        pred_cube = pred.reshape(cube_shape)
-        target_cube = self.targets.reshape(cube_shape)
-
-        pred_slice = slice_of_cube(combine_cubes(pred_cube,
+        pred_slice = slice_of_cube(combine_cubes(pred,
                                                  self.checkpoint_data_size, self.grid_size))
-        target_slice = slice_of_cube(combine_cubes(target_cube,
+        target_slice = slice_of_cube(combine_cubes(self.targets,
                                                    self.checkpoint_data_size, self.grid_size))
 
         vmin = np.amin(target_slice)
@@ -121,8 +82,6 @@ class Evaluation3dExperiment(Experiment):
         im = plt.imshow(pred_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
         plt.colorbar(im).ax.tick_params(labelsize=14)
         plt.title("Predicted slice")
-        plt.savefig("./slice.jpg")
-        self.artifacts.append("./slice.jpg")
         plt.show()
 
         end = time.time()
@@ -135,12 +94,9 @@ class Evaluation3dExperiment(Experiment):
         for param, value in self.get_parameters().items():
             self.backend.log_parameter(param, value)
 
-        for artifact in self.artifacts:
-            self.backend.log_artifact(artifact)
+        # TODO: save image from plot and log artifact
 
         self.backend.log_metric("runtime", runtime)
-
-        self._cleanup()
 
         return {
             'runtime': runtime

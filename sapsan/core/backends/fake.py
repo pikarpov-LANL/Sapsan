@@ -1,6 +1,6 @@
 import logging
 
-from sapsan.general.models import ExperimentBackend
+from sapsan.core.models import ExperimentBackend
 
 
 class FakeExperimentBackend(ExperimentBackend):

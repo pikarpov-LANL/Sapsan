@@ -27,7 +27,7 @@ from typing import List, Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sapsan.general.models import Experiment, ExperimentBackend, Estimator
+from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.utils.plot import pdf_plot, slice_of_cube
 from sapsan.utils.shapes import combine_cubes
 

@@ -3,9 +3,9 @@ import json
 import logging
 import sys
 
-from sapsan.general.mocks.fake_dataset import FakeDataset
-from sapsan.general.mocks.fake_experiment import FakeInferenceExperiment, FakeTrainingExperiment
-from sapsan.general.mocks.regression_estimator import LinearRegressionEstimator, LinearRegressionEstimatorConfiguration
+from sapsan.core.mocks.fake_dataset import FakeDataset
+from sapsan.core.mocks.fake_experiment import FakeInferenceExperiment, FakeTrainingExperiment
+from sapsan.core.mocks.regression_estimator import LinearRegressionEstimator, LinearRegressionEstimatorConfiguration
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

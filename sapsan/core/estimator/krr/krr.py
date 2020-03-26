@@ -5,7 +5,7 @@ import yaml
 import numpy as np
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
-from sapsan.general.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfiguration
 
 
 class KrrEstimatorConfiguration(EstimatorConfiguration):

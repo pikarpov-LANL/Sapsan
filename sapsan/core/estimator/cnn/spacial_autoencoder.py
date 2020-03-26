@@ -3,8 +3,8 @@ from typing import Dict
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
-from sapsan.general.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, JHTDB128Dataset
-from sapsan.general.models import Estimator, EstimatorConfiguration
+from sapsan.core.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, JHTDB128Dataset
+from sapsan.core.models import Estimator, EstimatorConfiguration
 
 
 class SpacialAutoencoderNetworkModel(torch.nn.Module):

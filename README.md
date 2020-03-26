@@ -21,22 +21,22 @@ TODO
 ### Structure
 Structure of project is build around few concepts making this project easier to extend to more cases.
 Core abstractions are: estimator, dataset, experiment, tracking backend
-Core abstraction are defined in [models.py](./sapsan/general/models.py) file.
+Core abstraction are defined in [models.py](sapsan/core/models.py) file.
 
 #### Estimator
 General abstraction for models/algorithms.
 
 ##### Available estimators
-- [KRR 1d estimator](./sapsan/general/estimator/krr/krr.py)
-- [3d convolution encoder estimator](./sapsan/general/estimator/cnn/spacial_3d_encoder.py)
-- [3d autoencoder estimator](./sapsan/general/estimator/cnn/spacial_autoencoder.py)
+- [KRR 1d estimator](sapsan/core/estimator/krr/krr.py)
+- [3d convolution encoder estimator](sapsan/core/estimator/cnn/spacial_3d_encoder.py)
+- [3d autoencoder estimator](sapsan/core/estimator/cnn/spacial_autoencoder.py)
 
 ##### How to implement new estimator:
 
 Extend `Estimator` class and implement `train`, `predict` and `metrics` methods.
 
 ```python
-from sapsan.general.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfiguration
 
 
 class AwesomeEstimator(Estimator):
@@ -60,8 +60,8 @@ class AwesomeEstimator(Estimator):
 General abstraction for dataset/dataframes.
 
 ##### Available datasets
-- [3d dataset](./sapsan/general/data/jhtdb_dataset.py)
-- [1d dataset](./sapsan/general/data/flatten_dataset.py)
+- [3d dataset](sapsan/core/data/jhtdb_dataset.py)
+- [1d dataset](sapsan/core/data/flatten_dataset.py)
 
 ##### How to implement new dataset:
 
@@ -69,7 +69,7 @@ Extend `Dataset` class and impement `load` method.
 
 ```python
 import numpy as np
-from sapsan.general.models import Dataset
+from sapsan.core.models import Dataset
 
 
 class RandomDataset(Dataset):
@@ -86,17 +86,17 @@ class RandomDataset(Dataset):
 General abstraction for experiments.
 
 ##### Available experiments
-- [general training experiment](./sapsan/general/experiments/training.py)
-- [evaluation 1d experiment](./sapsan/general/experiments/evaluation_flatten.py)
-- [evaluation 3d encoder experiment](./sapsan/general/experiments/evaluation_3d.py)
-- [evaluation 3d autoencoder experiment](./sapsan/general/experiments/evaluation_autoencoder.py)
+- [general training experiment](sapsan/core/experiments/training.py)
+- [evaluation 1d experiment](sapsan/core/experiments/evaluation_flatten.py)
+- [evaluation 3d encoder experiment](sapsan/core/experiments/evaluation_3d.py)
+- [evaluation 3d autoencoder experiment](sapsan/core/experiments/evaluation_autoencoder.py)
 
 ##### How to implement new experiment:
 
 Extend `Experiment` class and impement `run` method.
 
 ```python
-from sapsan.general.models import Experiment, ExperimentBackend
+from sapsan.core.models import Experiment, ExperimentBackend
 
 
 class AwesomeExperiment(Experiment):
@@ -113,15 +113,15 @@ class AwesomeExperiment(Experiment):
 General abstraction for experiment tracker.
 
 ##### Available tracking backends
-- [MlFlow](./sapsan/general/backends/mlflow.py)
-- [FakeBackend](./sapsan/general/backends/fake.py)
+- [MlFlow](sapsan/core/backends/mlflow.py)
+- [FakeBackend](sapsan/core/backends/fake.py)
 
 ##### How to implement new experiment:
 
 Extend `ExperimentBackend` class and impement `log_metric`, `log_parameter`, `log_artifact`  methods.
 
 ```python
-from sapsan.general.models import ExperimentBackend
+from sapsan.core.models import ExperimentBackend
 
 
 class InMemoryTrackingBackend(ExperimentBackend):

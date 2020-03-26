@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
-from sapsan.general.models import Dataset, DatasetPlugin, Sampling
+from sapsan.core.models import Dataset, DatasetPlugin, Sampling
 from sapsan.utils.shapes import split_cube_by_grid
 
 
