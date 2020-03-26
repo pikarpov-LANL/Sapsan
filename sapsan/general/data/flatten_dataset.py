@@ -17,9 +17,10 @@ class FlattenFrom3dDataset(Dataset):
                  path: str,
                  features: List[str],
                  labels: List[str],
-                 checkpoints: List[float],
+                 checkpoints: List[int],
                  sampler: Optional[Sampling] = None,
-                 label_channels: Optional[List[int]] = None):
+                 label_channels: Optional[List[int]] = None,
+                 time_granularity: float = 2.5e-3):
         """
         @param path:
         @param features:
@@ -36,13 +37,15 @@ class FlattenFrom3dDataset(Dataset):
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
         self.label_channels = label_channels
+        self.time_granularity = time_granularity
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
 
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
-        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=checkpoint,
+        timestep = self.time_granularity * checkpoint
+        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=timestep,
                                                                     feature=feature)
         return "{0}/{1}".format(self.path, relative_path)
 

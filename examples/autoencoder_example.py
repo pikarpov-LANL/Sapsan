@@ -27,7 +27,7 @@ def run():
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.0, 0.01, 0.25],
+                           checkpoints=[0, 4, 10],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()
@@ -41,7 +41,7 @@ def run():
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.025],
+                           checkpoints=[0],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()

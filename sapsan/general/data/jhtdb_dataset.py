@@ -80,10 +80,11 @@ class JHTDB128Dataset(Dataset):
                  path: str,
                  features: List[str],
                  labels: List[str],
-                 checkpoints: List[float],
+                 checkpoints: List[int],
                  grid_size: int = 64,
                  checkpoint_data_size: int = 128,
-                 sampler: Optional[Sampling] = None):
+                 sampler: Optional[Sampling] = None,
+                 time_granularity: float = 2.5e-3):
         """
         @param path:
         @param features:
@@ -100,13 +101,15 @@ class JHTDB128Dataset(Dataset):
         self.checkpoint_data_size = checkpoint_data_size
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
+        self.time_granularity = time_granularity
 
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
 
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
-        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=checkpoint,
+        timestep = self.time_granularity * checkpoint
+        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=timestep,
                                                                     feature=feature)
         return "{0}/{1}".format(self.path, relative_path)
 
