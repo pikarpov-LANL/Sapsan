@@ -23,7 +23,7 @@ def run():
     tracker_backend = FakeExperimentBackend(experiment_name)
 
     estimator = KrrEstimator(
-        config=KrrEstimatorConfiguration().from_yaml()
+        config=KrrEstimatorConfiguration(gamma=1.778, alpha=0.001)
     )
     x, y = FlattenFrom3dDataset(path=dataset_root_dir,
                                 features=features,
