@@ -1,6 +1,6 @@
 import mlflow
 
-from sapsan.general.models import ExperimentBackend
+from sapsan.core.models import ExperimentBackend
 
 
 class MlFlowExperimentBackend(ExperimentBackend):

@@ -1,6 +1,6 @@
 from sklearn.linear_model import LinearRegression
 
-from sapsan.general.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfiguration
 
 
 class LinearRegressionEstimatorConfiguration(EstimatorConfiguration):

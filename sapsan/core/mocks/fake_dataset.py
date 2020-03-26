@@ -1,5 +1,5 @@
 import numpy as np
-from sapsan.general.models import Dataset
+from sapsan.core.models import Dataset
 
 
 class FakeDataset(Dataset):

@@ -1,5 +1,5 @@
 from sklearn.metrics import mean_squared_error
-from sapsan.general.models import Experiment, Estimator, Dataset
+from sapsan.core.models import Experiment, Estimator, Dataset
 
 
 class FakeTrainingExperiment(Experiment):

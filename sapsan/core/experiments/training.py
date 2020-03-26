@@ -2,7 +2,7 @@ import time
 from typing import Dict, List
 
 import numpy as np
-from sapsan.general.models import Experiment, ExperimentBackend, Estimator
+from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 
 
 class TrainingExperiment(Experiment):
