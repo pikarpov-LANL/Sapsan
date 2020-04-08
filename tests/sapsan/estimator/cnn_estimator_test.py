@@ -2,9 +2,8 @@ import os
 import shutil
 import unittest
 
-from sapsan.core.estimator import KrrEstimator, KrrEstimatorConfiguration
-from sapsan.core.estimator.cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
-from sapsan.core.estimator.cnn.spacial_autoencoder import SpacialAutoencoderNetworkEstimator, SpacialAutoencoderNetworkEstimatorConfiguration
+from sapsan.lib.estimator import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
+from sapsan.lib.estimator import SpacialAutoencoderNetworkEstimator, SpacialAutoencoderNetworkEstimatorConfiguration
 
 
 class TestCnnEstimator(unittest.TestCase):

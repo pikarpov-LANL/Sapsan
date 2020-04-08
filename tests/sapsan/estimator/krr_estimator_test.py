@@ -2,7 +2,7 @@ import os
 import shutil
 import unittest
 
-from sapsan.core.estimator import KrrEstimator, KrrEstimatorConfiguration
+from sapsan.lib.estimator import KrrEstimator, KrrEstimatorConfiguration
 
 
 class TestKrrEstimator(unittest.TestCase):

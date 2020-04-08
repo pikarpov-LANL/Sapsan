@@ -1,2 +1,3 @@
 from .krr.krr import KrrEstimatorConfiguration, KrrEstimator
 from .cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
+from .cnn.spacial_autoencoder import SpacialAutoencoderNetworkEstimatorConfiguration, SpacialAutoencoderNetworkEstimator

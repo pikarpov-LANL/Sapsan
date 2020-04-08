@@ -1,10 +1,10 @@
-from sapsan.core.backends.fake import FakeExperimentBackend
-from sapsan.core.data.jhtdb_dataset import JHTDB128Dataset
-from sapsan.core.data.sampling.equidistant_sampler import Equidistance3dSampling
-from sapsan.core.estimator.cnn.spacial_autoencoder import SpacialAutoencoderNetworkEstimator,\
+from sapsan.lib.backends.fake import FakeExperimentBackend
+from sapsan.lib.data.jhtdb_dataset import JHTDB128Dataset
+from sapsan.lib.data import Equidistance3dSampling
+from sapsan.lib.estimator import SpacialAutoencoderNetworkEstimator,\
     SpacialAutoencoderNetworkEstimatorConfiguration
-from sapsan.core.experiments.evaluation_autoencoder import EvaluationAutoencoderExperiment
-from sapsan.core.experiments.training import TrainingExperiment
+from sapsan.lib.experiments import EvaluationAutoencoderExperiment
+from sapsan.lib.experiments.training import TrainingExperiment
 
 
 def run():

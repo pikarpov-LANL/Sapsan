@@ -1,9 +1,9 @@
-from sapsan.core.backends.fake import FakeExperimentBackend
-from sapsan.core.data.flatten_dataset import FlattenFrom3dDataset
-from sapsan.core.data.sampling.equidistant_sampler import Equidistance3dSampling
-from sapsan.core.estimator import KrrEstimator, KrrEstimatorConfiguration
-from sapsan.core.experiments.evaluation_flatten import EvaluationFlattenExperiment
-from sapsan.core.experiments.training import TrainingExperiment
+from sapsan.lib.backends.fake import FakeExperimentBackend
+from sapsan.lib.data.flatten_dataset import FlattenFrom3dDataset
+from sapsan.lib.data import Equidistance3dSampling
+from sapsan.lib.estimator import KrrEstimator, KrrEstimatorConfiguration
+from sapsan.lib.experiments.evaluation_flatten import EvaluationFlattenExperiment
+from sapsan.lib.experiments.training import TrainingExperiment
 
 
 def run():

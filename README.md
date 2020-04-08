@@ -27,9 +27,9 @@ Core abstraction are defined in [models.py](sapsan/core/models.py) file.
 General abstraction for models/algorithms.
 
 ##### Available estimators
-- [KRR 1d estimator](sapsan/core/estimator/krr/krr.py)
-- [3d convolution encoder estimator](sapsan/core/estimator/cnn/spacial_3d_encoder.py)
-- [3d autoencoder estimator](sapsan/core/estimator/cnn/spacial_autoencoder.py)
+- [KRR 1d estimator](sapsan/lib/estimator/krr/krr.py)
+- [3d convolution encoder estimator](sapsan/lib/estimator/cnn/spacial_3d_encoder.py)
+- [3d autoencoder estimator](sapsan/lib/estimator/cnn/spacial_autoencoder.py)
 
 ##### How to implement new estimator:
 
@@ -60,8 +60,8 @@ class AwesomeEstimator(Estimator):
 General abstraction for dataset/dataframes.
 
 ##### Available datasets
-- [3d dataset](sapsan/core/data/jhtdb_dataset.py)
-- [1d dataset](sapsan/core/data/flatten_dataset.py)
+- [3d dataset](sapsan/lib/data/jhtdb_dataset.py)
+- [1d dataset](sapsan/lib/data/flatten_dataset.py)
 
 ##### How to implement new dataset:
 
@@ -86,10 +86,10 @@ class RandomDataset(Dataset):
 General abstraction for experiments.
 
 ##### Available experiments
-- [general training experiment](sapsan/core/experiments/training.py)
-- [evaluation 1d experiment](sapsan/core/experiments/evaluation_flatten.py)
-- [evaluation 3d encoder experiment](sapsan/core/experiments/evaluation_3d.py)
-- [evaluation 3d autoencoder experiment](sapsan/core/experiments/evaluation_autoencoder.py)
+- [general training experiment](sapsan/lib/experiments/training.py)
+- [evaluation 1d experiment](sapsan/lib/experiments/evaluation_flatten.py)
+- [evaluation 3d encoder experiment](sapsan/lib/experiments/evaluation_3d.py)
+- [evaluation 3d autoencoder experiment](sapsan/lib/experiments/evaluation_autoencoder.py)
 
 ##### How to implement new experiment:
 
@@ -113,8 +113,8 @@ class AwesomeExperiment(Experiment):
 General abstraction for experiment tracker.
 
 ##### Available tracking backends
-- [MlFlow](sapsan/core/backends/mlflow.py)
-- [FakeBackend](sapsan/core/backends/fake.py)
+- [MlFlow](sapsan/lib/backends/mlflow.py)
+- [FakeBackend](sapsan/lib/backends/fake.py)
 
 ##### How to implement new experiment:
 

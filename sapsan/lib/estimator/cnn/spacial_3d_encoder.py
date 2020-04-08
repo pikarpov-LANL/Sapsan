@@ -1,44 +1,65 @@
+"""
+Spacial 3d encoder estimator
+Example:
+    estimator = Spacial3dEncoderNetworkEstimator(
+        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1)
+    )
+
+    ds = JHTDBDataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
+                      features=['u', 'b', 'a',
+                                'du0', 'du1', 'du2',
+                                'db0', 'db1', 'db2',
+                                'da0', 'da1', 'da2'],
+                      labels=['tn'],
+                      checkpoints=[0.0, 0.01, 0.025, 0.25])
+
+    x, y = ds.load()
+
+    model = estimator.train(x, y)
+"""
 import json
 from typing import Dict
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
-from sapsan.core.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, JHTDB128Dataset
+from sapsan.lib.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfiguration
 
 
-class SpacialAutoencoderNetworkModel(torch.nn.Module):
-    def __init__(self, input_channels, output_channels):
-        super(SpacialAutoencoderNetworkModel, self).__init__()
+class Spacial3dEncoderNetworkModel(torch.nn.Module):
+    def __init__(self, D_in, D_out):
+        super(Spacial3dEncoderNetworkModel, self).__init__()
 
-        self.conv1 = torch.nn.Conv3d(input_channels, 72, 2, stride=2, padding=1)
-        self.pool1 = torch.nn.MaxPool3d(kernel_size=2, padding=1, return_indices=True)
-        self.conv2 = torch.nn.Conv3d(72, 72, 2, stride=2, padding=1)
-        self.pool2 = torch.nn.MaxPool3d(kernel_size=2, padding=1, return_indices=True)
+        self.conv3d = torch.nn.Conv3d(D_in, 72, 2, stride=2, padding=1)
+        self.pooling = torch.nn.MaxPool3d(kernel_size=2, padding=1)
+        self.conv3d2 = torch.nn.Conv3d(72, 72, 2, stride=2, padding=1)
+        self.pooling2 = torch.nn.MaxPool3d(kernel_size=2, padding=1)
+        self.conv3d3 = torch.nn.Conv3d(72, 144, 2, stride=2, padding=1)
+        self.pooling3 = torch.nn.MaxPool3d(kernel_size=2)
 
-        self.unpool2 = torch.nn.MaxUnpool3d(kernel_size=2, padding=1)
-        self.deconv2 = torch.nn.ConvTranspose3d(72, 72, 2, stride=2, padding=1)
-        self.unpool1 = torch.nn.MaxUnpool3d(kernel_size=2, padding=1)
-        self.deconv1 = torch.nn.ConvTranspose3d(72, output_channels, 2, stride=2, padding=1)
+        self.relu = torch.nn.ReLU()
+
+        self.linear = torch.nn.Linear(144, 288)
+        self.linear2 = torch.nn.Linear(288, D_out)
 
     def forward(self, x):
-        # edcoding
-        convoluted1 = self.conv1(x)
-        pooled1, indices1 = self.pool1(convoluted1)
-        convoluted2 = self.conv2(pooled1)
-        pooled2, indices2 = self.pool2(convoluted2)
+        c1 = self.conv3d(x)
+        p1 = self.pooling(c1)
+        c2 = self.conv3d2(self.relu(p1))
+        p2 = self.pooling2(c2)
 
-        # decoding
-        unpooled2 = self.unpool2(pooled2, indices2, output_size=convoluted2.size())
-        deconvoluted2 = self.deconv2(unpooled2, output_size=pooled1.size())
-        unpooled1 = self.unpool1(deconvoluted2, indices1, output_size=convoluted1.size())
-        deconvoluted1 = self.deconv1(unpooled1, output_size=x.size())
+        c3 = self.conv3d3(self.relu(p2))
+        p3 = self.pooling3(c3)
+        v1 = p3.view(p3.size(0), -1)
 
-        return deconvoluted1
+        l1 = self.relu(self.linear(v1))
+        l2 = self.linear2(l1)
+
+        return l2
 
 
-class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
+class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
     def __init__(self,
                  n_epochs: int,
                  n_input_channels: int = 36,
@@ -52,7 +73,7 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         self.logdir = logdir
 
     @classmethod
-    def load(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str):
         with open(path, 'r') as f:
             cfg = json.load(f)
             return cls(**cfg)
@@ -66,15 +87,15 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         }
 
 
-class SpacialAutoencoderNetworkEstimator(Estimator):
+class Spacial3dEncoderNetworkEstimator(Estimator):
 
-    def __init__(self, config: SpacialAutoencoderNetworkEstimatorConfiguration):
+    def __init__(self, config: Spacial3dEncoderNetworkEstimatorConfiguration):
         super().__init__(config)
 
         self.config = config
 
-        self.model = SpacialAutoencoderNetworkModel(self.config.n_input_channels,
-                                                    self.config.n_output_channels)
+        self.model = Spacial3dEncoderNetworkModel(self.config.n_input_channels,
+                                                  self.config.grid_dim ** 3 * self.config.n_output_channels)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
@@ -86,8 +107,10 @@ class SpacialAutoencoderNetworkEstimator(Estimator):
         return self.model_metrics
 
     def train(self, inputs, targets=None):
-        plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
-        loaders = plugin.apply_on_x_y(inputs, targets)
+        output_flatter = OutputFlatterDatasetPlugin()
+        splitter_pytorch = JHTDBDatasetPyTorchSplitterPlugin(4)
+        _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
+        loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
         model = self.model
         model.to(self.device)
@@ -124,9 +147,9 @@ class SpacialAutoencoderNetworkEstimator(Estimator):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
 
-        config = SpacialAutoencoderNetworkEstimatorConfiguration.load(params_save_path)
+        config = Spacial3dEncoderNetworkEstimatorConfiguration.load(params_save_path)
 
-        estimator = SpacialAutoencoderNetworkEstimator(config)
+        estimator = Spacial3dEncoderNetworkEstimator(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         # model.eval()
         estimator.model = model
