@@ -1,9 +1,9 @@
-from sapsan.core.backends.fake import FakeExperimentBackend
-from sapsan.core.data.jhtdb_dataset import JHTDB128Dataset
-from sapsan.core.data.sampling.equidistant_sampler import Equidistance3dSampling
-from sapsan.core.estimator.cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
-from sapsan.core.experiments.evaluation_3d import Evaluation3dExperiment
-from sapsan.core.experiments.training import TrainingExperiment
+from sapsan.lib.backends.fake import FakeExperimentBackend
+from sapsan.lib.data.jhtdb_dataset import JHTDB128Dataset
+from sapsan.lib.data import Equidistance3dSampling
+from sapsan.lib.estimator import Spacial3dEncoderNetworkEstimator, Spacial3dEncoderNetworkEstimatorConfiguration
+from sapsan.lib.experiments.evaluation_3d import Evaluation3dExperiment
+from sapsan.lib.experiments.training import TrainingExperiment
 
 
 def run():
@@ -26,7 +26,7 @@ def run():
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.0, 0.01, 0.25],
+                           checkpoints=[0],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()
@@ -40,7 +40,7 @@ def run():
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
                            labels=labels,
-                           checkpoints=[0.025],
+                           checkpoints=[0],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                            sampler=sampler).load()

@@ -5,14 +5,14 @@ import logging
 import sys
 from typing import List, Optional
 
-from sapsan.core.backends.fake import FakeExperimentBackend
-from sapsan.core.backends.mlflow import MlFlowExperimentBackend
-from sapsan.core.data.jhtdb_dataset import JHTDB128Dataset
-from sapsan.core.data.sampling.equidistant_sampler import Equidistance3dSampling
-from sapsan.core.estimator.cnn.spacial_3d_encoder import Spacial3dEncoderNetworkEstimator, \
+from sapsan.lib.backends.fake import FakeExperimentBackend
+from sapsan.lib.backends import MlFlowExperimentBackend
+from sapsan.lib.data.jhtdb_dataset import JHTDB128Dataset
+from sapsan.lib.data import Equidistance3dSampling
+from sapsan.lib.estimator import Spacial3dEncoderNetworkEstimator, \
     Spacial3dEncoderNetworkEstimatorConfiguration
-from sapsan.core.experiments.evaluation_3d import Evaluation3dExperiment
-from sapsan.core.experiments.training import TrainingExperiment
+from sapsan.lib.experiments.evaluation_3d import Evaluation3dExperiment
+from sapsan.lib.experiments.training import TrainingExperiment
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

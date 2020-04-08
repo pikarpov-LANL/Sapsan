@@ -6,9 +6,9 @@ Note: For kubeflow skeleton
 data extraction -> training -> inference evaluation -> plotting
 
 ```python
-from sapsan.core.mocks.fake_dataset import FakeDataset
-from sapsan.core.mocks.regression_estimator import LinearRegressionEstimator, LinearRegressionEstimatorConfiguration
-from sapsan.core.mocks.fake_experiment import FakeTrainingExperiment, FakeInferenceExperiment
+from sapsan.lib.mocks import FakeDataset
+from sapsan.lib.mocks import LinearRegressionEstimator, LinearRegressionEstimatorConfiguration
+from sapsan.lib.mocks import FakeTrainingExperiment, FakeInferenceExperiment
 from sapsan.utils.plot import PlotUtils
 
 dataset = FakeDataset()
