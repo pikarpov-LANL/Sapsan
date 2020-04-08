@@ -1,34 +1,33 @@
-from distutils.core import setup
+import setuptools
 
-setup(
-    name='sapsan',
-    packages=['sapsan'],
-    version='0.1',
-    license='BSD 3-clause',
-    description='',
-    author='Platon Karpov, Iskandar Sitdikov',
-    author_email='',
-    url='https://github.com/pikarpov-LANL/Sapsan',
-    download_url='https://github.com/pikarpov-LANL/Sapsan/archive/v_01.tar.gz',
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="test-dopeuser",
+    version="0.0.1-alpha",
+    author="Platon Karpov, Iskandar Sitdikov",
+    author_email="",
+    description="",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/pikarpov-LANL/Sapsan",
+    packages=setuptools.find_packages(),
     keywords=['astrophysics'],
-    install_requires=[
-        'scikit-learn==0.21.3',
-        'scipy==1.3.1',
-        'torch==1.3.1',
-        'torchvision==0.4.2',
-        'mlflow==1.4.0',
-        'numpy==1.17.3',
-        'h5py==2.9.0'
-    ],
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Physicists',
-        'Topic :: Software Development :: Astrophysics',
-        'License :: OSI Approved :: BSD 3-clause',
+        'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
+    # install_requires=[
+    #     'scikit-learn==0.21.3',
+    #     'scipy==1.3.1',
+    #     'torch==1.3.1',
+    #     'torchvision==0.4.2',
+    #     'mlflow==1.4.0',
+    #     'numpy==1.17.3',
+    #     'h5py==2.9.0'
+    # ],
+    python_requires='>=3.6',
 )
