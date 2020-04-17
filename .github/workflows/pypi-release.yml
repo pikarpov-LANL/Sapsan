@@ -30,7 +30,7 @@ jobs:
     - name: Set version for release
       run: >-
         rm version &&
-        cat version > $release_version &&
+        echo $release_version > version &&
         echo $release_version
 # ${{GITHUB_REF}}
 #    - name: Publish distribution 📦 to PyPI
