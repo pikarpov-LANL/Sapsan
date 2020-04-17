@@ -27,8 +27,8 @@ jobs:
 #        sdist bdist_wheel
     - name: Set version for release
       run: >-
-        rm version
-        cat version > ${{GITHUB_SHA}}
+        rm version &&
+        cat version > ${{GITHUB_SHA}} &&
         echo ${{GITHUB_SHA}}
 # ${{GITHUB_REF}}
 #    - name: Publish distribution 📦 to PyPI
