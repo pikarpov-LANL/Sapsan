@@ -16,6 +16,13 @@ Sapsan
 TODO
 
 
+```shell script
+pip install sapsan[cli, subgrid]
+sapsan create --name awesome --with-actions
+```
+
+
+
 ---------
 
 ### Structure

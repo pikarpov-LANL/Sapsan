@@ -45,5 +45,5 @@ class {name_upper}Experiment(Experiment):
 
 
 def get_template(name: str):
-    return TEMPLATE.format(name=name,
+    return TEMPLATE.format(name=name.lower(),
                            name_upper=name.capitalize())

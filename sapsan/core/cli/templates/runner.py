@@ -2,9 +2,9 @@ TEMPLATE = """
 import os
 import argparse
     
-from {name}.algorithm import {name_upper}Estimator
-from {name}.dataset import {name_upper}Dataset
-from {name}.experiment import {name_upper}Experiment
+from {name}.algorithm.{name}_algorithm import {name_upper}Estimator
+from {name}.dataset.{name}_dataset import {name_upper}Dataset
+from {name}.experiment.{name}_experiment import {name_upper}Experiment
     
     
 def run(multiplier: int):
@@ -25,5 +25,5 @@ if __name__ == '__main__':
 
 
 def get_template(name: str):
-    return TEMPLATE.format(name=name,
+    return TEMPLATE.format(name=name.lower(),
                            name_upper=name.capitalize())

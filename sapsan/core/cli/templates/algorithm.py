@@ -21,7 +21,7 @@ class {name_upper}Estimator(Estimator):
     
     def save(self, path: str):
         with open(path, "w") as file:
-            to_save = dict(("multiplier", self.multiplier)
+            to_save = dict(("multiplier", self.multiplier))
             json.dump(to_save, file)
     
     @classmethod
@@ -34,5 +34,5 @@ class {name_upper}Estimator(Estimator):
 
 
 def get_template(name: str):
-    return TEMPLATE.format(name=name,
+    return TEMPLATE.format(name=name.lower(),
                            name_upper=name.capitalize())

@@ -1,10 +1,11 @@
+TEMPLATE = """
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = "" #fh.read()
+    long_description = fh.read()
 
 setuptools.setup(
-    name="test-pypi-dope-release",
+    name="{name}",
     version="0.0.1-alpha",
     author="",
     author_email="",
@@ -13,7 +14,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="",
     packages=setuptools.find_packages(),
-    keywords=[''],
+    keywords=[],
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
@@ -21,14 +22,12 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'numpy==1.17.3',
-        'Click>=6'
+        'numpy==1.17.3'
     ],
     python_requires='>=3.6',
-    entry_points='''
-        [console_scripts]
-        sapsan=sapsan.core.cli.cli:sapsan
-    '''
 )
+"""
 
 
+def get_setup_template(name: str) -> str:
+    return TEMPLATE.format(name=name)

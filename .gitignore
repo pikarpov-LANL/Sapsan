@@ -18,3 +18,8 @@ tmp/*
 
 dataset/*
 logs/*
+
+build/*
+dist/*
+
+*.egg-info
