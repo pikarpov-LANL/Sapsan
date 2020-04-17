@@ -1,19 +1,22 @@
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = "TEST README" #fh.read()
+    long_description = fh.read()
+
+with open("version", "r") as f:
+    version = f.read()
 
 setuptools.setup(
-    name="test-pypi-dope-release",
-    version="0.0.1-alpha",
-    author="",
+    name="sapsan",
+    version=version,
+    author="Platon Karpov, Iskandar Sitdikov",
     author_email="",
-    description="",
+    description="Sapsan project",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url="https://github.com/pikarpov-LANL/Sapsan",
     packages=setuptools.find_packages(),
-    keywords=[''],
+    keywords=['experiments', 'reproducibility', 'astrophysics'],
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',

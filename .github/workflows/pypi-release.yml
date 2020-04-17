@@ -1,13 +1,13 @@
 name: Publish Python 🐍 distributions 📦 to PyPI
 
-on: [push]
+on: [release]
 
 jobs:
   build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI
+    name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-18.04
     env:
-      release_version: '0.0.1-alpha' #${{ github.event.release.tag_name }}
+      release_version: ${{ github.event.release.tag_name }}
 
     steps:
     - uses: actions/checkout@master
@@ -22,16 +22,16 @@ jobs:
         --user
         --upgrade
         setuptools wheel
-    - name: Build a binary wheel and a source tarball
-      run: >-
-        python
-        setup.py
-        sdist bdist_wheel
     - name: Set version for release
       run: >-
         rm version &&
         echo $release_version > version &&
         echo $release_version
+    - name: Build a binary wheel and a source tarball
+      run: >-
+        python
+        setup.py
+        sdist bdist_wheel
     - name: Publish distribution 📦 to PyPI
 #      if: startsWith(github.event.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
