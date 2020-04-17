@@ -1,7 +1,7 @@
 import setuptools
 
 with open("README.md", "r") as fh:
-    long_description = "" #fh.read()
+    long_description = "TEST README" #fh.read()
 
 setuptools.setup(
     name="test-pypi-dope-release",
