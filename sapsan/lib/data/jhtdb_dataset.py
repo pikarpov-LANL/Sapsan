@@ -7,7 +7,7 @@ Usage:
                                 'du0', 'du1', 'du2',
                                 'db0', 'db1', 'db2',
                                 'da0', 'da1', 'da2'],
-                      labels=['tn'],
+                      target=['tn'],
                       checkpoints=[0.0, 0.01, 0.025, 0.25])
 
     plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
@@ -74,12 +74,10 @@ class OutputFlatterDatasetPlugin(DatasetPlugin):
 
 
 class JHTDB128Dataset(Dataset):
-    _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
-
     def __init__(self,
                  path: str,
                  features: List[str],
-                 labels: List[str],
+                 target: List[str],
                  checkpoints: List[int],
                  grid_size: int = 64,
                  checkpoint_data_size: int = 128,
@@ -88,13 +86,13 @@ class JHTDB128Dataset(Dataset):
         """
         @param path:
         @param features:
-        @param labels:
+        @param target:
         @param checkpoints:
         @param grid_size: size of cube that will be used to separate checkpoint data
         """
         self.path = path
         self.features = features
-        self.labels = labels
+        self.target = target
         self.checkpoints = checkpoints
         self.grid_size = grid_size
         self.sampler = sampler
@@ -109,9 +107,8 @@ class JHTDB128Dataset(Dataset):
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
         timestep = self.time_granularity * checkpoint
-        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=timestep,
-                                                                    feature=feature)
-        return "{0}/{1}".format(self.path, relative_path)
+        relative_path = self.path.format(checkpoint=timestep, feature=feature)
+        return relative_path #"{0}/{1}".format(self.path, relative_path)
 
     def _get_checkpoint_data(self, checkpoint, columns):
         all_data = []
@@ -138,8 +135,8 @@ class JHTDB128Dataset(Dataset):
         y = list()
         for checkpoint in self.checkpoints:
             features_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.features)
-            labels_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.labels)
+            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.target)
             x.append(features_checkpoint_batch)
-            y.append(labels_checkpoint_batch)
+            y.append(target_checkpoint_batch)
 
         return np.vstack(x), np.vstack(y)
