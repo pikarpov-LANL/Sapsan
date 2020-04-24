@@ -62,13 +62,9 @@ class Spacial3dEncoderNetworkModel(torch.nn.Module):
 class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
     def __init__(self,
                  n_epochs: int,
-                 n_input_channels: int = 36,
-                 n_output_channels: int = 3,
                  grid_dim: int = 64,
                  logdir: str = "./logs/"):
         self.n_epochs = n_epochs
-        self.n_input_channels = n_input_channels
-        self.n_output_channels = n_output_channels
         self.grid_dim = grid_dim
         self.logdir = logdir
 
@@ -82,8 +78,6 @@ class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         return {
             "n_epochs": self.n_epochs,
             "grid_dim": self.grid_dim,
-            "n_input_channels": self.n_input_channels,
-            "n_output_channels": self.n_output_channels
         }
 
 
@@ -93,20 +87,23 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         super().__init__(config)
 
         self.config = config
-
-        self.model = Spacial3dEncoderNetworkModel(self.config.n_input_channels,
-                                                  self.config.grid_dim ** 3 * self.config.n_output_channels)
+        self.model = None
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
 
+    def setup_model(self, n_input_channels, n_output_channels):
+        self.model = Spacial3dEncoderNetworkModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
+        
     def predict(self, inputs):
         return self.model(torch.as_tensor(inputs)).cpu().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
-
+        
     def train(self, inputs, targets=None):
+        self.setup_model(inputs.shape[1], targets.shape[1])
+        
         output_flatter = OutputFlatterDatasetPlugin()
         splitter_pytorch = JHTDBDatasetPyTorchSplitterPlugin(4)
         _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)

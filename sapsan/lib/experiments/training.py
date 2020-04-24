@@ -29,6 +29,7 @@ class TrainingExperiment(Experiment):
 
     def run(self):
         start = time.time()
+
         self.model.train(self.inputs, self.targets)
         end = time.time()
 

@@ -41,7 +41,6 @@ class Evaluation3dExperiment(Experiment):
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
-                 n_output_channels: int,
                  grid_size: int,
                  checkpoint_data_size: int,
                  cmap: str = 'ocean'
@@ -50,7 +49,7 @@ class Evaluation3dExperiment(Experiment):
         self.model = model
         self.inputs = inputs
         self.targets = targets
-        self.n_output_channels = n_output_channels
+        self.n_output_channels = targets.shape[1]
         self.grid_size = grid_size
         self.experiment_metrics = dict()
         self.checkpoint_data_size = checkpoint_data_size
