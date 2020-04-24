@@ -74,8 +74,6 @@ class OutputFlatterDatasetPlugin(DatasetPlugin):
 
 
 class JHTDB128Dataset(Dataset):
-    #path = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
-
     def __init__(self,
                  path: str,
                  features: List[str],
