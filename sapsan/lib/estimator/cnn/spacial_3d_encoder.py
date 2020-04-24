@@ -87,7 +87,7 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         super().__init__(config)
 
         self.config = config
-        self.model = None
+        self.model = Spacial3dEncoderNetworkModel(1, 1) #perhaps we want to re-think our save-load test; no need to load the model here
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
