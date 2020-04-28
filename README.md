@@ -4,11 +4,24 @@ Sapsan
 ### Intro
 
 
+
 ### Create a new project template
 ```shell script
 pip install sapsan
 sapsan create --name awesome
 ```
+
+
+#### Examples
+
+##### Local via docker compose
+
+```shell script
+docker-compose build
+docker-compose up --force-recreate
+```
+
+Then open browser at [localhost:8888](http://localhost:8888)
 
 
 -------
