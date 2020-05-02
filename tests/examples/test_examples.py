@@ -11,7 +11,6 @@ class TestExamples(unittest.TestCase):
         shutil.copytree("./examples", "./runtime_test_resources")
 
     def tearDown(self) -> None:
-        pass
         shutil.rmtree("./runtime_test_resources")
 
     def test_cnn_example(self):
