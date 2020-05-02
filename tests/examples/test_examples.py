@@ -8,13 +8,14 @@ class TestExamples(unittest.TestCase):
     """Tests example notebooks."""
 
     def setUp(self) -> None:
-        shutil.copytree("../examples", "./examples/resources")
+        shutil.copytree("./examples", "./runtime_test_resources")
 
     def tearDown(self) -> None:
-        shutil.rmtree("./examples/resources")
+        pass
+        shutil.rmtree("./runtime_test_resources")
 
     def test_cnn_example(self):
         """Tests cnn example."""
-        nb, errors = run_notebook(notebook_path="./examples/resources/cnn_example.ipynb",
-                                  resources_path="./examples/resources")
+        _, errors = run_notebook(notebook_path="./runtime_test_resources/cnn_example.ipynb",
+                                 resources_path="./runtime_test_resources")
         self.assertEqual(errors, [])
