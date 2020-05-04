@@ -17,6 +17,7 @@ Note: currently Sapsan is in alpha, but we are actively working on it and introd
 
 ### Getting Started
 To get started, simply pull sapsan via pip (or you could clone this repo)
+
 ```shell script
 pip install sapsan
 ```
@@ -169,6 +170,18 @@ Examples of implemented experiments.
 ### Kubeflow
 
 [Docs for experiments in kubeflow](./docs/kubeflow.md)
+
+#### Examples
+
+##### Local via docker compose
+
+```shell script
+docker-compose build
+docker-compose up --force-recreate
+```
+
+Then open browser at [localhost:8888](http://localhost:8888)
+
 
 -------
 
