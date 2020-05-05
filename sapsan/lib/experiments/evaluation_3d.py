@@ -93,7 +93,7 @@ class Evaluation3dExperiment(Experiment):
         try:
             cdf_plot([pred, self.targets], names=['prediction', 'targets'])
         except Exception as e:
-            logging.warn(e)
+            logging.warning(e)
 
         n_entries = self.inputs.shape[0]
 
