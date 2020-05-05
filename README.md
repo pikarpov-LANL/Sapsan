@@ -1,7 +1,6 @@
-# Sapsan
-![Sapsan_logo](https://github.com/pikarpov-LANL/Sapsan/docs/images/logo3_black_slim.png "Sapsan_logo")
+# Sapsan  <a href="https://github.com/pikarpov-LANL/Sapsan"><img src="docs/images/logo3_black_slim_notitle.png"  alt="Sapsan logo" align="right" width="100"></a>
 
-* [Intro](#intro)
+* [Intro](#intro) 
 * [Structure](#structure)
   * [Estimator](#estimator)
   * [Experiment](#experiment)
@@ -9,7 +8,6 @@
   * [Tracking backend](#tracking-backend) 
 * [Examples](#examples)
 * [Kubeflow](#kubeflow)
-
 -------
 
 ### Intro
@@ -17,9 +15,9 @@ Sapsan is a pipeline for easy Machine Learning implementation in scientific proj
 
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
-
 ### Getting Started
 To get started, simply pull sapsan via pip (or you could clone this repo)
+
 ```shell script
 pip install sapsan
 ```
@@ -172,6 +170,18 @@ Examples of implemented experiments.
 ### Kubeflow
 
 [Docs for experiments in kubeflow](./docs/kubeflow.md)
+
+#### Examples
+
+##### Local via docker compose
+
+```shell script
+docker-compose build
+docker-compose up --force-recreate
+```
+
+Then open browser at [localhost:8888](http://localhost:8888)
+
 
 -------
 

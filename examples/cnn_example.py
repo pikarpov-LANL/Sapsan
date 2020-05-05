@@ -13,14 +13,11 @@ os.environ["AWS_SECRET_ACCESS_KEY"] = "<AWS_SECRET_ACCESS_KEY>"
 def run():
     MLFLOW_BACKEND_HOST = "0.0.0.0"
     MLFLOW_BACKEND_PORT = 9000
-    dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    CHECKPOINT_DATA_SIZE = 128
-    SAMPLE_TO = 32
+    dataset_root_dir = "./data/u_dim32_fm15.h5"
+    CHECKPOINT_DATA_SIZE = 32
+    SAMPLE_TO = 16
     GRID_SIZE = 8
-    features = ['u', 'b', 'a',
-                'du0', 'du1', 'du2',
-                'db0', 'db1', 'db2',
-                'da0', 'da1', 'da2']
+    features = ['u']
     labels = ['tn']
 
     sampler = Equidistance3dSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO)
@@ -36,7 +33,7 @@ def run():
 
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
-                           labels=labels,
+                           target=labels,
                            checkpoints=[0, 4, 10],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
@@ -50,7 +47,7 @@ def run():
 
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=features,
-                           labels=labels,
+                           target=labels,
                            checkpoints=[0],
                            grid_size=GRID_SIZE,
                            checkpoint_data_size=CHECKPOINT_DATA_SIZE,
@@ -60,7 +57,6 @@ def run():
                                                    backend=tracking_backend,
                                                    model=training_experiment.model,
                                                    inputs=x, targets=y,
-                                                   n_output_channels=3,
                                                    grid_size=GRID_SIZE,
                                                    checkpoint_data_size=SAMPLE_TO)
 
