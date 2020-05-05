@@ -20,7 +20,7 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
         names = ["Data {}".format(i) for i in range(len(series))]
 
     for idx, data in enumerate(series):
-        plt.hist(data.flatten(), bins=bins, lw=3, normed=True, histtype='step', label=names[idx])
+        plt.hist(data.flatten(), bins=bins, lw=3, density=True, histtype='step', label=names[idx])
 
     plt.yscale("log")
     plt.xlabel("Values")

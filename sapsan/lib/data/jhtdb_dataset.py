@@ -16,7 +16,7 @@ Usage:
 
 from typing import List, Tuple, Dict, Optional
 import numpy as np
-import h5py
+import h5py as h5
 from skimage.util.shape import view_as_blocks
 from sklearn.model_selection import train_test_split
 from torch import from_numpy
@@ -114,7 +114,7 @@ class JHTDB128Dataset(Dataset):
         all_data = []
         # combine all features into cube with channels
         for col in columns:
-            data = h5py.File(self._get_path(checkpoint, col), 'r')
+            data = h5.File(self._get_path(checkpoint, col), 'r')
             key = list(data.keys())[-1]
             data = data[key]
             data = np.moveaxis(data, -1, 0)
