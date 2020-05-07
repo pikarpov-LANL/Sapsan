@@ -1,8 +1,8 @@
 """
 Spacial 3d encoder estimator
 Example:
-    estimator = Spacial3dEncoderNetworkEstimator(
-        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1)
+    estimator = CNN3d(
+        config=CNN3dConfig(n_epochs=1)
     )
 
     ds = JHTDBDataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
@@ -24,12 +24,12 @@ import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
 from sapsan.lib.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
-from sapsan.core.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfig
 
 
-class Spacial3dEncoderNetworkModel(torch.nn.Module):
+class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in, D_out):
-        super(Spacial3dEncoderNetworkModel, self).__init__()
+        super(CNN3dModel, self).__init__()
 
         self.conv3d = torch.nn.Conv3d(D_in, 72, 2, stride=2, padding=1)
         self.pooling = torch.nn.MaxPool3d(kernel_size=2, padding=1)
@@ -59,7 +59,7 @@ class Spacial3dEncoderNetworkModel(torch.nn.Module):
         return l2
 
 
-class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
+class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int,
                  grid_dim: int = 64,
@@ -81,19 +81,19 @@ class Spacial3dEncoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         }
 
 
-class Spacial3dEncoderNetworkEstimator(Estimator):
+class CNN3d(Estimator):
 
-    def __init__(self, config: Spacial3dEncoderNetworkEstimatorConfiguration):
+    def __init__(self, config: CNN3dConfig):
         super().__init__(config)
 
         self.config = config
-        self.model = Spacial3dEncoderNetworkModel(1, 1) #perhaps we want to re-think our save-load test; no need to load the model here
+        self.model = CNN3dModel(1, 1) #perhaps we want to re-think our save-load test; no need to load the model here
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
 
     def setup_model(self, n_input_channels, n_output_channels):
-        self.model = Spacial3dEncoderNetworkModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
+        self.model = CNN3dModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
         
     def predict(self, inputs):
         return self.model(torch.as_tensor(inputs)).cpu().data.numpy()
@@ -144,9 +144,9 @@ class Spacial3dEncoderNetworkEstimator(Estimator):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
 
-        config = Spacial3dEncoderNetworkEstimatorConfiguration.load(params_save_path)
+        config = CNN3dConfig.load(params_save_path)
 
-        estimator = Spacial3dEncoderNetworkEstimator(config)
+        estimator = CNN3d(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         # model.eval()
         estimator.model = model

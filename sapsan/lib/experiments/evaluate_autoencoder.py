@@ -11,7 +11,7 @@ from sapsan.utils.plot import pdf_plot, cdf_plot, slice_of_cube
 from sapsan.utils.shapes import combine_cubes
 
 
-class EvaluationAutoencoderExperiment(Experiment):
+class EvaluateAutoencoder(Experiment):
     def __init__(self,
                  name: str,
                  backend: ExperimentBackend,

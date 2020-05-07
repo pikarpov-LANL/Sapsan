@@ -6,10 +6,10 @@ import yaml
 import numpy as np
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
-from sapsan.core.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfig
 from joblib import dump, load
 
-class KrrEstimatorConfiguration(EstimatorConfiguration):
+class KRRConfig(EstimatorConfig):
     def __init__(self,
                  alpha: Optional[float] = None,
                  gamma: Optional[float] = None):
@@ -17,7 +17,7 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
         self.gamma = gamma
 
     @classmethod
-    def load(cls, path: Optional[str] = None) -> 'KrrEstimatorConfiguration':
+    def load(cls, path: Optional[str] = None) -> 'KRRConfig':
         with open(path, 'r') as f:
             cfg = json.load(f)
             return cls(**cfg)
@@ -29,11 +29,11 @@ class KrrEstimatorConfiguration(EstimatorConfiguration):
         }
 
 
-class KrrEstimator(Estimator):
+class KRR(Estimator):
     _SAVE_PATH_MODEL_SUFFIX = "model"
     _SAVE_PATH_PARAMS_SUFFIX = "params"
 
-    def __init__(self, config: KrrEstimatorConfiguration):
+    def __init__(self, config: KRRConfig):
         super().__init__(config)
 
         self.config = config
@@ -69,7 +69,7 @@ class KrrEstimator(Estimator):
         params_save_path = "{path}/{suffix}.json".format(path=path, suffix=cls._SAVE_PATH_PARAMS_SUFFIX)
 
         model = load(model_save_path)
-        config = KrrEstimatorConfiguration.load(params_save_path)
-        estimator = KrrEstimator(config)
+        config = KRRConfig.load(params_save_path)
+        estimator = KRR(config)
         estimator.model = model
         return estimator

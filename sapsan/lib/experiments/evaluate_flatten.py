@@ -3,8 +3,8 @@
 Example:
     experiment_name = "Training experiment"
     dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    estimator = Spacial3dEncoderNetworkEstimator(
-        config=Spacial3dEncoderNetworkEstimatorConfiguration(n_epochs=1)
+    estimator = CNN3d(
+        config=CNN3dConfig(n_epochs=1)
     )
     x, y = JHTDB128Dataset(path=dataset_root_dir,
                            features=['u', 'b', 'a',
@@ -15,7 +15,7 @@ Example:
                            checkpoints=[0.0]).load()
 
     experiment = TrainingExperiment(name=experiment_name,
-                                    backend=FakeExperimentBackend(experiment_name),
+                                    backend=FakeBackend(experiment_name),
                                     model=estimator,
                                     inputs=x, targets=y)
     experiment.run()
@@ -32,7 +32,7 @@ from sapsan.utils.plot import pdf_plot, slice_of_cube
 from sapsan.utils.shapes import combine_cubes
 
 
-class EvaluationFlattenExperiment(Experiment):
+class EvaluateFlatten(Experiment):
     def __init__(self,
                  name: str,
                  backend: ExperimentBackend,

@@ -3,7 +3,7 @@ import mlflow
 from sapsan.core.models import ExperimentBackend
 
 
-class MlFlowExperimentBackend(ExperimentBackend):
+class MLflowBackend(ExperimentBackend):
     def __init__(self, name: str, host: str, port: int):
         super().__init__(name)
         self.host = host

@@ -5,12 +5,12 @@ import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
 from sapsan.lib.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin
-from sapsan.core.models import Estimator, EstimatorConfiguration
+from sapsan.core.models import Estimator, EstimatorConfig
 
 
-class SpacialAutoencoderNetworkModel(torch.nn.Module):
+class CAEModel(torch.nn.Module):
     def __init__(self, input_channels, output_channels):
-        super(SpacialAutoencoderNetworkModel, self).__init__()
+        super(CAEModel, self).__init__()
 
         self.conv1 = torch.nn.Conv3d(input_channels, 72, 2, stride=2, padding=1)
         self.pool1 = torch.nn.MaxPool3d(kernel_size=2, padding=1, return_indices=True)
@@ -38,7 +38,7 @@ class SpacialAutoencoderNetworkModel(torch.nn.Module):
         return deconvoluted1
 
 
-class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
+class CAEConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int,
                  n_input_channels: int = 36,
@@ -52,7 +52,7 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         self.logdir = logdir
 
     @classmethod
-    def load(cls, path: str) -> 'EstimatorConfiguration':
+    def load(cls, path: str) -> 'EstimatorConfig':
         with open(path, 'r') as f:
             cfg = json.load(f)
             return cls(**cfg)
@@ -66,14 +66,14 @@ class SpacialAutoencoderNetworkEstimatorConfiguration(EstimatorConfiguration):
         }
 
 
-class SpacialAutoencoderNetworkEstimator(Estimator):
+class CAE(Estimator):
 
-    def __init__(self, config: SpacialAutoencoderNetworkEstimatorConfiguration):
+    def __init__(self, config: CAEConfig):
         super().__init__(config)
 
         self.config = config
 
-        self.model = SpacialAutoencoderNetworkModel(self.config.n_input_channels,
+        self.model = CAEModel(self.config.n_input_channels,
                                                     self.config.n_output_channels)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
@@ -124,9 +124,9 @@ class SpacialAutoencoderNetworkEstimator(Estimator):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
 
-        config = SpacialAutoencoderNetworkEstimatorConfiguration.load(params_save_path)
+        config = CAEConfig.load(params_save_path)
 
-        estimator = SpacialAutoencoderNetworkEstimator(config)
+        estimator = CAE(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         # model.eval()
         estimator.model = model
