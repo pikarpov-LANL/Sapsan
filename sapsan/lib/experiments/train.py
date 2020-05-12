@@ -5,7 +5,7 @@ import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 
 
-class TrainingExperiment(Experiment):
+class Train(Experiment):
 
     def __init__(self,
                  name: str,
@@ -46,4 +46,3 @@ class TrainingExperiment(Experiment):
         return {
             'runtime': runtime
         }
-

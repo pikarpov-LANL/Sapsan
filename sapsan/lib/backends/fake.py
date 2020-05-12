@@ -3,7 +3,7 @@ import logging
 from sapsan.core.models import ExperimentBackend
 
 
-class FakeExperimentBackend(ExperimentBackend):
+class FakeBackend(ExperimentBackend):
     def log_parameter(self, name: str, value: str):
         logging.info("Logging experiment '{experiment}' parameter "
                      "{name}: {value}".format(experiment=self.name,

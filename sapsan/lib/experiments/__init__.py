@@ -1,4 +1,5 @@
-from .evaluation_3d import Evaluation3dExperiment
-from .evaluation_autoencoder import EvaluationAutoencoderExperiment
-from .evaluation_flatten import EvaluationFlattenExperiment
-from .training import TrainingExperiment
+from .evaluate_3d import Evaluate3d
+from .evaluate_autoencoder import EvaluateAutoencoder
+from .evaluate_flatten import EvaluateFlatten
+from .train import Train
+

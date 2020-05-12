@@ -4,15 +4,15 @@ from typing import Dict, List
 import numpy as np
 
 
-class EstimatorConfiguration(ABC):
-    """ Estimator configuration class """
+class EstimatorConfig(ABC):
+    """ Estimator Config class """
     @classmethod
     @abstractmethod
     def load(cls, path: str):
         """
-        Parse yaml file with configuration
-        @param path: path to yaml configuration
-        @return: instance of configuration
+        Parse yaml file with Config
+        @param path: path to yaml Config
+        @return: instance of Config
         """
         pass
 
@@ -27,7 +27,7 @@ class EstimatorConfiguration(ABC):
 
 class Estimator(ABC):
     """ Parent class of all estimators """
-    def __init__(self, config: EstimatorConfiguration):
+    def __init__(self, config: EstimatorConfig):
         self.config = config
 
     @abstractmethod
