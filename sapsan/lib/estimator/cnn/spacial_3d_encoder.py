@@ -63,10 +63,14 @@ class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int,
                  grid_dim: int = 64,
+                 patience: int = 10,
+                 min_delta: float = 1e-5, 
                  logdir: str = "./logs/"):
         self.n_epochs = n_epochs
         self.grid_dim = grid_dim
         self.logdir = logdir
+        self.patience = patience
+        self.min_delta = min_delta
 
     @classmethod
     def load(cls, path: str):
@@ -126,7 +130,8 @@ class CNN3d(Estimator):
                           loaders=loaders,
                           logdir=self.config.logdir,
                           num_epochs=self.config.n_epochs,
-                          callbacks=[EarlyStoppingCallback(patience=10, min_delta=1e-5)],
+                          callbacks=[EarlyStoppingCallback(patience=self.config.patience,
+                                                           min_delta=self.config.min_delta)],
                           verbose=False,
                           check=False)
 
