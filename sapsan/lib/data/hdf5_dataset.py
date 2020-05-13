@@ -1,8 +1,8 @@
 """
-JHTDB dataset classes
+HDF5 dataset classes
 
 Usage:
-    ds = JHTDB128Dataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
+    ds = HDF5Dataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
                       features=['u', 'b', 'a',
                                 'du0', 'du1', 'du2',
                                 'db0', 'db1', 'db2',
@@ -10,7 +10,7 @@ Usage:
                       target=['tn'],
                       checkpoints=[0.0, 0.01, 0.025, 0.25])
 
-    plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
+    plugin = HDF5DatasetPyTorchSplitterPlugin(4)
     loaders = plugin.apply(ds)
 """
 
@@ -26,7 +26,7 @@ from sapsan.core.models import Dataset, DatasetPlugin, Sampling
 from sapsan.utils.shapes import split_cube_by_grid
 
 
-class JHTDBDatasetPyTorchSplitterPlugin(DatasetPlugin):
+class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
     def __init__(self,
                  batch_size: int,
                  train_size: float = 0.5,
@@ -73,7 +73,7 @@ class OutputFlatterDatasetPlugin(DatasetPlugin):
         return x, self._flatten_output(y)
 
 
-class JHTDB128Dataset(Dataset):
+class HDF5Dataset(Dataset):
     def __init__(self,
                  path: str,
                  features: List[str],

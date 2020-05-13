@@ -23,7 +23,7 @@ from typing import Dict
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
-from sapsan.lib.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
+from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
 
 
@@ -109,7 +109,7 @@ class CNN3d(Estimator):
         self.setup_model(inputs.shape[1], targets.shape[1])
         
         output_flatter = OutputFlatterDatasetPlugin()
-        splitter_pytorch = JHTDBDatasetPyTorchSplitterPlugin(4)
+        splitter_pytorch = HDF5DatasetPyTorchSplitterPlugin(4)
         _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
         loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
