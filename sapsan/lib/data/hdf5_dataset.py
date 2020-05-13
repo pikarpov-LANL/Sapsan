@@ -82,7 +82,9 @@ class HDF5Dataset(Dataset):
                  grid_size: int = 64,
                  checkpoint_data_size: int = 128,
                  sampler: Optional[Sampling] = None,
-                 time_granularity: float = 2.5e-3):
+                 time_granularity: float = 2.5e-3,
+                 features_label = None,
+                 target_label = None):
         """
         @param path:
         @param features:
@@ -93,6 +95,8 @@ class HDF5Dataset(Dataset):
         self.path = path
         self.features = features
         self.target = target
+        self.features_label = features_label
+        self.target_label = target_label
         self.checkpoints = checkpoints
         self.grid_size = grid_size
         self.sampler = sampler
@@ -110,12 +114,18 @@ class HDF5Dataset(Dataset):
         relative_path = self.path.format(checkpoint=timestep, feature=feature)
         return relative_path #"{0}/{1}".format(self.path, relative_path)
 
-    def _get_checkpoint_data(self, checkpoint, columns):
+    def _get_checkpoint_data(self, checkpoint, columns, labels):
         all_data = []
         # combine all features into cube with channels
-        for col in columns:
-            data = h5.File(self._get_path(checkpoint, col), 'r')
-            key = list(data.keys())[-1]
+        
+        for col in range(len(columns)):
+            data = h5.File(self._get_path(checkpoint, columns[col]), 'r')
+            
+            if labels==None: key = list(data.keys())[-1]
+            else: key = label[col]
+
+            print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
+            
             data = data[key]
             data = np.moveaxis(data, -1, 0)
             all_data.append(data)
@@ -134,8 +144,10 @@ class HDF5Dataset(Dataset):
         x = list()
         y = list()
         for checkpoint in self.checkpoints:
-            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.features)
-            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.target)
+            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+                                                                  self.features, self.features_label)
+            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+                                                                self.target, self.target_label)
             x.append(features_checkpoint_batch)
             y.append(target_checkpoint_batch)
 
