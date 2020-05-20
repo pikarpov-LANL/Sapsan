@@ -2,10 +2,11 @@ import numpy as np
 from sapsan.core.models import Sampling
 
 
-class Equidistance3dSampling(Sampling):
-    def __init__(self, original_dim: int, target_dim: int):
+class EquidistanceSampling(Sampling):
+    def __init__(self, original_dim: int, target_dim: int, axis: int):
         self.original_dim = original_dim
         self.target_dim = target_dim
+        self.axis = axis
 
     @property
     def scale(self):
@@ -16,4 +17,7 @@ class Equidistance3dSampling(Sampling):
         return self.target_dim
 
     def sample(self, data: np.ndarray):
-        return data[:, ::self.scale, ::self.scale, ::self.scale]
+        if self.axis == 3:
+            return data[:, ::self.scale, ::self.scale, ::self.scale]
+        if self.axis == 2:
+            return data[:, ::self.scale, ::self.scale]

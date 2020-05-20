@@ -39,20 +39,21 @@ class EvaluateFlatten(Experiment):
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
-                 n_output_channels: int,
                  checkpoint_data_size: int,
-                 grid_size: int,
-                 checkpoints: List[float]
-                 ):
+                 checkpoints: List[float],
+                 axis: int,
+                 cmap: str = 'ocean'):
         super().__init__(name, backend)
         self.model = model
         self.inputs = inputs
         self.targets = targets
-        self.n_output_channels = n_output_channels
+        self.n_output_channels = targets.shape[1]
         self.experiment_metrics = dict()
         self.checkpoint_data_size = checkpoint_data_size
         self.checkpoints = checkpoints
-        self.grid_size = grid_size
+        self.axis = axis
+        self.cmap = cmap
+        self.artifacts = []
 
     def get_metrics(self) -> Dict[str, float]:
         return self.experiment_metrics
@@ -76,20 +77,38 @@ class EvaluateFlatten(Experiment):
 
         n_entries = len(self.checkpoints)
 
-        cube_shape = (n_entries, 1, self.grid_size,
-                      self.grid_size, self.grid_size)
-        pred_cube = pred.reshape(cube_shape)
-        target_cube = self.targets.reshape(cube_shape)
+        if self.axis == 3:
+            cube_shape = (n_entries, 1, self.checkpoint_data_size,
+                          self.checkpoint_data_size, self.checkpoint_data_size)
+            pred_cube = pred.reshape(cube_shape)
+            target_cube = self.targets.reshape(cube_shape)
 
-        pred_slice = slice_of_cube(pred_cube[0])
-        target_slice = slice_of_cube(target_cube[0])
+            pred_slice = slice_of_cube(pred_cube[0])
+            target_slice = slice_of_cube(target_cube[0])
+        
+        if self.axis == 2: 
+            cube_shape = (n_entries, 1, self.checkpoint_data_size, self.checkpoint_data_size)
+            pred_cube = pred.reshape(cube_shape)
+            target_cube = self.targets.reshape(cube_shape)
 
-        plt.title("Pred slice")
-        plt.imshow(pred_slice)
-        plt.show()
-
+            pred_slice = slice_of_cube(pred_cube)
+            target_slice = slice_of_cube(target_cube)
+        
+        vmin = np.amin(target_slice)
+        vmax = np.amax(target_slice)
+        
+        fig = plt.figure(figsize = (16, 6))
+        fig.add_subplot(121)
+        im = plt.imshow(target_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
+        plt.colorbar(im).ax.tick_params(labelsize=14)
         plt.title("Target slice")
-        plt.imshow(target_slice)
+
+        fig.add_subplot(122)
+        im = plt.imshow(pred_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
+        plt.colorbar(im).ax.tick_params(labelsize=14)
+        plt.title("Predicted slice")
+        plt.savefig("./slice.jpg")
+        self.artifacts.append("./slice.jpg")
         plt.show()
 
         end = time.time()

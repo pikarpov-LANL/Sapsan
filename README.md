@@ -75,7 +75,7 @@ General abstraction for dataset/dataframes.
 
 ##### Available datasets
 - [3d dataset](sapsan/lib/data/jhtdb_dataset.py)
-- [2d dataset](sapsan/lib/data/flatten_dataset.py) *(coming soon!)*
+- [2d dataset](sapsan/lib/data/flatten_dataset.py)
 
 ##### How to implement new dataset:
 

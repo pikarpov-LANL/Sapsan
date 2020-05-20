@@ -10,50 +10,57 @@ from sapsan.core.models import Dataset, DatasetPlugin, Sampling
 from sapsan.utils.shapes import split_cube_by_grid
 
 
-class FlattenFrom3dDataset(Dataset):
-    _CHECKPOINT_FOLDER_NAME_PATTERN = "mhd128_t{checkpoint:.4f}/fm30/{feature}_dim128_fm30.h5"
-
+class FlattenDataset(Dataset):
     def __init__(self,
                  path: str,
                  features: List[str],
-                 labels: List[str],
+                 target: List[str],
                  checkpoints: List[int],
                  sampler: Optional[Sampling] = None,
-                 label_channels: Optional[List[int]] = None,
-                 time_granularity: float = 2.5e-3):
+                 target_channels: Optional[List[int]] = None,
+                 time_granularity: float = 2.5e-3,
+                 features_label: Optional[List[str]] = None,
+                 target_label: Optional[List[str]] = None,
+                 axis: int = 3):
         """
         @param path:
         @param features:
-        @param labels:
+        @param target:
         @param checkpoints:
         @param sampler: sampler for data
         @param label_channel: channel from labels to pick
         """
         self.path = path
         self.features = features
-        self.labels = labels
+        self.target = target
+        self.features_label = features_label
+        self.target_label = target_label
         self.checkpoints = checkpoints
         self.sampler = sampler
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
-        self.label_channels = label_channels
+        self.target_channels = target_channels
         self.time_granularity = time_granularity
-
+        
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
 
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
         timestep = self.time_granularity * checkpoint
-        relative_path = self._CHECKPOINT_FOLDER_NAME_PATTERN.format(checkpoint=timestep,
-                                                                    feature=feature)
-        return "{0}/{1}".format(self.path, relative_path)
+        relative_path = self.path.format(checkpoint=timestep, feature=feature)
+        return relative_path
 
-    def _get_checkpoint_data(self, checkpoint, columns, channels: Optional[List[int]] = None):
+    def _get_checkpoint_data(self, checkpoint, columns, labels, channels: Optional[List[int]] = None):
         all_data = []
-        for col in columns:
-            data = h5py.File(self._get_path(checkpoint, col), 'r')
-            key = list(data.keys())[-1]
+        for col in range(len(columns)):
+            data = h5py.File(self._get_path(checkpoint, columns[col]), 'r')
+            
+            if labels==None: key = list(data.keys())[-1]
+            else: key = label[col]
+
+            print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
+            
             data = data[key]
             data = np.moveaxis(data, -1, 0)
             all_data.append(data)
@@ -83,9 +90,11 @@ class FlattenFrom3dDataset(Dataset):
         x = list()
         y = list()
         for checkpoint in self.checkpoints:
-            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.features)
-            labels_checkpoint_batch = self._get_checkpoint_data(checkpoint, self.labels, self.label_channels)
+            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+                                                                  self.features, self.features_label)
+            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+                                                                self.target, self.target_label)
             x.append(features_checkpoint_batch)
-            y.append(labels_checkpoint_batch)
+            y.append(target_checkpoint_batch)
 
         return np.hstack(x), np.hstack(y)
