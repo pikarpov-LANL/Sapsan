@@ -25,7 +25,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from sapsan.core.models import Dataset, DatasetPlugin, Sampling
 from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
 
-
 class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
     def __init__(self,
                  batch_size: int,
@@ -103,6 +102,7 @@ class HDF5Dataset(Dataset):
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
         self.axis = axis
+
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
         self.time_granularity = time_granularity
