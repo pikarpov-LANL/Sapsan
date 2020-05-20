@@ -15,13 +15,14 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
-    plt.figure()
+    plt.figure(figsize = (6, 6))
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
 
     for idx, data in enumerate(series):
         plt.hist(data.flatten(), bins=bins, lw=3, density=True, histtype='step', label=names[idx])
 
+    plt.legend(loc=1)
     plt.yscale("log")
     plt.xlabel("Values")
     plt.ylabel("PDF")
