@@ -112,7 +112,7 @@ st.table(pd.DataFrame([
     ["sample to", SAMPLE_TO],
     ["grid size", GRID_SIZE],
     ["features", features],
-    ["labels", target],
+    ["target", target],
     #["checkpoints", checkpoints]
 ], columns=["key", "value"]).T)
 
@@ -139,6 +139,34 @@ def run_experiment():
     
     st.write('Done!')
 
+#def evaluate_experiment():
+    #--- Test the model ---
+    #Load the test data
+    x, y = HDF5Dataset(path=path,
+                       features=features,
+                       target=target,
+                       checkpoints=[0],
+                       grid_size=GRID_SIZE,
+                       checkpoint_data_size=CHECKPOINT_DATA_SIZE,
+                       sampler=sampler).load()
+
+    #Set the test experiment
+    evaluation_experiment = Evaluate3d(name=experiment_name,
+                                               backend=tracking_backend,
+                                               model=training_experiment.model,
+                                               inputs=x, targets=y,
+                                               grid_size=GRID_SIZE,
+                                               checkpoint_data_size=SAMPLE_TO)
+
+    #Test the model
+    evaluation_experiment.run()
+    
+
+    data = y
+    #'data', data
+    st.pyplot()
+    
+    
 if st.checkbox("Show model graph"):
     res = hl.build_graph(estimator.model, torch.zeros([72, 1, 2, 2, 2]))
     st.graphviz_chart(res.build_dot())
@@ -149,6 +177,11 @@ if st.checkbox("Show code of model"):
 if st.button("Run experiment"):
     #st.write("Experiment is running. Please hold on...")
     run_experiment()
+    
+#if st.button("Evaluate experiment"):
+#    #st.write("Experiment is running. Please hold on...")
+#    evaluate_experiment()
+    
     
    
 
