@@ -21,7 +21,14 @@ To get started, simply pull sapsan via pip (or you could clone this repo)
 ```shell script
 pip install sapsan
 ```
-Next, please run an example to make sure everything has been installed correctly. It is a jupyter notebook which can be found here:
+#### Graphical Interface
+We've built a Sapsan configuration and running interface with Streamlit. In order to run it type in the following and follow the instrucitons - the interface will be opened in your browser.
+```shell script
+streamlit run examples/streamlit.py
+```
+
+#### Command Line Interface
+Please run an example to make sure everything has been installed correctly. It is a jupyter notebook which can be found here:
 ```shell script
 Sapsan/examples/cnn_example.ipynb
 ```
