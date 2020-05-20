@@ -4,7 +4,7 @@ from typing import Dict
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
 
-from sapsan.lib.data.jhtdb_dataset import JHTDBDatasetPyTorchSplitterPlugin
+from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
 
 
@@ -86,7 +86,7 @@ class CAE(Estimator):
         return self.model_metrics
 
     def train(self, inputs, targets=None):
-        plugin = JHTDBDatasetPyTorchSplitterPlugin(4)
+        plugin = HDF5DatasetPyTorchSplitterPlugin(4)
         loaders = plugin.apply_on_x_y(inputs, targets)
 
         model = self.model

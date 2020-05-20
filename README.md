@@ -41,8 +41,8 @@ Core abstraction are defined in [models.py](sapsan/core/models.py) file.
 General abstraction for models/algorithms.
 
 ##### Available estimators
-- [KRR 1d estimator](sapsan/lib/estimator/krr/krr.py)
-- [3d convolution encoder estimator](sapsan/lib/estimator/cnn/spacial_3d_encoder.py)
+- [KRR 1d estimator](https://scikit-learn.org/stable/modules/generated/sklearn.kernel_ridge.KernelRidge.html)
+- [3d convolution encoder estimator](https://pytorch.org/docs/stable/nn.html#conv3d)
 - [3d autoencoder estimator](sapsan/lib/estimator/cnn/spacial_autoencoder.py) *(coming soon!)*
 
 ##### How to implement new estimator:
