@@ -6,7 +6,7 @@ def split_cube_by_grid(data: np.ndarray,
                        size: int,
                        grid_size: int,
                        n_features: int) -> np.ndarray:
-    """ Splits big cube into smaller ones into grid.
+    """ --3D-- Splits big cube into smaller ones into grid.
 
     @param data: (channels, grid_size, grid_size, grid_size)
     @return (batch, channels, grid_size, grid_size, grid_size)
@@ -16,6 +16,21 @@ def split_cube_by_grid(data: np.ndarray,
                                              grid_size, grid_size)
                           ).reshape(batch, n_features,
                                     grid_size, grid_size, grid_size)
+
+def split_square_by_grid(data: np.ndarray,
+                       size: int,
+                       grid_size: int,
+                       n_features: int) -> np.ndarray:
+    """ --2D-- Splits big square into smaller ones into grid.
+
+    @param data: (channels, grid_size, grid_size)
+    @return (batch, channels, grid_size, grid_size)
+    """
+    batch = int(size ** 2 / grid_size ** 2)
+    return view_as_blocks(data, block_shape=(n_features, grid_size,
+                                             grid_size)
+                          ).reshape(batch, n_features,
+                                    grid_size, grid_size)
 
 
 def combine_cubes(cubes: np.ndarray,

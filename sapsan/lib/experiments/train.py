@@ -5,6 +5,8 @@ import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 
 
+import sys
+
 class Train(Experiment):
 
     def __init__(self,
@@ -29,7 +31,7 @@ class Train(Experiment):
 
     def run(self):
         start = time.time()
-
+        
         self.model.train(self.inputs, self.targets)
         end = time.time()
 

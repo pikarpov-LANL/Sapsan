@@ -23,7 +23,7 @@ from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
 from sapsan.core.models import Dataset, DatasetPlugin, Sampling
-from sapsan.utils.shapes import split_cube_by_grid
+from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
 
 
 class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
@@ -84,7 +84,8 @@ class HDF5Dataset(Dataset):
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 2.5e-3,
                  features_label = None,
-                 target_label = None):
+                 target_label = None,
+                 axis: int = 3):
         """
         @param path:
         @param features:
@@ -101,6 +102,7 @@ class HDF5Dataset(Dataset):
         self.grid_size = grid_size
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
+        self.axis = axis
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
         self.time_granularity = time_granularity
@@ -117,7 +119,7 @@ class HDF5Dataset(Dataset):
     def _get_checkpoint_data(self, checkpoint, columns, labels):
         all_data = []
         # combine all features into cube with channels
-        
+                
         for col in range(len(columns)):
             data = h5.File(self._get_path(checkpoint, columns[col]), 'r')
             
@@ -137,8 +139,12 @@ class HDF5Dataset(Dataset):
         # columns_length: 12 features (or 1 label) * 3 dim = 36
         columns_length = checkpoint_data.shape[0]
 
-        return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
-                                  self.grid_size, columns_length)
+        if self.axis == 3:
+            return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
+                                      self.grid_size, columns_length)
+        if self.axis == 2:
+            return split_square_by_grid(checkpoint_data, self.checkpoint_data_size,
+                                      self.grid_size, columns_length)
 
     def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()
