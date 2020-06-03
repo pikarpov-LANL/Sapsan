@@ -25,6 +25,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sapsan.core.models import Dataset, DatasetPlugin, Sampling
 from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
 
+
 class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
     def __init__(self,
                  batch_size: int,
@@ -133,10 +134,12 @@ class HDF5Dataset(Dataset):
             all_data.append(data)
         # checkpoint_data shape: (features, 128, 128, 128)
         checkpoint_data = np.vstack(all_data)
+
         # downsample if needed
         if self.sampler:
             checkpoint_data = self.sampler.sample(checkpoint_data)
         # columns_length: 12 features (or 1 label) * 3 dim = 36
+
         columns_length = checkpoint_data.shape[0]
 
         if self.axis == 3:
@@ -154,6 +157,7 @@ class HDF5Dataset(Dataset):
                                                                   self.features, self.features_label)
             target_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
                                                                 self.target, self.target_label)
+            
             x.append(features_checkpoint_batch)
             y.append(target_checkpoint_batch)
 
