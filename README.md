@@ -7,6 +7,7 @@
   * [Dataset](#dataset)
   * [Tracking backend](#tracking-backend) 
 * [Examples](#examples)
+* [CLI](#cli)
 * [Kubeflow](#kubeflow)
 -------
 
@@ -171,6 +172,22 @@ Examples of implemented experiments.
 - [3d convolution encoder example](./examples/cnn_example.ipynb)
 - [3d audoencoder example](./examples/autoencoder_example.py) *(coming soon!)*
 - [KRR 1d estimator](./examples/krr_example.py) *(coming soon!)*
+
+### CLI
+
+To use structure of Sapsan and CI/CD capabilities run
+```shell script
+sapsan create <NAME>
+cd <NAME>
+git init
+git remote add origin <YOUR_REPOSITORY_ORIGIN>
+git add .
+git commit -m "Initial commit"
+git push origin master
+```
+
+`<NAME>` can be `research` for example.
+
 
 -------
 

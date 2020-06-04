@@ -8,6 +8,9 @@ from sapsan.core.cli.templates.runner import get_template as get_runner_template
 from sapsan.core.cli.templates.readme import get_readme_template
 from sapsan.core.cli.templates.docker import get_dockerfile_template
 from sapsan.core.cli.templates.setup import get_setup_template
+from sapsan.core.cli.templates.test import get_template as get_tests_template
+from sapsan.core.cli.templates.actions import (TEST_TEMPLATE, PYPI_TEMPLATE,
+                                               RELEASE_DRAFTER_TEMPLATE, RELEASE_DRAFTER_WORKFLOW_TEMPLATE)
 
 
 def create_init(path: str):
@@ -17,12 +20,16 @@ def create_init(path: str):
 
 def setup_project(name: str):
     os.mkdir(name)
+    os.mkdir('./{name}/.github'.format(name=name))
+    os.mkdir('./{name}/.github/workflows'.format(name=name))
+    os.mkdir("./{name}/tests/".format(name=name))
     os.mkdir("./{name}/{name}".format(name=name))
     os.mkdir("./{name}/{name}/algorithm".format(name=name))
     os.mkdir("./{name}/{name}/dataset".format(name=name))
     os.mkdir("./{name}/{name}/experiment".format(name=name))
-    click.echo("Created folders.")
+    click.echo("Folders has been created.")
 
+    create_init("./{name}/tests".format(name=name))
     create_init("./{name}/{name}".format(name=name))
     create_init("./{name}/{name}/algorithm".format(name=name))
     create_init("./{name}/{name}/dataset".format(name=name))
@@ -56,6 +63,28 @@ def setup_project(name: str):
     with open("./{name}/README.md".format(name=name), "w") as file:
         file.write(get_readme_template(name))
         click.echo("Created readme.")
+
+    with open("./{name}/tests/test_estimator.py".format(name=name), "w") as file:
+        file.write(get_tests_template(name))
+        click.echo("Created tests.")
+
+    with open("./{name}/requirements.txt".format(name=name), "w") as file:
+        requirements="""numpy==1.17.3
+        sapsan==0.0.3
+        """
+        file.write(requirements)
+        click.echo("Created requirements file.")
+
+    with open("./{name}/.github/release-drafter.yml".format(name=name), "w") as file:
+        file.write(RELEASE_DRAFTER_TEMPLATE)
+    with open("./{name}/.github/workflows/release-drafter.yml".format(name=name), "w") as file:
+        file.write(RELEASE_DRAFTER_WORKFLOW_TEMPLATE)
+    with open("./{name}/.github/workflows/pythonpackage.yml".format(name=name), "w") as file:
+        file.write(TEST_TEMPLATE)
+    with open("./{name}/.github/workflows/pypi-release.yml".format(name=name), "w") as file:
+        file.write(PYPI_TEMPLATE)
+
+    click.echo("Created github actions.")
 
 
 @click.group(help="""
