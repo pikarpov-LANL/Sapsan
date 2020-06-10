@@ -4,9 +4,12 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("version", "r") as f:
+    version = f.read()
+
 setuptools.setup(
     name="{name}",
-    version="0.0.1-alpha",
+    version=version,
     author="",
     author_email="",
     description="",

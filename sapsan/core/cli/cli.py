@@ -36,6 +36,10 @@ def setup_project(name: str):
     create_init("./{name}/{name}/experiment".format(name=name))
     click.echo("Marked folders as packages.")
 
+    with open("./{name}/version".format(name=name), "w") as file:
+        file.write("0.0.1")
+        click.echo("Created version file.")
+
     with open("./{name}/{name}/algorithm/{name}_algorithm.py".format(name=name), "w") as file:
         file.write(get_algorithm_template(name))
         click.echo("Created algorithm file.")
