@@ -1,4 +1,4 @@
-# Sapsan  <a href="https://github.com/pikarpov-LANL/Sapsan"><img src="docs/images/logo3_black_slim_notitle.png"  alt="Sapsan logo" align="right" width="100"></a>
+# Sapsan  <a href="http://sapsan.app"><img src="docs/images/logo3_black_slim_notitle.png"  alt="Sapsan logo" align="right" width="100"></a>
 
 * [Intro](#intro) 
 * [Structure](#structure)
@@ -17,18 +17,23 @@ Sapsan is a pipeline for easy Machine Learning implementation in scientific proj
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
 ### Getting Started
+
+#### Website
+Feel free to check out a website version with more robust examples at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
+
+#### Local
 To get started, simply pull sapsan via pip (or you could clone this repo)
 
 ```shell script
 pip install sapsan
 ```
-#### Graphical Interface
+##### Graphical Interface
 We've built a Sapsan configuration and running interface with Streamlit. In order to run it type in the following and follow the instrucitons - the interface will be opened in your browser.
 ```shell script
 streamlit run examples/streamlit.py
 ```
 
-#### Command Line Interface
+##### Command Line Interface
 Please run an example to make sure everything has been installed correctly. It is a jupyter notebook which can be found here:
 ```shell script
 Sapsan/examples/cnn_example.ipynb
