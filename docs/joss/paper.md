@@ -74,7 +74,7 @@ To begin, let's focus on a high-level overview of Sapsan. Logically project can 
 all abstractions and necessary classes are located, lib where scientific context is coming to play implementing abstractions 
 from core module and wrapping it up as reusable models in our case turbulence subgrid models and CLI - command line interface 
 for project boilerplate initialization. Idea behind Sapsan approach is simple - organization of workflow within experiments 
-which encapsulate data preparation and optimization \& training leading to a ready-to-go model (Fig. \ref{fig:high_sapsan}). 
+which encapsulate data preparation and optimization \& training leading to a ready-to-go model (Fig.1). 
 Now, let's consider a physical context in which we are working. In particular let's take the example of turbulence subgrid modeling, 
 e.g. a model to predict turbulent behavior at the under-resolved simulation scales
 
@@ -82,7 +82,7 @@ e.g. a model to predict turbulent behavior at the under-resolved simulation scal
   * __Data:__ 3D time-variable magnetohydrodynamic (MHD) turbulence data. ``Sapsan`` is ready to process common HD and MHD, 
     simulation-code-specific data formats, such as HDF5 \& ATHDF (with more to come per community need).
   * __Features:__ usually, the necessary physical features needed for training have to be calculated at the data pre-processing 
-    stage, such as energy, tensor components, and others. These operations are automated within \sapsan.
+    stage, such as energy, tensor components, and others. These operations are automated within ``Sapsan``.
   * __Filter:__ in order to build a subgrid model, one will have to filter the data, e.g. remove small-scale perturbations. 
     An example of such would be either a box or spectral filter.  The data can be filtered on the fly within the framework.
     
@@ -100,8 +100,46 @@ e.g. a model to predict turbulent behavior at the under-resolved simulation scal
     or ''closes'' the governing large-scale equations of motion with small-scale terms. The prediction from a trained ML model is 
     used to provide the needed quantities.
 
-[high-level structure](/images/logo.png)
+![High level overview of ``Sapsan's`` workflow.](high_level_structure.png)
+
+
+# Applications
+
+While ``Sapsan`` is built to be highly customizable to be used in a wide variety of projects in physical sciences, one will find it particularly useful in the study of turbulence. 
+
+## Hydro simulations
+
+Here are a few examples of a turbulence closure model, trained on the high resolution Johns Hopkins Turbulence Database (JHTDB) [@jhtdb2008]. The dataset used in this comparison is a direct numerical simulation (DNS) of statistically-stationary isotropic 3D MHD
+turbulence dataset, 1024<sup>3</sup> in resolution covering ~ one large eddy turnover time, e.i. dynamical time of the system
+[@Eyink2013]. We are comparing with a commonly used Dynamic Smagorinsky (DS) turbulence closure model. On ``Sapsan``  side, a Kernel
+Ridge Regression model [@murphy2004] is used to demonstrate the effectiveness of conventional ML approaches in tackling turbulence
+problems. In this test we used the following setup:
+
+
+* __Train features:__ velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at timestep = 1. All quantities have been filtered to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
+* __Model Input:__ low fidelity velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
+* __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
+
+In Figure \ref{fig:jhtdb}, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, e.i. statistical distribution of the stress tensor. The results are consistent with [@king2016].
+
+
+Fig 2
+
+## Supernovae
+If the conventional regression-based ML approach worked well in the previous section, why would one want more? Supernovae host a
+different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
+changing statistics and evolution of the turbulence that is not necessarily isotropic. Depending on the evolutionary stage, turbulence
+can behave drastically different, hence physical constraints of a ML model become necessary. ``Sapsan`` is being built to tackle these
+issues.
+
+A practical example of this were showcased in Figure 2 of [@mohan2020], a paper on physics-embedded CNN AutoEncoder (PhyCAE) algorithm
+applied for turbulence treatment. The results showed a divergence decrease of 3 orders of magnitude from 10<sup>-2</sup> to
+10<sup>-5</sup>, which is a promising result. ``Sapsan`` is employing the algorithm described by [@mohan2020], as well as adapting it
+for our physical constraints of supernovae. Further discussion and demonstration of the methods integrated within 1D Core-Collapse
+Supernovae code can be found on ``Sapsan``'s website ([sapsan.app](https://sapsan.app)).
+
 
 # Acknowledgements
+Developement of ``Sapsan`` was made possible by Earth & Space Sciences Center at Los Alamos National Laboratory - graduate fellowship grant (№). In addition, We would like to thank SciDAC for additional funding (№).
 
 # References
