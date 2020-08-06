@@ -140,6 +140,6 @@ Supernovae code can be found on ``Sapsan``'s website ([sapsan.app](https://sapsa
 
 
 # Acknowledgements
-Developement of ``Sapsan`` was made possible by Earth & Space Sciences Center at Los Alamos National Laboratory - graduate fellowship grant (№). In addition, We would like to thank SciDAC for additional funding (№).
+Development of ``Sapsan`` was supported by the Laboratory Directed Research and Development program and the Center for Space and Earth Science at Los Alamos National Laboratory through the student fellow grant. In addition, We would like to thank DOE SciDAC for additional funding support.
 
 # References
