@@ -1,4 +1,4 @@
-catalyst==19.11.3
+catalyst==20.7
 Click==7.0
 h5py==2.9.0
 jupyter==1.0.0
@@ -18,3 +18,4 @@ torch==1.5.0
 torchvision==0.6.0
 hiddenlayer==0.3
 graphviz==0.14
+streamlit==0.58.0

@@ -27,8 +27,13 @@ from threading import Thread
 from streamlit.ReportThread import add_report_ctx
 import json
 from collections import OrderedDict
-#import plotly.figure_factory as ff
 import plotly.express as px
+import os
+import signal
+import sys
+from st_state_patch import SessionState
+from multiprocessing import Process
+
 
 cf = configparser.RawConfigParser()
 widget_values = {}
@@ -66,7 +71,7 @@ def intro():
 def cnn3d():
     st.title('Sapsan Configuration')
     st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')
-
+    
     st.sidebar.markdown("General Configuration")
     
     try:
@@ -113,7 +118,6 @@ def cnn3d():
                 widget_values[label+'_flag'] = False
                 widget(value = widget_type[widget](default), **additional_params)
     
-
     def widget_history_unchecked(params):
         widget_type = {number:int, number_main:int, text:str, text_main:str, checkbox:bool}
         for i in range(len(params)):
@@ -134,18 +138,38 @@ def cnn3d():
         widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
         
     def show_log(progress_slot, epoch_slot):
-        log_path = 'logs/checkpoints/_metrics.json'
+        from datetime import datetime
+        
+        #log_path = 'logs/checkpoints/_metrics.json'
+        log_path = 'logs/log.txt'
         log_exists = False
         while log_exists == False:
             if os.path.exists(log_path):
                 log_exists = True
             time.sleep(0.1)
             
-        plot_data = {'epoch':[], 'loss':[]}
+        plot_data = {'epoch':[], 'train_loss':[]}
         last_epoch = 0
-        running = True        
+        running = True
+        
+        start_time= datetime.now()
         while running:
             with open(log_path) as file:
+                #get the date of the latest event
+                lines = list(file)
+                latest_time = lines[-4].replace(",",".")
+                latest_time = datetime.strptime(latest_time, '[%Y-%m-%d %H:%M:%S.%f] ')
+
+                #check for the newest entry
+                if start_time > latest_time:
+                    continue
+                else:
+                    current_epoch = int(lines[-2].split('/')[0])
+                    train_loss = float(lines[-2].split('loss=')[-1])
+                    valid_loss = float(lines[-1].split('loss=')[-1])
+
+                '''
+                #to read a .json file
                 data = OrderedDict(json.load(file))
                 elem = list(data.keys())
 
@@ -153,14 +177,15 @@ def cnn3d():
                     current_epoch = int(elem[-1].rpartition('_')[-1]) + 1
                 else:
                     current_epoch = -1
-                
+                '''
             if current_epoch == last_epoch or current_epoch == -1:
                 pass
             else:     
-                metrics = data['epoch_%d'%(current_epoch-1)][-1]
-                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Loss:$~$**%.4e**'%(current_epoch, metrics['loss']))
+                #metrics = data['epoch_%d'%(current_epoch-1)][-1]
+                metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
+                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
                 plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
-                plot_data['loss'] = np.append(plot_data['loss'], metrics['loss'])                
+                plot_data['train_loss'] = np.append(plot_data['train_loss'], metrics['train_loss'])                
                 df = pd.DataFrame(plot_data)
                 
                 if len(plot_data['epoch']) == 1:
@@ -168,7 +193,7 @@ def cnn3d():
                 else:
                     plotting_routine = px.line
                 
-                fig = plotting_routine(df, x="epoch", y="loss", 
+                fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
                               title='Training Progress', width=700, height=400)
                 fig.layout.hovermode = 'x'
                 progress_slot.plotly_chart(fig)
@@ -192,9 +217,16 @@ def cnn3d():
             widget_values['mlflow_host'],widget_values['mlflow_port'])
         
         #Load the data
+        
+        features = widget_values['features'].split(',')
+        features = [i.strip() for i in features]
+        
+        target = widget_values['target'].split(',')
+        target = [i.strip() for i in features]        
+        
         x, y = HDF5Dataset(path=widget_values['path'],
-                           features=widget_values['features'],
-                           target=widget_values['target'],
+                           features=features,
+                           target=target,
                            checkpoints=[0],
                            grid_size=int(widget_values['grid_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
@@ -207,7 +239,7 @@ def cnn3d():
                                      model=estimator,
                                      inputs=x, targets=y)
         
-        #Plot progress
+        #Plot progress        
         progress_slot = st.empty()
         epoch_slot = st.empty()
         
@@ -225,9 +257,9 @@ def cnn3d():
         #--- Test the model ---
         #Load the test data
         x, y = HDF5Dataset(path=widget_values['path'],
-                           features=widget_values['features'],
-                           target=widget_values['target'],
-                           checkpoints=[0],
+                           features=features,
+                           target=target,
+                           checkpoints=[0], 
                            grid_size=int(widget_values['grid_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler).load()
@@ -249,6 +281,9 @@ def cnn3d():
         st.pyplot()
     
     #--- Load Default ---
+    
+    state = SessionState()
+    
     #button = make_recording_widget(st.sidebar.button)
     number = make_recording_widget(st.sidebar.number_input)
     number_main = make_recording_widget(st.number_input)
@@ -258,7 +293,7 @@ def cnn3d():
     selectbox = make_recording_widget(st.sidebar.selectbox)
     
     config_file = st.sidebar.text_input('Configuration file', "st_config.txt", type='default')
-    
+        
     if st.sidebar.button('reload config'):
         #st.caching.clear_cache()
         config = load_config(config_file)
@@ -370,12 +405,20 @@ def cnn3d():
 
     if st.button("Run experiment"):
         start = time.time()
-        try: os.remove('logs/checkpoints/_metrics.json')
+        try: os.remove('logs/logs.txt')
         except: pass
+        
+        #p = Process(target=run_experiment)
+        #p.start()
+        #state.pid = p.pid
         
         run_experiment()
         
-        st.write('Finished in %.2f mins'%((time.time()-start)/60))
+        st.write('Finished in %.2f mins'%((time.time()-start)/60)) 
+    
+    #if st.button("Stop experiment"):
+            #sys.exit('Experiment stopped')
+    #        st.stop
         
         
     if st.button("MLflow tracking"):

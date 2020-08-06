@@ -21,7 +21,7 @@ import json
 from typing import Dict
 
 import torch
-from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
+from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
 
 from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
@@ -84,7 +84,10 @@ class CNN3dConfig(EstimatorConfig):
             "grid_dim": self.grid_dim,
         }
 
-
+class SkipCheckpointCallback(CheckpointCallback):
+    def on_epoch_end(self, state):
+        pass
+    
 class CNN3d(Estimator):
 
     def __init__(self, config: CNN3dConfig):
@@ -122,7 +125,40 @@ class CNN3d(Estimator):
             optimizer,
             patience=3,
             min_lr=1e-5)
+        
+        lr=0.001
+        '''
+        for e in range(10):
+            print('epoch', e)
+            for i, data in enumerate(loaders['train'],0):
+                
+                inputs, target = data
+                y_pred = model(inputs)
 
+                loss = loss_func(y_pred, target)
+
+                model.zero_grad()
+
+                loss.backward()
+
+                with torch.no_grad():
+                    for param in model.parameters():
+                        param -=  lr* param.grad
+                        
+            for i, data in enumerate(loaders['test'],0):
+                
+                inputs, target = data
+                y_pred = model(inputs)
+
+                loss = loss_func(y_pred, target)
+
+                with torch.no_grad():
+                    for param in model.parameters():
+                        param -=  lr* param.grad
+            
+
+        
+        '''
         self.runner.train(model=model,
                           criterion=loss_func,
                           optimizer=optimizer,
@@ -131,10 +167,13 @@ class CNN3d(Estimator):
                           logdir=self.config.logdir,
                           num_epochs=self.config.n_epochs,
                           callbacks=[EarlyStoppingCallback(patience=self.config.patience,
-                                                           min_delta=self.config.min_delta)],
+                                                           min_delta=self.config.min_delta),
+                                    #CheckpointCallback(save_n_best=0), 
+                                    SkipCheckpointCallback()
+                                    ],
                           verbose=False,
                           check=False)
-
+        
         return model
 
     def save(self, path):
