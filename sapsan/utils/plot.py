@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str]] = None):
     """ PDF plot
 
-    @param series: series of numpy arrays to build pds plot from
+    @param series: series of numpy arrays to build a pdf plot from
     @param bins: number of bins
     @param names: name of series in case of multiseries plot
     @return: pyplot object
@@ -33,7 +33,7 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
 def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
     """ CDF plot
 
-    @param series: series of numpy arrays to build pds plot from
+    @param series: series of numpy arrays to build a cdf plot
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
@@ -42,9 +42,9 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
         names = ["Data {}".format(i) for i in range(len(series))]
 
     func = []
-    print('shapes', np.shape(series))
-    val = np.zeros((np.shape(series)[0],np.shape(series)[1]*np.shape(series)[2]))
+    val = np.zeros((len(series),np.prod(np.shape(series[0]))))
     for idx, data in enumerate(series):
+        print(idx)
         val[idx] = np.sort(data.flatten())
 
         #cdf calculation via linear interpolation
@@ -69,11 +69,13 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
                      r'$\rm ks_{line}$'+' = %.3e\n'%Dmax+
                      r'$\rm line_{pos}$'+' = %.3e'%Dpos)
 
-            plt.figtext(0.17, 0.6, txt, fontsize=14)        
+            plt.figtext(0.15, 0.55, txt, fontsize=14)        
 
     plt.legend()
     plt.xlabel('Values')
-    plt.ylabel('CDF')        
+    plt.ylabel('CDF')
+    
+    return plt
 
     
 def slice_of_cube(data: np.ndarray,

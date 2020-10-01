@@ -21,7 +21,7 @@ import json
 from typing import Dict
 
 import torch
-from catalyst.dl import SupervisedRunner, EarlyStoppingCallback
+from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
 
 from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
@@ -31,19 +31,20 @@ class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in, D_out):
         super(CNN3dModel, self).__init__()
 
-        self.conv3d = torch.nn.Conv3d(D_in, 72, 2, stride=2, padding=1)
+        self.conv3d = torch.nn.Conv3d(D_in, D_in*2, 2, stride=2, padding=1)
         self.pooling = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d2 = torch.nn.Conv3d(72, 72, 2, stride=2, padding=1)
+        self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*2, 2, stride=2, padding=1)
         self.pooling2 = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d3 = torch.nn.Conv3d(72, 144, 2, stride=2, padding=1)
+        self.conv3d3 = torch.nn.Conv3d(D_in*2, D_in*4, 2, stride=2, padding=1)
         self.pooling3 = torch.nn.MaxPool3d(kernel_size=2)
 
         self.relu = torch.nn.ReLU()
 
-        self.linear = torch.nn.Linear(144, 288)
-        self.linear2 = torch.nn.Linear(288, D_out)
+        self.linear = torch.nn.Linear(D_in*4, D_in*8)
+        self.linear2 = torch.nn.Linear(D_in*8, D_out)
 
-    def forward(self, x):
+    def forward(self, x): 
+        x = x.float()
         c1 = self.conv3d(x)
         p1 = self.pooling(c1)
         c2 = self.conv3d2(self.relu(p1))
@@ -71,6 +72,11 @@ class CNN3dConfig(EstimatorConfig):
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.parameters = {
+                        "model - n_epochs": self.n_epochs,
+                        "model - min_delta": self.min_delta,
+                        "model - patience": self.patience,
+                    }
 
     @classmethod
     def load(cls, path: str):
@@ -79,12 +85,12 @@ class CNN3dConfig(EstimatorConfig):
             return cls(**cfg)
 
     def to_dict(self):
-        return {
-            "n_epochs": self.n_epochs,
-            "grid_dim": self.grid_dim,
-        }
+        return self.parameters
 
-
+class SkipCheckpointCallback(CheckpointCallback):
+    def on_epoch_end(self, state):
+        pass
+    
 class CNN3d(Estimator):
 
     def __init__(self, config: CNN3dConfig):
@@ -100,7 +106,10 @@ class CNN3d(Estimator):
         self.model = CNN3dModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
         
     def predict(self, inputs):
-        return self.model(torch.as_tensor(inputs)).cpu().data.numpy()
+        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
+        else: data = torch.as_tensor(inputs).cuda()
+        
+        return self.model(data).cpu().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
@@ -115,13 +124,13 @@ class CNN3d(Estimator):
 
         model = self.model
         model.to(self.device)
-
+        
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         loss_func = torch.nn.MSELoss()  # torch.nn.SmoothL1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
             patience=3,
-            min_lr=1e-5)
+            min_lr=1e-5) 
 
         self.runner.train(model=model,
                           criterion=loss_func,
@@ -131,10 +140,22 @@ class CNN3d(Estimator):
                           logdir=self.config.logdir,
                           num_epochs=self.config.n_epochs,
                           callbacks=[EarlyStoppingCallback(patience=self.config.patience,
-                                                           min_delta=self.config.min_delta)],
+                                                           min_delta=self.config.min_delta),
+                                    SkipCheckpointCallback()
+                                    ],
                           verbose=False,
                           check=False)
+        
+        self.config.parameters['model - device'] = self.runner.device         
+        self.model_metrics['final epoch'] = self.runner.epoch-1
+        for key,value in self.runner.epoch_metrics.items():
+            self.model_metrics[key] = value
 
+        with open('model_details.txt', 'w') as file:
+            file.write('%s\n\n%s\n\n%s'%(str(self.runner.model),
+                                   str(self.runner.optimizer),
+                                   str(self.runner.scheduler)))
+        
         return model
 
     def save(self, path):

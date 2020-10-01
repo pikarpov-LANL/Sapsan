@@ -12,7 +12,10 @@ class MLflowBackend(ExperimentBackend):
                                                         port=port)
         mlflow.set_tracking_uri(self.mlflow_url)
         self.experiment_id = mlflow.set_experiment(name)
-
+        
+    def start(self, run_name: str):
+        mlflow.start_run(run_name = run_name)
+        
     def log_metric(self, name: str, value: float):
         mlflow.log_metric(name, value)
 
@@ -21,3 +24,6 @@ class MLflowBackend(ExperimentBackend):
 
     def log_artifact(self, path: str):
         mlflow.log_artifact(path)
+
+    def end(self):
+        mlflow.end_run()
