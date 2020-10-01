@@ -31,23 +31,25 @@ class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in, D_out):
         super(CNN3dModel, self).__init__()
 
-        self.conv3d = torch.nn.Conv3d(D_in, 72, 2, stride=2, padding=1)
+        self.conv3d = torch.nn.Conv3d(D_in, D_in*2, 2, stride=2, padding=1)
         self.pooling = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d2 = torch.nn.Conv3d(72, 72, 2, stride=2, padding=1)
+        self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*2, 2, stride=2, padding=1)
         self.pooling2 = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d3 = torch.nn.Conv3d(72, 144, 2, stride=2, padding=1)
+        self.conv3d3 = torch.nn.Conv3d(D_in*2, D_in*4, 2, stride=2, padding=1)
         self.pooling3 = torch.nn.MaxPool3d(kernel_size=2)
 
         self.relu = torch.nn.ReLU()
 
-        self.linear = torch.nn.Linear(144, 288)
-        self.linear2 = torch.nn.Linear(288, D_out)
+        self.linear = torch.nn.Linear(D_in*4, D_in*8)
+        self.linear2 = torch.nn.Linear(D_in*8, D_out)
 
-    def forward(self, x):
-        c1 = self.conv3d(x)
-        p1 = self.pooling(c1)
-        c2 = self.conv3d2(self.relu(p1))
-        p2 = self.pooling2(c2)
+    def forward(self, x): 
+        x = x.float()
+        print('x', np.shape(x))
+        print('c1', np.shape(c1))
+        print('p1', np.shape(p1))
+        print('c2', np.shape(c2))
+        print('p2', np.shape(p2))
 
         c3 = self.conv3d3(self.relu(p2))
         p3 = self.pooling3(c3)
@@ -71,6 +73,11 @@ class CNN3dConfig(EstimatorConfig):
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.parameters = {
+                        "model - n_epochs": self.n_epochs,
+                        "model - min_delta": self.min_delta,
+                        "model - patience": self.patience,
+                    }
 
     @classmethod
     def load(cls, path: str):
@@ -79,10 +86,7 @@ class CNN3dConfig(EstimatorConfig):
             return cls(**cfg)
 
     def to_dict(self):
-        return {
-            "n_epochs": self.n_epochs,
-            "grid_dim": self.grid_dim,
-        }
+        return self.parameters
 
 class SkipCheckpointCallback(CheckpointCallback):
     def on_epoch_end(self, state):
@@ -103,7 +107,10 @@ class CNN3d(Estimator):
         self.model = CNN3dModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
         
     def predict(self, inputs):
-        return self.model(torch.as_tensor(inputs)).cpu().data.numpy()
+        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
+        else: data = torch.as_tensor(inputs).cuda()
+        
+        return self.model(data).cpu().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
@@ -118,47 +125,14 @@ class CNN3d(Estimator):
 
         model = self.model
         model.to(self.device)
-
+        
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         loss_func = torch.nn.MSELoss()  # torch.nn.SmoothL1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
             patience=3,
-            min_lr=1e-5)
-        
-        lr=0.001
-        '''
-        for e in range(10):
-            print('epoch', e)
-            for i, data in enumerate(loaders['train'],0):
-                
-                inputs, target = data
-                y_pred = model(inputs)
+            min_lr=1e-5) 
 
-                loss = loss_func(y_pred, target)
-
-                model.zero_grad()
-
-                loss.backward()
-
-                with torch.no_grad():
-                    for param in model.parameters():
-                        param -=  lr* param.grad
-                        
-            for i, data in enumerate(loaders['test'],0):
-                
-                inputs, target = data
-                y_pred = model(inputs)
-
-                loss = loss_func(y_pred, target)
-
-                with torch.no_grad():
-                    for param in model.parameters():
-                        param -=  lr* param.grad
-            
-
-        
-        '''
         self.runner.train(model=model,
                           criterion=loss_func,
                           optimizer=optimizer,
@@ -168,11 +142,20 @@ class CNN3d(Estimator):
                           num_epochs=self.config.n_epochs,
                           callbacks=[EarlyStoppingCallback(patience=self.config.patience,
                                                            min_delta=self.config.min_delta),
-                                    #CheckpointCallback(save_n_best=0), 
                                     SkipCheckpointCallback()
                                     ],
                           verbose=False,
                           check=False)
+        
+        self.config.parameters['model - device'] = self.runner.device         
+        self.model_metrics['final epoch'] = self.runner.epoch-1
+        for key,value in self.runner.epoch_metrics.items():
+            self.model_metrics[key] = value
+
+        with open('model_details.txt', 'w') as file:
+            file.write('%s\n\n%s\n\n%s'%(str(self.runner.model),
+                                   str(self.runner.optimizer),
+                                   str(self.runner.scheduler)))
         
         return model
 

@@ -11,6 +11,7 @@ n_epochs = 1
 patience = 10
 min_delta = 1e-5
 path = ../data/t{checkpoint:1.0f}/{feature}_dim32_fm15.h5
+checkpoints = 0
 features = u
 target = u
 backend_selection = Fake

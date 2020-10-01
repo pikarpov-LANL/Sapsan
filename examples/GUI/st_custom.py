@@ -34,41 +34,10 @@ import sys
 from st_state_patch import SessionState
 from multiprocessing import Process
 
-
 cf = configparser.RawConfigParser()
 widget_values = {}
 
-
-def intro():
-    st.sidebar.success("Select an experiment above")
-
-    st.markdown(
-        """
-        Sapsan is a pipeline for easy Machine Learning implementation in scientific projects.
-        That being said, its primary goal and featured models are geared towards dynamic MHD 
-        turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning
-        models in its set of tools to accurately capture the turbulent nature appicable to 
-        Core-Collapse Supernovae.
-
-        Note: currently Sapsan is in alpha, but we are actively working on it and introduce new 
-        feature on a daily basis.        
-
-        **👈 Select an experiment from the dropdown on the left** to see what Sapsan can do!
-        ### Want to learn more?
-        - Check out Sapsan on [Github](https://github.com/pikarpov-LANL/Sapsan)
-    """
-    )
-    
-    show_license = st.checkbox('License Information', value=False)
-    if show_license:
-        st.markdown(
-            """
-© (or copyright) 2019. Triad National Security, LLC. All rights reserved. This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S. Department of Energy/National Nuclear Security Administration. All rights in the program are reserved by Triad National Security, LLC, and the U.S. Department of Energy/National Nuclear Security Administration. The Government is granted for itself and others acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license in this material to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.
-        """
-        )
-        
-            
-def cnn3d():
+def custom():
     st.title('Sapsan Configuration')
     st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')
     
@@ -214,20 +183,22 @@ def cnn3d():
             
         elif widget_values['backend_selection'] == 'MLflow':
             tracking_backend = MLflowBackend(widget_values['experiment name'], 
-            widget_values['mlflow_host'],widget_values['mlflow_port'])
+                                             widget_values['mlflow_host'],widget_values['mlflow_port'])
         
         #Load the data
-        
         features = widget_values['features'].split(',')
         features = [i.strip() for i in features]
         
         target = widget_values['target'].split(',')
-        target = [i.strip() for i in target]        
+        target = [i.strip() for i in target]     
+        
+        checkpoints = widget_values['checkpoints'].split(',')
+        checkpoints = [float(i.strip()) for i in checkpoints]    
         
         data_loader = HDF5Dataset(path=widget_values['path'],
                            features=features,
                            target=target,
-                           checkpoints=[0],
+                           checkpoints=checkpoints,
                            grid_size=int(widget_values['grid_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
@@ -261,7 +232,7 @@ def cnn3d():
         data_loader = HDF5Dataset(path=widget_values['path'],
                            features=features,
                            target=target,
-                           checkpoints=[0], 
+                           checkpoints=checkpoints, 
                            grid_size=int(widget_values['grid_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
@@ -294,7 +265,7 @@ def cnn3d():
     checkbox = make_recording_widget(st.sidebar.checkbox)
     selectbox = make_recording_widget(st.sidebar.selectbox)
     
-    config_file = st.sidebar.text_input('Configuration file', "st_config.txt", type='default')
+    config_file = st.sidebar.text_input('Configuration file', "st_config_custom.txt", type='default')
         
     if st.sidebar.button('reload config'):
         #st.caching.clear_cache()
@@ -338,6 +309,7 @@ def cnn3d():
 
     
     widget_history_checkbox('Data',[{'label':'path', 'default':config['path'], 'widget':text},
+                                    {'label':'checkpoints', 'default':config['checkpoints'], 'widget':text},
                                     {'label':'features', 'default':config['features'], 'widget':text},
                                     {'label':'target', 'default':config['target'], 'widget':text},
                                     {'label':'checkpoint_data_size', 'default':config['checkpoint_data_size'], 
@@ -367,6 +339,7 @@ def cnn3d():
     show_config = [
         ['experiment name',  widget_values["experiment name"]],
         ['data path', widget_values['path']],
+        ['checkpoints', widget_values['checkpoints']],
         ['features', widget_values['features']],
         ['target', widget_values['target']],
         ['Dimensionality of the data', widget_values['axis']],
@@ -435,152 +408,3 @@ def cnn3d():
         file.write('[config]\n')
         for key, value in widget_values.items():
             file.write('%s = %s\n'%(key, value))
-        
-        
-def custom():
-    st.markdown("# Construction ongoing!")
-    
-def ccsn():
-    import os
-    
-    st.markdown("# 1D Core-Collapse Supernovae Experiment")
-    st.write('Below is an example on our ML implementation within 1D CCSN code developed by Chris Fryer (Los Alamos National Laboratory)')
-    
-    def run_ccsn():
-        os.system("./ChCode/run15f1/st_test")
-        st.error("At line 4617 of file 1dburn.f (unit = 60, file = 'tst1')")
-    
-    if st.button("Run experiment"):
-        run_ccsn()
-        
-        
-def config_write(var, file):
-    cf.read(config_file)
-    cf['sapsan_config'][''] = '1123'
-    with open(config_file, 'w') as file:
-        cf.write(file)
-    
-def test(): 
-    st.write('----Before----')
-    try:
-        cf.read('temp.txt')
-        temp = dict(cf.items('config'))
-        st.write(temp)
-    except: st.write('no temp 8(')
-
-    def make_recording_widget(f):
-        """Return a function that wraps a streamlit widget and records the
-        widget's values to a global dictionary.
-        """
-        def wrapper(label, *args, **kwargs):
-            widget_value = f(label, *args, **kwargs)
-            widget_values[label] = widget_value
-            return widget_value
-
-        return wrapper
-
-    def widget_history(name, default):
-        if checkbox(name+'_checkbox'):
-            try:
-                if widget_values['flag'] == True:
-                    widget_values['flag'] = False
-                    try:
-                        widget_values[name+'_default'] = int(temp[name])
-                        number("recorded number", value = int(temp[name]))
-                    except: number(name, value = widget_values[name+'_default'])
-                else:
-                    number(name, value = widget_values[name+'_default'])
-                st.write('I tried and succeded')
-            except: 
-                widget_values['flag'] = False
-                number(name, value = default)  
-        else:
-            widget_values['flag'] = True        
-            widget_values[name+'_default'] = default
-    
-    
-    button = make_recording_widget(st.button)
-    number = make_recording_widget(st.number_input)
-    checkbox = make_recording_widget(st.checkbox)
-    #button("recorded button")
-    name = 'recorded number'
-    default = 10
-    if st.button("reset"):
-        widget_values[name+'_default'] = default
-        widget_values[name] = default
-        widget_values['flag'] = False
-        st.write(widget_values[name], widget_values[name+'_default'])
-        #widget_history(name, default)
-    
-    
-
-            
-    name = 'recorded number'
-    print(widget_history(name, default))
-    
-
-        
-    st.write('----After----')
-    st.write("recorded values: ", widget_values)
-    
-    with open('temp.txt', 'w') as file:
-        file.write('[config]\n')
-        for key, value in widget_values.items():
-            file.write('%s = %s\n'%(key, value))
-
-   
-
-
-'''
-@st.cache(allow_output_mutation=True, suppress_st_warning=True)
-def write_config(config_file, config):
-    with open(config_file, 'w') as file:
-        st.write('writing to file! ', config['n_epochs'])
-        file.write('[sapsan_config]\n')
-        for key, value in config.items():
-            file.write('%s = %s \n'%(key, value))
-
-def index_history_checked(params):
-    widget_type = {number:int, text:str, checkbox:bool, selectbox:int}
-    for i in range(len(params)):
-        default = params[i]['default']
-        widget = params[i]['widget']
-        if 'name' in params[i]: name = params[i]['name']
-        else: name = params[i]['label']
-
-        if widget == selectbox: params[i]['input']='index'
-        else: params[i]['input']='value'
-
-        not_widget_params = ['default', 'widget', 'widget_type', 'name', 'input']
-        additional_params = {key:value for key, value in params[i].items() if key not in not_widget_params}
-        try:
-            if widget_values[name+'_flag'] == True:
-                widget_values[name+'_flag'] = False
-                try:
-                    widget_values[name+'_default'] = widget_type[widget](temp[name])
-                    widget(index = widget_type[widget](temp[name]), **additional_params)
-                except: widget(index = widget_values[name+'_default'], **additional_params)
-            else:
-                widget(index = widget_values[name+'_default'], **additional_params)
-        except: 
-            widget_values[name+'_flag'] = False
-            widget(index = widget_type[widget](default), **additional_params)
-            
-            
-            
-        
-        
-        #index_history_checked([{'label':'backend_selection', 'default':1, 
-        #                        'widget':selectbox, 
-        #                        'options':widget_values['backend_list']}])
-        
-        #'name':'backend_selection_index'
-        
-        #widget_values['backend_selection'] = widget_values['backend_list'][widget_values['backend_selection_index']]
-        #st.write('backend print', widget_values['backend_selection'])
-        
-        
-                #widget_history_unchecked([{'label':'backend_selection', 'name':'backend_selection_index', 'default':1, 
-        #                        'widget':selectbox, 
-        #                        'options':widget_values['backend_list']}])
-'''

@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
-from sapsan.core.models import Dataset, DatasetPlugin, Sampling
+from sapsan.core.models import Dataset, DatasetPlugin, Sampling, ExperimentBackend
 from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
 
 
@@ -36,18 +36,20 @@ class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
         self.shuffle = shuffle
 
     def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
-        x_train, x_test, y_train, y_test = train_test_split(x, y,
-                                                            train_size=self.train_size,
-                                                            shuffle=True)
+        #x_train, x_test, y_train, y_test = train_test_split(x, y,
+        #                                                    train_size=self.train_size,
+        #                                                    shuffle=True)
 
-        train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train),
-                                                        from_numpy(y_train)),
+        x_train = x_test = x
+        y_train = y_test = y
+        train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
+                                                        from_numpy(y_train).float()),
                                   batch_size=self.batch_size,
                                   shuffle=self.shuffle,
                                   num_workers=4)
 
-        val_loader = DataLoader(dataset=TensorDataset(from_numpy(x_test),
-                                                      from_numpy(y_test)),
+        val_loader = DataLoader(dataset=TensorDataset(from_numpy(x_test).float(),
+                                                      from_numpy(y_test).float()),
                                 batch_size=self.batch_size,
                                 shuffle=self.shuffle,
                                 num_workers=4)
@@ -82,7 +84,7 @@ class HDF5Dataset(Dataset):
                  grid_size: int = 64,
                  checkpoint_data_size: int = 128,
                  sampler: Optional[Sampling] = None,
-                 time_granularity: float = 2.5e-3,
+                 time_granularity: float = 1,#2.5e-3,
                  features_label = None,
                  target_label = None,
                  axis: int = 3):
@@ -102,12 +104,28 @@ class HDF5Dataset(Dataset):
         self.grid_size = grid_size
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
+        self.initial_size = checkpoint_data_size
         self.axis = axis
 
         if sampler:
             self.checkpoint_data_size = self.sampler.sample_dim
         self.time_granularity = time_granularity
-
+    
+    def get_parameters(self):
+        return {
+            "data - path": self.path,
+            "data - features": str(self.features)[1:-1].replace("'",""),
+            "data - target": str(self.target)[1:-1].replace("'",""),
+            "data - features_label": self.features_label,
+            "data - target_label": self.target_label,
+            "data - axis": self.axis,
+            "checkpoint - time": self.checkpoints,
+            "checkpoint - batch size": self.grid_size,
+            "checkpoint - initial size": self.initial_size,
+            "checkpoint - sample to size": self.checkpoint_data_size,
+            "checkpoint - time_granularity": self.time_granularity
+        }
+        
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
 
@@ -122,17 +140,21 @@ class HDF5Dataset(Dataset):
         # combine all features into cube with channels
                 
         for col in range(len(columns)):
-            data = h5.File(self._get_path(checkpoint, columns[col]), 'r')
+            file = h5.File(self._get_path(checkpoint, columns[col]), 'r')
             
-            if labels==None: key = list(data.keys())[-1]
+            if labels==None: key = list(file.keys())[-1]
             else: key = label[col]
 
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
             
-            data = data[key]
-            data = np.moveaxis(data, -1, 0)
+            data = file.get(key)
+            
+            if (self.axis==3 and len(np.shape(data))==3) or (self.axis==2 and len(np.shape(data))==2): 
+                data = [data]     
+            #data = np.moveaxis(data, -1, 0)
             all_data.append(data)
-        # checkpoint_data shape: (features, 128, 128, 128)
+            
+        # checkpoint_data shape: (features, 128, 128, 128)        
         checkpoint_data = np.vstack(all_data)
 
         # downsample if needed
