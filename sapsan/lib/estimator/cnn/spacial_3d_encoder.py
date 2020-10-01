@@ -45,11 +45,10 @@ class CNN3dModel(torch.nn.Module):
 
     def forward(self, x): 
         x = x.float()
-        print('x', np.shape(x))
-        print('c1', np.shape(c1))
-        print('p1', np.shape(p1))
-        print('c2', np.shape(c2))
-        print('p2', np.shape(p2))
+        c1 = self.conv3d(x)
+        p1 = self.pooling(c1)
+        c2 = self.conv3d2(self.relu(p1))
+        p2 = self.pooling2(c2)
 
         c3 = self.conv3d3(self.relu(p2))
         p3 = self.pooling3(c3)
