@@ -125,22 +125,20 @@ problems. In this test we used the following setup:
 
 In Figure \ref{fig:jhtdb}, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, e.i. statistical distribution of the stress tensor. The results are consistent with [@king2016].
 
-
-![Predicting Turbulent Stress-Tesnor in Core-Collapse Supernovae.](ccsn_mri_plots.png)
-
 ## Supernovae
 If the conventional regression-based ML approach worked well in the previous section, why would one want more? Supernovae host a
 different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
 changing statistics and evolution of the turbulence that is not necessarily isotropic. Depending on the evolutionary stage, turbulence
-can behave drastically different, hence physical constraints of a ML model become necessary. ``Sapsan`` is being built to tackle these
-issues.
+can behave drastically different, hence a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN model 
+in attempts to predict a turbulent velocity stress tensor in a realistic CCSN case. Figure 3 presents results of the following:
 
-A practical example of this were showcased in Figure 2 of [@mohan2020], a paper on physics-embedded CNN AutoEncoder (PhyCAE) algorithm
-applied for turbulence treatment. The results showed a divergence decrease of 3 orders of magnitude from 10<sup>-2</sup> to
-10<sup>-5</sup>, which is a promising result. ``Sapsan`` is employing the algorithm described by [@mohan2020], as well as adapting it
-for our physical constraints of supernovae. Further discussion and demonstration of the methods integrated within 1D Core-Collapse
-Supernovae code can be found on ``Sapsan``'s website ([sapsan.app](https://sapsan.app)).
+* __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at timestep = 1. All quantities have been filtered to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
+* __Model Input:__ low fidelity velocity (*u*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
+* __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
 
+In this case, the matching level of the distributions is the most important factor. It can be seen that the probability density functions match quite closely, with the outlier beeing the exception, even though prediction is done far into the future (timestep=500). For further discussion on comparison of the models and the results, please refer to [the ApJ paper].
+
+![Predicting Turbulent Stress-Tesnor in Core-Collapse Supernovae.](ccsn_mri_plots.png)
 
 # Acknowledgements
 Development of ``Sapsan`` was supported by the Laboratory Directed Research and Development program and the Center for Space and Earth Science at Los Alamos National Laboratory through the student fellow grant. In addition, We would like to thank DOE SciDAC for additional funding support.
