@@ -126,7 +126,7 @@ problems. In this test we used the following setup:
 In Figure \ref{fig:jhtdb}, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, e.i. statistical distribution of the stress tensor. The results are consistent with [@king2016].
 
 
-Fig 2
+![Predicting Turbulent Stress-Tesnor in Core-Collapse Supernovae.](ccsn_mri_plots.png)
 
 ## Supernovae
 If the conventional regression-based ML approach worked well in the previous section, why would one want more? Supernovae host a
