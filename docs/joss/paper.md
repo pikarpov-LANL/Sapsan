@@ -125,6 +125,8 @@ problems. In this test we used the following setup:
 
 In Figure \ref{fig:jhtdb}, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, e.i. statistical distribution of the stress tensor. The results are consistent with [@king2016].
 
+![Predicting turbulent stress-tesnor in statistically-stationary isotropic MHD turbulence setup.](JHTDB.png)
+
 ## Supernovae
 If the conventional regression-based ML approach worked well in the previous section, why would one want more? Supernovae host a
 different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
