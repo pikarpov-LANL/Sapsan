@@ -73,11 +73,8 @@ This paper will go into details behind ``Sapsan`` following the outline:
 ``Sapsan`` is built to be versatile, flexible, and reproducible, while being easy to use. In this section we will examine 
 how each of these are achieved.
 
-To begin, let's focus on a high-level overview of Sapsan. Logically, the project can be separated into three modules: *core*, where 
-all abstractions and necessary classes are located, *lib*, where scientific context is coming to play implementing abstractions 
-from the *core* module and wrapping it up as reusable models, in our case turbulence subgrid models, and *CLI* - command line interface 
-for project boilerplate initialization. The idea behind Sapsan's approach is simple - organization of workflow within experiments 
-which encapsulate data preparation and optimization \& training leading to a ready-to-go model (Fig.1). 
+The idea behind Sapsan's approach is simple - organization of workflow within experiments 
+which encapsulate data preparation and optimization \& training leading to a ready-to-go model, which can be represented by three respective modules (Fig.1). 
 Now, let's consider a physical context in which we are working. In particular, let's take the example of turbulence subgrid modeling, 
 e.g. a model to predict turbulent behavior at the under-resolved simulation scales.
 
