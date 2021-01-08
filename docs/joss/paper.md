@@ -38,7 +38,7 @@ the community.
 
 Turbulence is ubiquitous in astrophysical environments; however, it involves physics at a vast range of temporal and spatial 
 scales, making accurate fully-resolved modeling difficult. Various analytical turbulence models have been developed to be used 
-in simulations using time or spatial averaged governing equations, but accuracy is lacking. In search of better methods to model 
+in simulations using time or spatial averaged governing equations, such as in RANS (Reynolds-averaged Navier-Stokes) and LES (Large Eddy Simulation), but accuracy is lacking. In search of better methods to model 
 turbulence in core-collapse supernovae, it became apparent that ML has great potential 
 to produce more accurate turbulence models on unaveraged subgrid scale than the current methods. Scientists from both industry and 
 academia [@king2016], [@zhang2018] have already began using ML for applied turbulent problems, but none reach out to 
@@ -46,7 +46,7 @@ a theoretical medium of physics and astronomy community on a practical level. Fo
 evaluation and interpretability tools are not standardized nor they are widely available. As a result, it is a common 
 struggle to verify published results, with the setup not fully disclosed, the code being poorly structured and/or commented or 
 even worse - not publicly available; the problem ML community can relate to as well[cite a decade review]. Thus, it is not surprising that there is considerable skepticism 
-against ML in physical sciences is very abundant, with astrophysics being no exception. [@carleo2019]
+against ML in physical sciences is very abundant, with astrophysics being no exception [@carleo2019].
 
 In pursuit of our supernova (SNe) study, the issues outlined above became painfully apparent. Thus, we attempted to simplify 
 the barrier to entry for new researchers in domain science fields to employ ML, with the main 
@@ -76,10 +76,10 @@ how each of these are achieved.
 To begin, let's focus on a high-level overview of Sapsan. Logically, the project can be separated into three modules: *core*, where 
 all abstractions and necessary classes are located, *lib*, where scientific context is coming to play implementing abstractions 
 from the *core* module and wrapping it up as reusable models, in our case turbulence subgrid models, and *CLI* - command line interface 
-for project boilerplate initialization. The idea behind Sapsan approach is simple - organization of workflow within experiments 
+for project boilerplate initialization. The idea behind Sapsan's approach is simple - organization of workflow within experiments 
 which encapsulate data preparation and optimization \& training leading to a ready-to-go model (Fig.1). 
 Now, let's consider a physical context in which we are working. In particular, let's take the example of turbulence subgrid modeling, 
-e.g. a model to predict turbulent behavior at the under-resolved simulation scales
+e.g. a model to predict turbulent behavior at the under-resolved simulation scales.
 
 * __Data Module__
   * __Data:__ 3D time-variable magnetohydrodynamic (MHD) turbulence data. ``Sapsan`` is ready to process common 3D HD and MHD turbulence data, 
@@ -114,7 +114,7 @@ While ``Sapsan`` is built to be highly customizable to be used in a wide variety
 
 Here are a few examples of a turbulence closure model, trained on the high resolution Johns Hopkins Turbulence Database (JHTDB) [@jhtdb2008]. The dataset used in this comparison is a direct numerical simulation (DNS) of statistically-stationary isotropic 3D MHD
 turbulence dataset, 1024<sup>3</sup> in spatial resolution and covering roughly one large eddy turnover time over 1024 checkpoints, e.i. dynamical time of the system
-[@Eyink2013]. We are comparing with a commonly used Dynamic Smagorinsky (DS) turbulence closure model. On ``Sapsan``  side, a Kernel
+[@Eyink2013]. We are comparing with a commonly used Dynamic Smagorinsky (DS) turbulence closure model [@lilly1966]. On ``Sapsan``  side, a Kernel
 Ridge Regression model [@murphy2004] is used to demonstrate the effectiveness of conventional ML approaches in tackling turbulence
 problems. In this test we used the following setup:
 
@@ -123,7 +123,7 @@ problems. In this test we used the following setup:
 * __Model Input:__ low fidelity velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
 * __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
 
-In Figure 2, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, e.i. statistical distribution of the stress tensor. The results are consistent with [@king2016].
+In Figure 2, it can be seen that ML-based approach significantly outperforms DS subgrid model in reproducing the probability density function, i.e. statistical distribution of the stress tensor. The results are consistent with [@king2016].
 
 ![Predicting turbulent stress-tesnor in statistically-stationary isotropic MHD turbulence setup. The outmost left plot compares the original spatial map of the stree-tensor component to the plot in the middle depicting the predicted spatial map. The plot on the right presents probability density functions (PDF), i.e. distributions, of the original stress-tensor component values, the ML predicted values, and the conventional DS subgrid model prediction.](JHTDB.png)
 
@@ -131,16 +131,16 @@ In Figure 2, it can be seen that ML-based approach significantly outperforms DS 
 Even though the conventional regression-based ML approach worked well in the previous section, the complexity of our physical problem forced us to seek a more rigurous ML method. Supernovae host a
 different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
 changing statistics and evolution of the turbulence that is not necessarily isotropic. Depending on the evolutionary stage, turbulence
-can behave drastically different, hence a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN model 
-in attempts to predict a turbulent velocity stress tensor in a realistic CCSN case. Figure 3 presents results of the following:
+can behave drastically different, hence a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN (Convolutional Neural Network) model 
+in attempts to predict a turbulent velocity stress tensor in a realistic Core-Collapse Supernova (CCSN) case. Figure 3 presents results of the following:
 
 * __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at timestep = 1. All quantities have been filtered to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
 * __Model Input:__ low fidelity velocity (*u*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
 * __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
 
-In this case, the matching level of the distributions is the most important factor. It can be seen that the probability density functions match quite closely, with the outlier beeing the exception, even though prediction is done far into the future (timestep=500). For further discussion on comparison of the models and the results, please refer to [the ApJ paper].
+In this case, the matching level of the distributions is the most important factor. It can be seen that the probability density functions match quite closely, with the outlier at the most negative values being the exception, even though prediction is done far into the future (timestep=500). For further discussion on comparison of the models and the results, please refer to [the ApJ paper].
 
-![Predicting Turbulent Stress-Tesnor in a Core-Collapse Supernovae. The model has been trained on a 3D MHD direct numerical simulation (DNS) of the first 10ms after shockwave has bounced off of the core in a CCSN scenario. On the left, the two figures are the 2D slices of a 3D data-cube prediction, with the right plot presenting a comparison of PDFs of the original 3D data, 3D ML prediction, and a conventional Gradient subgrid model.](ccsn_mri_plots.png)
+![Predicting Turbulent Stress-Tesnor in a Core-Collapse Supernovae (CCSN). The model has been trained on a 3D MHD direct numerical simulation (DNS) of the first 10ms after shockwave has bounced off of the core in a CCSN scenario. On the left, the two figures are the 2D slices of a 3D data-cube prediction, with the right plot presenting a comparison of PDFs of the original 3D data, 3D ML prediction, and a conventional Gradient subgrid model.](ccsn_mri_plots.png)
 
 # Acknowledgements
 Development of ``Sapsan`` was supported by the Laboratory Directed Research and Development program and the Center for Space and Earth Science at Los Alamos National Laboratory through the student fellow grant. In addition, We would like to thank DOE SciDAC for additional funding support.
