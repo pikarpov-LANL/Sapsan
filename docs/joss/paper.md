@@ -45,7 +45,7 @@ academia [@king2016], [@zhang2018] have already began using ML for applied turbu
 a theoretical medium of physics and astronomy community on a practical level. For example, physics-based model 
 evaluation and interpretability tools are not standardized nor they are widely available. As a result, it is a common 
 struggle to verify published results, with the setup not fully disclosed, the code being poorly structured and/or commented or 
-even worse - not publicly available; the problem ML community can relate to as well[cite a decade review]. Thus, it is not surprising that there is considerable skepticism 
+even worse - not publicly available; the problem ML community can relate to as well [@Hutson725]. Thus, it is not surprising that there is considerable skepticism 
 against ML in physical sciences is very abundant, with astrophysics being no exception [@carleo2019].
 
 In pursuit of our supernova (SNe) study, the issues outlined above became painfully apparent. Thus, we attempted to simplify 
@@ -57,16 +57,6 @@ physics-based. More importantly, at its core, the framework is meant to be flexi
 interface for users to work on their own ML algorithms. In addition, ``Sapsan`` brings best practices from the industry when it 
 comes to ML development frameworks. For example, ``Sapsan`` includes docker containers for reproducible release, as well as 
 MLflow\footnote{https://mlflow.org/} for experiment tracking.
-
-
-This paper will go into details behind ``Sapsan`` following the outline:
-    
-* In Section [Framework](#framework) the paper will go over ``Sapsan's``  technical details. We will introduce its structure, 
-  capabilities, and provide description of the built-in CLI and GUI interfaces.
-* In Section [Applications](#applications) we will cover some of the applications in physical sciences. In particular we will delve 
-  into uses in hydrodynamic (HD) and megnetohydrodynamic (MHD) simulations and supernovae modeling.
-* In Section [Discussion](#discussion) a discussion will proceed on broader usability of ``Sapsan`` . In addition, the reader will 
-  find information on near future and long terms plans of the framework's development.
 
 # Framework
 
@@ -89,10 +79,10 @@ e.g. a model to predict turbulent behavior at the under-resolved simulation scal
 * __Machine Learning Module__
 
   * __Model Selection:__ different ML models would be appropriate for different physical regimes. Even though ``Sapsan`` cannot 
-    account for every single physical setup, we have constrained our focus to those suitable for the study of core-collapse supernovae. More details 
-    of ML models can be found in Section [Discussion](#discussion).
-  * __Optimize:__ every ML model has to be optimized. While basic hyperparameter optimization is currently included in ``Sapsan`` 
-    (Section [Framework](#framework)), physics-based optimizations are coming (Section [Discussion](#discussion)).
+    account for every single physical setup, we have constrained our focus to those suitable for the study of core-collapse supernovae. 
+    The framework provides templates for a selection of both conventional and physics-based models with more to come.
+  * __Optimize:__ every ML model has to be optimized. While basic hyperparameter optimization via cross-validation is currently included in ``Sapsan``, 
+  physics-based optimizations will continue to be developed.
   * __Uncertainty:__ conventional and physics-based uncertainty estimation.
 
 * __Model Module__
