@@ -133,7 +133,7 @@ class Evaluate3d(Experiment):
         self.artifacts.append("prediction.png")
         plt.show()
 
-        self.experiment_metrics["MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean() 
+        self.experiment_metrics["MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean()         
 
         for metric, value in self.get_metrics().items():
             self.backend.log_metric(metric, value)
@@ -147,6 +147,6 @@ class Evaluate3d(Experiment):
         self.backend.end()
         self._cleanup()
         
-        return {
-            'runtime': runtime
-        }
+        print("runtime: ", runtime)
+        
+        return target_cube, pred_cube

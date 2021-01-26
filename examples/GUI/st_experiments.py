@@ -195,6 +195,7 @@ def cnn3d():
                 
                 fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
                               title='Training Progress', width=700, height=400)
+                fig.update_layout(yaxis=dict(exponentformat='e'))
                 fig.layout.hovermode = 'x'
                 progress_slot.plotly_chart(fig)
                 

@@ -164,12 +164,13 @@ def custom():
                 
                 fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
                               title='Training Progress', width=700, height=400)
+                fig.update_layout(yaxis=dict(exponentformat='e'))
                 fig.layout.hovermode = 'x'
                 progress_slot.plotly_chart(fig)
                 
                 last_epoch = current_epoch
 
-            if current_epoch == widget_values['n_epochs']: 
+            if current_epoch == widget_values['n_epochs']:
                 return
             
             time.sleep(0.1) 
@@ -210,7 +211,8 @@ def custom():
                                      backend=tracking_backend,
                                      model=estimator,
                                      inputs=x, targets=y,
-                                     data_parameters = data_loader.get_parameters())
+                                     data_parameters = data_loader.get_parameters(),
+                                     show_history = False)
         
         #Plot progress        
         progress_slot = st.empty()
@@ -220,8 +222,8 @@ def custom():
         add_report_ctx(thread)
         thread.start()
 
-        start = time.time()
         #Train the model
+        start = time.time()
         training_experiment.run()
         st.write('Trained in %.2f sec'%((time.time()-start)))
         st.success('Done! Plotting...')

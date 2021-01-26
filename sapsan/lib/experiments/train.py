@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
+from sapsan.utils.plot import log_plot
 
 import os
 import sys
@@ -15,13 +16,15 @@ class Train(Experiment):
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
-                 data_parameters: dict):
+                 data_parameters: dict,
+                 show_history = True):
         super().__init__(name, backend)
         self.model = model
         self.inputs = inputs
         self.targets = targets
         self.data_parameters = data_parameters
         self.artifacts = []
+        self.show_history = show_history
 
     def get_metrics(self) -> Dict[str, float]:
         return self.model.metrics()
@@ -47,7 +50,11 @@ class Train(Experiment):
         runtime = end - start
         
         #if catalyst.runner is not used, then this file won't exist
-        try: self.artifacts.append('model_details.txt')
+        try: 
+            self.artifacts.append('model_details.txt')
+            log = log_plot(self.show_history)
+            log.write_html("runtime_log.html")
+            self.artifacts.append("runtime_log.html")
         except: pass
 
         for metric, value in self.get_metrics().items():
