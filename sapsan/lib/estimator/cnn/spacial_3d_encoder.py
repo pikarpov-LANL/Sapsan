@@ -19,6 +19,7 @@ Example:
 """
 import json
 from typing import Dict
+import numpy as np
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
@@ -30,13 +31,13 @@ from sapsan.core.models import Estimator, EstimatorConfig
 class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in, D_out):
         super(CNN3dModel, self).__init__()
-
-        self.conv3d = torch.nn.Conv3d(D_in, D_in*2, 2, stride=2, padding=1)
-        self.pooling = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*2, 2, stride=2, padding=1)
-        self.pooling2 = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.conv3d3 = torch.nn.Conv3d(D_in*2, D_in*4, 2, stride=2, padding=1)
-        self.pooling3 = torch.nn.MaxPool3d(kernel_size=2)
+        
+        self.conv3d = torch.nn.Conv3d(D_in, D_in*2, kernel_size=2, stride=2, padding=1)
+        self.pool = torch.nn.MaxPool3d(kernel_size=2, padding=1)
+        self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*2, kernel_size=2, stride=2, padding=1)
+        self.pool2 = torch.nn.MaxPool3d(kernel_size=2, padding=1)
+        self.conv3d3 = torch.nn.Conv3d(D_in*2, D_in*4, kernel_size=2, stride=2, padding=1)
+        self.pool3 = torch.nn.MaxPool3d(kernel_size=2)
 
         self.relu = torch.nn.ReLU()
 
@@ -44,18 +45,20 @@ class CNN3dModel(torch.nn.Module):
         self.linear2 = torch.nn.Linear(D_in*8, D_out)
 
     def forward(self, x): 
+
+        torch.cuda.empty_cache()
         x = x.float()
         c1 = self.conv3d(x)
-        p1 = self.pooling(c1)
+        p1 = self.pool(c1)
         c2 = self.conv3d2(self.relu(p1))
-        p2 = self.pooling2(c2)
-
+        p2 = self.pool2(c2)
         c3 = self.conv3d3(self.relu(p2))
-        p3 = self.pooling3(c3)
+        p3 = self.pool3(c3)
+
         v1 = p3.view(p3.size(0), -1)
 
         l1 = self.relu(self.linear(v1))
-        l2 = self.linear2(l1)
+        l2 = self.linear2(l1)   
 
         return l2
 
@@ -115,6 +118,9 @@ class CNN3d(Estimator):
         return self.model_metrics
         
     def train(self, inputs, targets=None):
+        
+        print('Device used:', self.device)
+        
         self.setup_model(inputs.shape[1], targets.shape[1])
         
         output_flatter = OutputFlatterDatasetPlugin()
@@ -123,6 +129,11 @@ class CNN3d(Estimator):
         loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
         model = self.model
+        if torch.cuda.device_count() > 1:
+            print("GPUs available: ", torch.cuda.device_count())
+            print("Note: if batch_size == 1, then only 1 GPU will be used")
+            model = torch.nn.DataParallel(model)
+        
         model.to(self.device)
         
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -132,6 +143,7 @@ class CNN3d(Estimator):
             patience=3,
             min_lr=1e-5) 
 
+        torch.cuda.empty_cache()
         self.runner.train(model=model,
                           criterion=loss_func,
                           optimizer=optimizer,

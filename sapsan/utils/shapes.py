@@ -10,7 +10,7 @@ def split_cube_by_grid(data: np.ndarray,
 
     @param data: (channels, grid_size, grid_size, grid_size)
     @return (batch, channels, grid_size, grid_size, grid_size)
-    """
+    """    
     batch = int(size ** 3 / grid_size ** 3)
     return view_as_blocks(data, block_shape=(n_features, grid_size,
                                              grid_size, grid_size)
