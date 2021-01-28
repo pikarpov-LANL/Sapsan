@@ -30,7 +30,7 @@ pip install sapsan
 ##### Graphical Interface
 We've built a Sapsan configuration and running interface with Streamlit. In order to run it type in the following and follow the instrucitons - the interface will be opened in your browser.
 ```shell script
-streamlit run examples/streamlit.py
+streamlit run examples/GUI/st_intro.py
 ```
 
 ##### Command Line Interface
