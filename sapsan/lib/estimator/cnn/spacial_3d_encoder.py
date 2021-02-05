@@ -65,11 +65,12 @@ class CNN3dModel(torch.nn.Module):
 
 class CNN3dConfig(EstimatorConfig):
     def __init__(self,
-                 n_epochs: int,
+                 n_epochs: int = 1,
                  grid_dim: int = 64,
                  patience: int = 10,
                  min_delta: float = 1e-5, 
-                 logdir: str = "./logs/"):
+                 logdir: str = "./logs/",
+                 *args, **kwargs):
         self.n_epochs = n_epochs
         self.grid_dim = grid_dim
         self.logdir = logdir
