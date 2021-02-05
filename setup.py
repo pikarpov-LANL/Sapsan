@@ -35,7 +35,7 @@ setuptools.setup(
         'mlflow==1.11.0',
         'numpy==1.17.3',
         'pandas==0.25.3',
-        'Pillow==6.2.1',
+        'Pillow==7.1.0',
         'plotly==4.3.0',
         'safitty==1.3',
         'scikit-image==0.16.2',
