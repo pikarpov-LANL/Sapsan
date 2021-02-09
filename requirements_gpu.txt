@@ -14,8 +14,8 @@ scikit-learn==0.23.2
 scipy==1.5.2
 seaborn==0.11.1
 six==1.15.0
-torch==1.7.1
-torchvision==0.8.2
+torch==1.7.1+cu110
+torchvision==0.8.2+cu110
 hiddenlayer==0.3
 graphviz==0.14
 streamlit==0.58.0
