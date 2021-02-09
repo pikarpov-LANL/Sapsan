@@ -16,8 +16,20 @@ Sapsan is a pipeline for easy Machine Learning implementation in scientific proj
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
 ### Getting Started
-To get started, simply pull sapsan via pip (or you could clone this repo)
+To get started, clone this repo and install the requirements
 
+```shell script
+git clone https://github.com/pikarpov-LANL/Sapsan.git
+cd Sapsan/
+pip install -r requirements.txt
+```
+
+If you want to use the GPU enabled version then change the last line to
+```shell script
+pip install -r requirements_gpu.txt
+```
+
+or you can install sapsan via pip
 ```shell script
 pip install sapsan
 ```
