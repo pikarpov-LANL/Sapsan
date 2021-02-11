@@ -8,7 +8,7 @@ class TestExamples(unittest.TestCase):
     """Tests example notebooks."""
 
     def setUp(self) -> None:
-        shutil.copytree("./examples", "./runtime_test_resources")
+        shutil.copytree("./sapsan/examples", "./runtime_test_resources")
 
     def tearDown(self) -> None:
         shutil.rmtree("./runtime_test_resources")
