@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 with open("version", "r") as f:
     version = f.read()
 
-with open("requirements.txt", 'r') as f:
+with open("requirements_gpu.txt", 'r') as f:
     requirements = [i.strip() for i in f.readlines()]
     
 setuptools.setup(
