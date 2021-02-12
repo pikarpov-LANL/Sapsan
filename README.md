@@ -1,4 +1,4 @@
-# Sapsan  <a href="https://github.com/pikarpov-LANL/Sapsan"><img src="docs/images/logo3_black_slim_notitle.png"  alt="Sapsan logo" align="right" width="100"></a>
+# Sapsan  <a href="http://sapsan.app"><img src="docs/images/logo3_black_slim_notitle.png"  alt="Sapsan logo" align="right" width="100"></a>
 
 * [Intro](#intro) 
 * [Structure](#structure)
@@ -7,15 +7,19 @@
   * [Dataset](#dataset)
   * [Tracking backend](#tracking-backend) 
 * [Examples](#examples)
+* [CLI](#cli)
 * [Kubeflow](#kubeflow)
 -------
 
 ### Intro
 Sapsan is a pipeline for easy Machine Learning implementation in scientific projects. That being said, its primary goal and featured models are geared towards dynamic MHD turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
 
+Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
+
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
 ### Getting Started
+
 To get started, clone this repo and install the requirements
 
 ```shell script
@@ -33,13 +37,13 @@ or you can install sapsan via pip
 ```shell script
 pip install sapsan
 ```
-#### Graphical Interface
+##### Graphical Interface
 We've built a Sapsan configuration and running interface with Streamlit. In order to run it type in the following and follow the instrucitons - the interface will be opened in your browser.
 ```shell script
-streamlit run examples/streamlit.py
+streamlit run examples/GUI/st_intro.py
 ```
 
-#### Command Line Interface
+##### Command Line Interface
 Please run an example to make sure everything has been installed correctly. It is a jupyter notebook which can be found here:
 ```shell script
 Sapsan/examples/cnn_example.ipynb
@@ -183,6 +187,22 @@ Examples of implemented experiments.
 - [3d convolution encoder example](./examples/cnn_example.ipynb)
 - [3d audoencoder example](./examples/autoencoder_example.py) *(coming soon!)*
 - [KRR 1d estimator](./examples/krr_example.py) *(coming soon!)*
+
+### CLI
+
+To use structure of Sapsan and CI/CD capabilities run
+```shell script
+sapsan create <NAME>
+cd <NAME>
+git init
+git remote add origin <YOUR_REPOSITORY_ORIGIN>
+git add .
+git commit -m "Initial commit"
+git push origin master
+```
+
+`<NAME>` can be `research` for example.
+
 
 -------
 
