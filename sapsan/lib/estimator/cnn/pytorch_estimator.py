@@ -94,13 +94,13 @@ class TorchEstimator(Estimator):
         self.config.save(params_save_path)
 
     @classmethod
-    def load(cls, path: str):
+    def load(cls, path: str, model=None, config=None):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
 
-        config = cls.config.load(params_save_path)
+        config = config.load(params_save_path)
 
-        estimator = CNN3d(config)
+        estimator = model(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         # model.eval()
         estimator.model = model
