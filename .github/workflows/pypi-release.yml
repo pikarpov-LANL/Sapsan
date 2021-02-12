@@ -7,7 +7,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       release_version: ${{ github.event.release.tag_name }}
 
@@ -42,7 +42,7 @@ jobs:
         
   build-n-publish-gpu:
     name: Build and publish Sapsan-gpu Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       release_version_gpu: ${{ github.event.release.tag_name }}-gpu
 
