@@ -186,10 +186,6 @@ Examples of implemented experiments.
 
 -------
 
-### Kubeflow
-
-[Docs for experiments in kubeflow](./docs/kubeflow.md)
-
 #### Examples
 
 ##### Local via docker compose
