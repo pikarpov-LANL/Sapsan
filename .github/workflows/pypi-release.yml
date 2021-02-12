@@ -61,6 +61,8 @@ jobs:
         setuptools wheel
     - name: Set version for release
       run: >-
+        rm version &&
+        echo $release_version_gpu >> version &&
         echo $release_version_gpu
     - name: Build a binary wheel and a source tarball
       run: >-
