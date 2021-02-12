@@ -14,16 +14,26 @@
 ### Intro
 Sapsan is a pipeline for easy Machine Learning implementation in scientific projects. That being said, its primary goal and featured models are geared towards dynamic MHD turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
 
+Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
+
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
 ### Getting Started
 
-#### Website
-Feel free to check out a website version with more robust examples at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
+To get started, clone this repo and install the requirements
 
-#### Local
-To get started, simply pull sapsan via pip (or you could clone this repo)
+```shell script
+git clone https://github.com/pikarpov-LANL/Sapsan.git
+cd Sapsan/
+pip install -r requirements.txt
+```
 
+If you want to use the GPU enabled version then change the last line to
+```shell script
+pip install -r requirements_gpu.txt
+```
+
+or you can install sapsan via pip
 ```shell script
 pip install sapsan
 ```
@@ -195,10 +205,6 @@ git push origin master
 
 
 -------
-
-### Kubeflow
-
-[Docs for experiments in kubeflow](./docs/kubeflow.md)
 
 #### Examples
 
