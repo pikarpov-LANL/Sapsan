@@ -10,7 +10,7 @@ with open("requirements_gpu.txt", 'r') as f:
     requirements = [i.strip() for i in f.readlines()]
     
 setuptools.setup(
-    name="sapsan",
+    name="sapsan-gpu",
     version=version,
     author="Platon Karpov, Iskandar Sitdikov",
     author_email="plkarpov@ucsc.edu",
