@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: update version
-        run: $release_version > version
+        run: $release_version >> version
       - name: Commit version
         run: |
           git config --global user.name 'pikarpov-LANL'
