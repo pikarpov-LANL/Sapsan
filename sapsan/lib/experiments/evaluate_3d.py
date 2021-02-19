@@ -1,25 +1,14 @@
 """
-
 Example:
-    experiment_name = "Training experiment"
-    dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    estimator = CNN3d(
-        config=CNN3dConfig(n_epochs=1)
-    )
-    x, y = JHTDB128Dataset(path=dataset_root_dir,
-                           features=['u', 'b', 'a',
-                                'du0', 'du1', 'du2',
-                                'db0', 'db1', 'db2',
-                                'da0', 'da1', 'da2'],
-                           labels=['tn'],
-                           checkpoints=[0.0]).load()
+evaluation_experiment = Evaluate3d(name=experiment_name,
+                                   backend=tracking_backend,
+                                   model=training_experiment.model,
+                                   inputs=x, targets=y,
+                                   data_parameters = data_loader.get_parameters())
 
-    experiment = TrainingExperiment(name=experiment_name,
-                                    backend=FakeBackend(experiment_name),
-                                    model=estimator,
-                                    inputs=x, targets=y)
-    experiment.run()
+target_cube, pred_cube = evaluation_experiment.run()
 """
+
 import os
 import time
 from typing import List, Dict
@@ -31,8 +20,8 @@ import numpy as np
 import torch
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
-from sapsan.utils.plot import pdf_plot, cdf_plot, slice_of_cube
-from sapsan.utils.shapes import combine_cubes
+from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot
+from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 
 class Evaluate3d(Experiment):
@@ -43,7 +32,7 @@ class Evaluate3d(Experiment):
                  inputs: np.ndarray,
                  targets: np.ndarray,
                  data_parameters: dict,
-                 cmap: str = 'ocean'
+                 cmap: str = 'plasma'
                  ):
         super().__init__(name, backend)
         self.model = model
@@ -52,9 +41,8 @@ class Evaluate3d(Experiment):
         self.n_output_channels = targets.shape[1]
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
-        self.checkpoint_data_size = self.data_parameters["checkpoint - sample to size"]
-        self.grid_size = self.data_parameters["checkpoint - batch size"]
-
+        self.checkpoint_data_size = self.data_parameters["chkpnt - sample to size"]
+        self.grid_size = self.data_parameters["chkpnt - batch size"]
         self.cmap = cmap
 
         self.artifacts = []
@@ -93,12 +81,12 @@ class Evaluate3d(Experiment):
         runtime = end - start
         self.backend.log_metric("runtime", runtime)
 
-        pdf = pdf_plot([pred, self.targets], names=['prediction', 'targets'])
+        pdf = pdf_plot([pred, self.targets], names=['prediction', 'target'])
         pdf.savefig("pdf_plot.png")
         self.artifacts.append("pdf_plot.png")
 
         try:
-            cdf = cdf_plot([pred, self.targets], names=['prediction', 'targets'])
+            cdf = cdf_plot([pred, self.targets], names=['prediction', 'target'])
             cdf.savefig("cdf_plot.png")
             self.artifacts.append("cdf_plot.png")
         except Exception as e:
@@ -116,23 +104,10 @@ class Evaluate3d(Experiment):
         target_slice = slice_of_cube(combine_cubes(target_cube,
                                                    self.checkpoint_data_size, self.grid_size))
 
-        vmin = np.amin(target_slice)
-        vmax = np.amax(target_slice)
+        slices = slice_plot([pred_slice, target_slice], names=['prediction', 'target'], cmap=self.cmap)
+        slices.savefig("slices_plot.png")
+        self.artifacts.append("slices_plot.png")        
         
-        fig = plt.figure(figsize = (16, 6))
-        fig.add_subplot(121)
-        im = plt.imshow(target_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
-        plt.colorbar(im).ax.tick_params(labelsize=14)
-        plt.title("Target slice")
-
-        fig.add_subplot(122)
-        im = plt.imshow(pred_slice, cmap=self.cmap, vmin=vmin, vmax = vmax)
-        plt.colorbar(im).ax.tick_params(labelsize=14)
-        plt.title("Predicted slice")
-        plt.savefig("prediction.png")
-        self.artifacts.append("prediction.png")
-        plt.show()
-
         self.experiment_metrics["MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean()         
 
         for metric, value in self.get_metrics().items():

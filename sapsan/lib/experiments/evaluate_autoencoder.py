@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
-from sapsan.utils.plot import pdf_plot, cdf_plot, slice_of_cube
-from sapsan.utils.shapes import combine_cubes
+from sapsan.utils.plot import pdf_plot, cdf_plot
+from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 
 class EvaluateAutoencoder(Experiment):

@@ -1,24 +1,13 @@
 """
-
 Example:
-    experiment_name = "Training experiment"
-    dataset_root_dir = "/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset"
-    estimator = CNN3d(
-        config=CNN3dConfig(n_epochs=1)
-    )
-    x, y = JHTDB128Dataset(path=dataset_root_dir,
-                           features=['u', 'b', 'a',
-                                'du0', 'du1', 'du2',
-                                'db0', 'db1', 'db2',
-                                'da0', 'da1', 'da2'],
-                           labels=['tn'],
-                           checkpoints=[0.0]).load()
-
-    experiment = TrainingExperiment(name=experiment_name,
-                                    backend=FakeBackend(experiment_name),
-                                    model=estimator,
-                                    inputs=x, targets=y)
-    experiment.run()
+evaluation_experiment = EvaluateFlatten(name=experiment_name,
+                                           backend=tracking_backend,
+                                           model=training_experiment.model,
+                                           inputs=x, targets=np.array([y[0]]),
+                                           checkpoint_data_size=SAMPLE_TO,
+                                           checkpoints=[0], 
+                                           axis = AXIS)
+evaluation_experiment.run()
 """
 
 import time
@@ -28,8 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
-from sapsan.utils.plot import pdf_plot, slice_of_cube
-from sapsan.utils.shapes import combine_cubes
+from sapsan.utils.plot import pdf_plot
+from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 
 class EvaluateFlatten(Experiment):
@@ -75,7 +64,10 @@ class EvaluateFlatten(Experiment):
         plot = pdf_plot([pred, self.targets], names=['prediction', 'targets'])
         plt.show()
 
+        #not needed, user can loop themselves
         n_entries = len(self.checkpoints)
+        
+        print('from eval', n_entries, self.checkpoint_data_size)
 
         if self.axis == 3:
             cube_shape = (n_entries, 1, self.checkpoint_data_size,

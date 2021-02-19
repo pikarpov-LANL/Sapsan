@@ -87,35 +87,24 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
     
     return plt
 
+
+def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap = 'plasma'):
+    if not names:
+        names = ["Data {}".format(i) for i in range(len(series))]
     
-def slice_of_cube(data: np.ndarray,
-                  feature: Optional[int] = None,
-                  n_slice: Optional[int] = None,
-                  name: Optional[str] = None):
-    """ Slice of 3d cube
-
-    @param data: numpy array
-    @param feature: feature of cube to use in case of multifeature plot
-    @param n_slice: slice to use
-    @param name: name of plot
-    @return: pyplot object
-    """
-    if len(data.shape) not in [3, 4]:
-        return None
-
-    if len(data.shape) == 4:
-        if feature is None:
-            warning("Feature was not provided. First one will be used")
-            feature = 0
-        data = data[feature, :, :, :]
-
-    if n_slice is None:
-        warning("Slice is not selected first one will be used")
-        n_slice = 0
-
-    slice_to_plot = data[n_slice]
-
-    return slice_to_plot
+    #colormap range is based on the target slice
+    vmin = np.amin(series[-1])
+    vmax = np.amax(series[-1])
+    
+    fig = plt.figure(figsize = (16, 6))
+    for idx, data in enumerate(series):
+        fig.add_subplot(121+idx)
+        im = plt.imshow(data, cmap=cmap, vmin=vmin, vmax = vmax)
+        plt.colorbar(im).ax.tick_params(labelsize=14)
+        plt.title(names[idx])
+    plt.tight_layout()
+    
+    return plt
 
 
 def log_plot(show_history = True):
@@ -168,8 +157,8 @@ class PlotUtils(object):
         return cdf_plot(data)
 
     @classmethod
-    def plot_slices(cls):
-        pass
+    def plot_slice(cls, data):
+        return slice_plot(data)
     
     @classmethod
     def plot_log(cls, data):

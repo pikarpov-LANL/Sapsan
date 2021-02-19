@@ -1,6 +1,7 @@
 import numpy as np
 from skimage.util import view_as_blocks
-
+from logging import warning
+from typing import List, Tuple, Dict, Optional
 
 def split_cube_by_grid(data: np.ndarray,
                        size: int,
@@ -52,3 +53,33 @@ def combine_cubes(cubes: np.ndarray,
             y.append(np.concatenate(z, axis=3))
         x.append(np.concatenate(y, axis=2))
     return np.concatenate(x, axis=1)
+
+
+def slice_of_cube(data: np.ndarray,
+                  feature: Optional[int] = None,
+                  n_slice: Optional[int] = None,
+                  name: Optional[str] = None):
+    """ Slice of 3d cube
+
+    @param data: numpy array
+    @param feature: feature of cube to use in case of multifeature plot
+    @param n_slice: slice to use
+    @param name: name of plot
+    @return: pyplot object
+    """
+    if len(data.shape) not in [3, 4]:
+        return None
+
+    if len(data.shape) == 4:
+        if feature is None:
+            warning("Feature was not provided. First one will be used")
+            feature = 0
+        data = data[feature, :, :, :]
+
+    if n_slice is None:
+        warning("Slice is not selected first one will be used")
+        n_slice = 0
+
+    slice_to_plot = data[n_slice]
+
+    return slice_to_plot

@@ -41,7 +41,19 @@ class FlattenDataset(Dataset):
             self.checkpoint_data_size = self.sampler.sample_dim
         self.target_channels = target_channels
         self.time_granularity = time_granularity
+        self.axis = axis
         
+    def get_parameters(self):
+        return {
+            "data - path": self.path,
+            "data - features": str(self.features)[1:-1].replace("'",""),
+            "data - target": str(self.target)[1:-1].replace("'",""),
+            "data - features_label": self.features_label,
+            "data - target_label": self.target_label,
+            "data - axis": self.axis,
+            "checkpoint - time": self.checkpoints,
+        }        
+    
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
         return self._load_data()
 
