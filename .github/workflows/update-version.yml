@@ -4,12 +4,15 @@ jobs:
   report:
     runs-on: ubuntu-20.04
     env:
-      release_version: '1.5.0'
+      release_version: 1.5.0
       
     steps:
       - uses: actions/checkout@v2
       - name: update version
-        run: $release_version >> version
+        #run: $release_version >> version
+        run: 
+          echo $release_version
+          $release_version >> version
       - name: Commit version
         run: |
           git config --global user.name 'pikarpov-LANL'
