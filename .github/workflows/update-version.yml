@@ -11,7 +11,6 @@ jobs:
       - name: update version
         #run: $release_version >> version
         run: 
-          echo $release_version
           $release_version >> version
       - name: Commit version
         run: |
