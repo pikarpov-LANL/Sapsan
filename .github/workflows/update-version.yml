@@ -1,5 +1,5 @@
 name: Update package version
-on: release
+on: push
 jobs:
   report:
     runs-on: ubuntu-20.04
