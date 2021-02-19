@@ -26,6 +26,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
+    dependency_links = ['https://download.pytorch.org/whl/torch_stable.html'],
     install_requires=requirements,
     python_requires='>=3.7, !=3.9',
     entry_points='''
