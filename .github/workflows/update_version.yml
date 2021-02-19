@@ -1,0 +1,18 @@
+name: Update package version
+on: push
+jobs:
+  report:
+    runs-on: ubuntu-20.04
+    env:
+      release_version: ${{ github.event.release.tag_name }}
+      
+    steps:
+      - uses: actions/checkout@v2
+      - name: update version
+        run: $release_version > version
+      - name: Commit version
+        run: |
+          git config --global user.name 'pikarpov-LANL'
+          git config --global user.email 'pikarpov-LANL@users.noreply.github.com'
+          git commit -am "version update"
+          git push
