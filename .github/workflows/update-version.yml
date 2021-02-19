@@ -1,10 +1,10 @@
 name: Update package version
-on: push
+on: release
 jobs:
   report:
     runs-on: ubuntu-20.04
     env:
-      release_version: ${{ github.event.release.tag_name }}
+      release_version: '1.5.0'
       
     steps:
       - uses: actions/checkout@v2
