@@ -6,7 +6,7 @@ Usage:
                       features=['a', 'b'],
                       target=['c'],
                       checkpoints=[0.0, 0.01],
-                      grid_size=GRID_SIZE,
+                      batch_size=BATCH_SIZE,
                       checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                       sampler=sampler,
                       axis = AXIS,
@@ -24,7 +24,7 @@ from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 
 from sapsan.core.models import Dataset, DatasetPlugin, Sampling, ExperimentBackend
-from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
+from sapsan.utils.shapes import split_cube_by_batch, split_square_by_batch
 
 
 class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
@@ -82,7 +82,7 @@ class HDF5Dataset(Dataset):
                  features: List[str],
                  target: List[str],
                  checkpoints: List[int],
-                 grid_size: int = None,
+                 batch_size: int = None,
                  checkpoint_data_size: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
@@ -95,7 +95,7 @@ class HDF5Dataset(Dataset):
         @param features:
         @param target:
         @param checkpoints:
-        @param grid_size: size of cube that will be used to separate checkpoint data
+        @param batch_size: size of cube that will be used to separate checkpoint data
         """
         self.path = path
         self.features = features
@@ -103,7 +103,7 @@ class HDF5Dataset(Dataset):
         self.features_label = features_label
         self.target_label = target_label
         self.checkpoints = checkpoints
-        self.grid_size = grid_size
+        self.batch_size = batch_size
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
         self.initial_size = checkpoint_data_size
@@ -125,9 +125,9 @@ class HDF5Dataset(Dataset):
             "chkpnt - time": self.checkpoints,
             "chkpnt - initial size": self.initial_size,
             "chkpnt - sample to size": self.checkpoint_data_size,
-            "chkpnt - time_granularity": self.time_granularity
+            "chkpnt - time_granularity": self.time_granularity,
+            "chkpnt - batch size": self.batch_size
         }
-        if self.grid_size!=None: parameters["chkpnt - batch size"]=self.grid_size
         return parameters
         
     def load(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -165,7 +165,7 @@ class HDF5Dataset(Dataset):
             checkpoint_data = self.sampler.sample(checkpoint_data)
             
         if self.flat: return self.flatten(checkpoint_data)
-        else: return self.split_grid(checkpoint_data)
+        else: return self.split_batch(checkpoint_data)
 
 
     def flatten(self, checkpoint_data):
@@ -178,15 +178,15 @@ class HDF5Dataset(Dataset):
             return checkpoint_data.reshape(cd_shape[0], 
                                            cd_shape[1]*cd_shape[2])
         
-    def split_grid(self, checkpoint_data):
+    def split_batch(self, checkpoint_data):
         # columns_length ex: 12 features * 3 dim = 36  
         columns_length = checkpoint_data.shape[0]
         if self.axis == 3:
-            return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
-                                      self.grid_size, columns_length)
+            return split_cube_by_batch(checkpoint_data, self.checkpoint_data_size,
+                                      self.batch_size, columns_length)
         if self.axis == 2:
-            return split_square_by_grid(checkpoint_data, self.checkpoint_data_size,
-                                      self.grid_size, columns_length)
+            return split_square_by_batch(checkpoint_data, self.checkpoint_data_size,
+                                      self.batch_size, columns_length)
 
     def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()

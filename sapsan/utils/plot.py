@@ -1,13 +1,26 @@
+'''
+Plotting routines
+
+You can adjust the style to your liking by changing 'param'.
+'''
+
 from logging import warning
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import plotly.express as px
 import pandas as pd
 import numpy as np
 
 from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
+
+params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
+          'axes.titlesize':24, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
+          'xtick.major.width': 1,'ytick.major.width': 1,'xtick.minor.width': 1,'ytick.minor.width': 1,
+          'xtick.major.size': 4,'ytick.major.size': 4,'xtick.minor.size': 3,'ytick.minor.size': 3,
+          'axes.formatter.limits' : [-7, 7], 'text.usetex': False}
 
 def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str]] = None):
     """ PDF plot
@@ -17,6 +30,7 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
+    mpl.rcParams.update(params)
     fig = plt.figure(figsize = (6, 6))
     ax = fig.add_subplot(111)
 
@@ -43,7 +57,8 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
-    fig = plt.figure()
+    mpl.rcParams.update(params)
+    fig = plt.figure(figsize = (6, 6))
     ax = fig.add_subplot(111)
 
     if not names:
@@ -52,7 +67,6 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
     func = []
     val = np.zeros((len(series),np.prod(np.shape(series[0]))))
     for idx, data in enumerate(series):
-        print(idx)
         val[idx] = np.sort(data.flatten())
 
         #cdf calculation via linear interpolation
@@ -89,6 +103,7 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
 
 
 def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap = 'plasma'):
+    mpl.rcParams.update(params)
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
     
@@ -141,7 +156,6 @@ def log_plot(show_history = True):
         if show_history: fig.show()
 
         return fig
-
     
 class PlotUtils(object):
     @classmethod

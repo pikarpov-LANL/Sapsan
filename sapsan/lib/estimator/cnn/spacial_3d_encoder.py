@@ -52,13 +52,13 @@ class CNN3dModel(torch.nn.Module):
 class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int = 1,
-                 grid_dim: int = 64,
+                 batch_dim: int = 64,
                  patience: int = 10,
                  min_delta: float = 1e-5, 
                  logdir: str = "./logs/",
                  *args, **kwargs):
         self.n_epochs = n_epochs
-        self.grid_dim = grid_dim
+        self.batch_dim = batch_dim
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
@@ -85,7 +85,7 @@ class CNN3d(TorchEstimator):
         self.model = CNN3dModel(1, 1) #perhaps we want to re-think our save-load test; no need to load the model here
         
     def setup_model(self, n_input_channels, n_output_channels):
-        return CNN3dModel(n_input_channels, self.config.grid_dim ** 3 * n_output_channels)
+        return CNN3dModel(n_input_channels, self.config.batch_dim ** 3 * n_output_channels)
 
     def train(self, inputs, targets=None):
 

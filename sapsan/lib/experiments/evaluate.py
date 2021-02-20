@@ -1,6 +1,6 @@
 """
 Example:
-evaluation_experiment = Evaluate3d(name=experiment_name,
+evaluation_experiment = Evaluate(name=experiment_name,
                                    backend=tracking_backend,
                                    model=training_experiment.model,
                                    inputs=x, targets=y,
@@ -24,7 +24,7 @@ from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot
 from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 
-class Evaluate3d(Experiment):
+class Evaluate(Experiment):
     def __init__(self,
                  name: str,
                  backend: ExperimentBackend,
@@ -32,27 +32,26 @@ class Evaluate3d(Experiment):
                  inputs: np.ndarray,
                  targets: np.ndarray,
                  data_parameters: dict,
-                 cmap: str = 'plasma'
-                 ):
+                 cmap: str = 'plasma',
+                 axis: int = 3,
+                 flat: bool = False):
         super().__init__(name, backend)
         self.model = model
         self.inputs = inputs
         self.targets = targets
-        self.n_output_channels = targets.shape[1]
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
         self.checkpoint_data_size = self.data_parameters["chkpnt - sample to size"]
-        self.grid_size = self.data_parameters["chkpnt - batch size"]
+        self.batch_size = self.data_parameters["chkpnt - batch size"]
         self.cmap = cmap
+        self.axis = axis
+        self.flat = flat
+        if self.flat: self.n_output_channels = targets.shape[0] #flat arrays don't have batches
+        else: self.n_output_channels = targets.shape[1]
 
         self.artifacts = []
         
-        params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
-                  'axes.titlesize':20, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
-                  'xtick.major.width': 1,'ytick.major.width': 1,'xtick.minor.width': 1,'ytick.minor.width': 1,
-                  'xtick.major.size': 4,'ytick.major.size': 4,'xtick.minor.size': 3,'ytick.minor.size': 3,
-                  'axes.formatter.limits' : [-7, 7], 'text.usetex': False, 'figure.figsize': [6,6]}
-        mpl.rcParams.update(params)
+
 
     def get_metrics(self) -> Dict[str, float]:
         return self.experiment_metrics
@@ -92,18 +91,9 @@ class Evaluate3d(Experiment):
         except Exception as e:
             logging.warning(e)
 
-        n_entries = self.inputs.shape[0]
-
-        cube_shape = (n_entries, self.n_output_channels,
-                      self.grid_size, self.grid_size, self.grid_size)
-        pred_cube = pred.reshape(cube_shape)
-        target_cube = self.targets.reshape(cube_shape)
-
-        pred_slice = slice_of_cube(combine_cubes(pred_cube,
-                                                 self.checkpoint_data_size, self.grid_size))
-        target_slice = slice_of_cube(combine_cubes(target_cube,
-                                                   self.checkpoint_data_size, self.grid_size))
-
+        if self.flat: pred_slice, target_slice, pred_cube, target_cube = self.flatten(pred)
+        else: pred_slice, target_slice, pred_cube, target_cube = self.split_batch(pred)
+                
         slices = slice_plot([pred_slice, target_slice], names=['prediction', 'target'], cmap=self.cmap)
         slices.savefig("slices_plot.png")
         self.artifacts.append("slices_plot.png")        
@@ -125,3 +115,34 @@ class Evaluate3d(Experiment):
         print("runtime: ", runtime)
         
         return target_cube, pred_cube
+    
+    
+    def flatten(self, pred):
+        if self.axis == 3:
+            cube_shape = (self.n_output_channels, self.checkpoint_data_size,
+                          self.checkpoint_data_size, self.checkpoint_data_size)
+        if self.axis == 2: 
+            cube_shape = (self.n_output_channels, self.checkpoint_data_size, self.checkpoint_data_size)
+            
+        pred_cube = pred.reshape(cube_shape)
+        target_cube = self.targets.reshape(cube_shape)
+
+        pred_slice = slice_of_cube(pred_cube)
+        target_slice = slice_of_cube(target_cube)
+
+        return pred_slice, target_slice, pred_cube, target_cube
+    
+    
+    def split_batch(self, pred):
+        n_entries = self.inputs.shape[0]
+        cube_shape = (n_entries, self.n_output_channels,
+              self.batch_size, self.batch_size, self.batch_size)
+        pred_cube = pred.reshape(cube_shape)
+        target_cube = self.targets.reshape(cube_shape)
+
+        pred_slice = slice_of_cube(combine_cubes(pred_cube,
+                                                 self.checkpoint_data_size, self.batch_size))
+        target_slice = slice_of_cube(combine_cubes(target_cube,
+                                                   self.checkpoint_data_size, self.batch_size))
+        return pred_slice, target_slice, pred_cube, target_cube
+
