@@ -102,6 +102,5 @@ class TorchEstimator(Estimator):
 
         estimator = model(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
-        # model.eval()
         estimator.model = model
         return estimator

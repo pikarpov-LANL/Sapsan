@@ -24,8 +24,8 @@ class KRRConfig(EstimatorConfig):
 
     def to_dict(self):
         return {
-            "hyperpar - alpha": self.alpha,
-            "hyperpar - gamma": self.gamma
+            "alpha": self.alpha,
+            "gamma": self.gamma
         }
 
 
