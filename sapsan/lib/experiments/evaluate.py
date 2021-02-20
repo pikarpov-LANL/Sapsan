@@ -1,10 +1,10 @@
 """
 Example:
 evaluation_experiment = Evaluate(name=experiment_name,
-                                   backend=tracking_backend,
-                                   model=training_experiment.model,
-                                   inputs=x, targets=y,
-                                   data_parameters = data_loader.get_parameters())
+                                 backend=tracking_backend,
+                                 model=training_experiment.model,
+                                 inputs=x, targets=y,
+                                 data_parameters = data_loader.get_parameters())
 
 target_cube, pred_cube = evaluation_experiment.run()
 """
@@ -51,7 +51,6 @@ class Evaluate(Experiment):
 
         self.artifacts = []
         
-
 
     def get_metrics(self) -> Dict[str, float]:
         return self.experiment_metrics
