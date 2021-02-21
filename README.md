@@ -1,4 +1,4 @@
-# Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/master/docs/images/logo3_black_slim_notitle.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
+# Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/master/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
 
 * [Intro](#intro) 
 * [Structure](#structure)
