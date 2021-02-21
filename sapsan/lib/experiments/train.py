@@ -52,11 +52,14 @@ class Train(Experiment):
         #if catalyst.runner is not used, then this file won't exist
         if os.path.exists('model_details.txt'):
             self.artifacts.append('model_details.txt')
+            
+            #plot the training history if pytorch is used
+            log = log_plot(self.show_history)
+            log.write_html("runtime_log.html")
+            self.artifacts.append("runtime_log.html")
         else: pass
         
-        log = log_plot(self.show_history)
-        log.write_html("runtime_log.html")
-        self.artifacts.append("runtime_log.html")
+
 
         for metric, value in self.get_metrics().items():
             self.backend.log_metric(metric, value)

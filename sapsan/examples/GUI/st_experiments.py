@@ -2,9 +2,10 @@ import streamlit as st
 import os
 import sys
 import inspect
+from pathlib import Path
 
 #uncomment if cloned from github!
-sys.path.append("/home/pkarpov/Sapsan/")
+sys.path.append(str(Path.home())+"/Sapsan/")
 
 from sapsan.lib.backends.fake import FakeBackend
 from sapsan.lib.backends.mlflow import MLflowBackend
@@ -12,7 +13,7 @@ from sapsan.lib.data.hdf5_dataset import HDF5Dataset
 from sapsan.lib.data import EquidistanceSampling
 from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
-from sapsan.lib.experiments.evaluate_3d import Evaluate3d
+from sapsan.lib.experiments.evaluate import Evaluate
 from sapsan.lib.experiments.train import Train
 
 import pandas as pd
@@ -34,7 +35,7 @@ import sys
 from st_state_patch import SessionState
 from multiprocessing import Process
 
-
+#initialization of defaults
 cf = configparser.RawConfigParser()
 widget_values = {}
 
@@ -137,6 +138,7 @@ def cnn3d():
         widget_values['backend_list'] = ['Fake', 'MLflow']
         widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
         
+    #show loss vs epoch progress with plotly
     def show_log(progress_slot, epoch_slot):
         from datetime import datetime
         
@@ -206,9 +208,9 @@ def cnn3d():
             
             time.sleep(0.1) 
             
+
+            
     def run_experiment():
-        
-        #os.system("mlflow ui --port=%s &"%widget_values['mlflow_port'])
         
         if widget_values['backend_selection'] == 'Fake':
             tracking_backend = FakeBackend(widget_values['experiment name'])
@@ -217,8 +219,7 @@ def cnn3d():
             tracking_backend = MLflowBackend(widget_values['experiment name'], 
             widget_values['mlflow_host'],widget_values['mlflow_port'])
         
-        #Load the data
-        
+        #Load the data      
         features = widget_values['features'].split(',')
         features = [i.strip() for i in features]
         
@@ -229,7 +230,7 @@ def cnn3d():
                            features=features,
                            target=target,
                            checkpoints=[0],
-                           grid_size=int(widget_values['grid_size']),
+                           batch_size=int(widget_values['batch_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
         x, y = data_loader.load()
@@ -240,7 +241,8 @@ def cnn3d():
                                      backend=tracking_backend,
                                      model=estimator,
                                      inputs=x, targets=y,
-                                     data_parameters = data_loader.get_parameters())
+                                     data_parameters = data_loader.get_parameters(),
+                                     show_history = False)
         
         #Plot progress        
         progress_slot = st.empty()
@@ -249,7 +251,7 @@ def cnn3d():
         thread = Thread(target=show_log, args=(progress_slot, epoch_slot))
         add_report_ctx(thread)
         thread.start()
-
+        
         start = time.time()
         #Train the model
         training_experiment.run()
@@ -263,13 +265,13 @@ def cnn3d():
                            features=features,
                            target=target,
                            checkpoints=[0], 
-                           grid_size=int(widget_values['grid_size']),
+                           batch_size=int(widget_values['batch_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
         x, y = data_loader.load()
 
         #Set the test experiment
-        evaluation_experiment = Evaluate3d(name=widget_values["experiment name"],
+        evaluation_experiment = Evaluate(name=widget_values["experiment name"],
                                            backend=tracking_backend,
                                            model=training_experiment.model,
                                            inputs=x, targets=y,
@@ -345,7 +347,7 @@ def cnn3d():
                                                                      'widget':number, 'min_value':1},
                                     {'label':'sample_to', 'default':config['sample_to'], 
                                                                      'widget':number, 'min_value':1},
-                                    {'label':'grid_size', 'default':config['grid_size'], 
+                                    {'label':'batch_size', 'default':config['batch_size'], 
                                                                      'widget':number, 'min_value':1}])
     
 
@@ -361,7 +363,7 @@ def cnn3d():
                                        int(widget_values['sample_to']), int(widget_values['axis']))
     
     estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         grid_dim=int(widget_values['grid_size']), 
+                                         batch_dim=int(widget_values['batch_size']), 
                                          patience=int(widget_values['patience']), 
                                          min_delta=float(widget_values['min_delta'])))
         
@@ -373,7 +375,7 @@ def cnn3d():
         ['Dimensionality of the data', widget_values['axis']],
         ['Size of the data per axis', widget_values['checkpoint_data_size']],
         ['Reduce each dimension to', widget_values['sample_to']],
-        ['Batch size per dimension', widget_values['grid_size']],
+        ['Batch size per dimension', widget_values['batch_size']],
         ['number of epochs', widget_values['n_epochs']],
         ['patience', widget_values['patience']],
         ['min_delta', widget_values['min_delta']],
@@ -414,10 +416,10 @@ def cnn3d():
         #p = Process(target=run_experiment)
         #p.start()
         #state.pid = p.pid
-        
+
         run_experiment()
         
-        st.write('Finished in %.2f mins'%((time.time()-start)/60)) 
+        st.write('Finished in %.2f sec'%((time.time()-start))) 
     
     #if st.button("Stop experiment"):
             #sys.exit('Experiment stopped')
@@ -462,6 +464,64 @@ def config_write(var, file):
         cf.write(file)
     
 def test(): 
+    
+    #--- Experiment tracking backend ---
+    experiment_name = "CNN experiment"
+
+    #Fake (disable backend)
+    tracking_backend = FakeBackend(experiment_name)
+
+    #MLflow
+    #launch mlflow with: mlflow ui --port=9000
+    #uncomment tracking_backend to use mlflow
+
+    MLFLOW_HOST = "localhost"
+    MLFLOW_PORT = 9000
+    path = "../data/t{checkpoint:1.0f}/{feature}_dim32_fm15.h5"
+    features = ['u']
+    target = ['u']
+
+    #dimensionality of the data
+    AXIS = 3
+
+    #Dimensionality of your data per axis
+    CHECKPOINT_DATA_SIZE = 32
+
+    #Reduce dimensionality of each axis to
+    SAMPLE_TO = 16
+
+    #Dimensionality of each axis in a batch
+    BATCH_SIZE = 8
+
+    #Sampler to use for reduction
+    sampler = EquidistanceSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO, AXIS)
+    estimator = CNN3d(
+    config=CNN3dConfig(n_epochs=20, batch_dim=BATCH_SIZE, patience=10, min_delta=1e-5)
+    )
+
+    #Load the data
+    data_loader = HDF5Dataset(path=path,
+                       features=features,
+                       target=target,
+                       checkpoints=[0],
+                       batch_size=BATCH_SIZE,
+                       checkpoint_data_size=CHECKPOINT_DATA_SIZE,
+                       sampler=sampler)
+    x, y = data_loader.load()
+
+    print(x.shape, y.shape)
+
+    #Set the experiment
+    training_experiment = Train(name=experiment_name,
+                                 backend=tracking_backend,
+                                 model=estimator,
+                                 inputs=x, targets=y,
+                                 data_parameters = data_loader.get_parameters())
+
+    #Train the model
+    training_experiment.run()
+    #tracking_backend = MLflowBackend(experiment_name, MLFLOW_HOST, MLFLOW_PORT)
+    '''
     st.write('----Before----')
     try:
         cf.read('temp.txt')
@@ -528,7 +588,7 @@ def test():
         file.write('[config]\n')
         for key, value in widget_values.items():
             file.write('%s = %s\n'%(key, value))
-
+    '''
    
 
 
