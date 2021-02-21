@@ -1,11 +1,14 @@
 # Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/master/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
--------
 
 Sapsan is a pipeline for easy Machine Learning implementation in scientific projects. That being said, its primary goal and featured models are geared towards dynamic MHD turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
 
 Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
 
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
+
+### [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
+
+Please refer to Sapsan's wiki to learn more about framework's details and capabilities.
 
 ### Quick Start
 
@@ -28,16 +31,14 @@ pip install sapsan
 
 Note: make sure you are using the latest release version
 
-## Run Examples
+#### Run Examples
 
 To make sure everything is alright and to familiarize yourself with the interface, please run an example
 ```shell script
 jupyter notebook sapsan/examples/cnn_example.ipynb
 ```
 
-### [Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
 
-Please refer to Sapsan's wiki to learn more about framework's details and capabilities.
 
 
 -------
