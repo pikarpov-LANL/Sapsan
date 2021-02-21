@@ -23,7 +23,7 @@ class CAEModel(torch.nn.Module):
         self.deconv1 = torch.nn.ConvTranspose3d(72, output_channels, 2, stride=2, padding=1)
 
     def forward(self, x):
-        # edcoding
+        # encoding
         convoluted1 = self.conv1(x)
         pooled1, indices1 = self.pool1(convoluted1)
         convoluted2 = self.conv2(pooled1)
@@ -43,12 +43,12 @@ class CAEConfig(EstimatorConfig):
                  n_epochs: int,
                  n_input_channels: int = 36,
                  n_output_channels: int = 3,
-                 grid_dim: int = 64,
+                 batch_dim: int = 64,
                  logdir: str = "./logs/"):
         self.n_epochs = n_epochs
         self.n_input_channels = n_input_channels
         self.n_output_channels = n_output_channels
-        self.grid_dim = grid_dim
+        self.batch_dim = batch_dim
         self.logdir = logdir
 
     @classmethod
@@ -60,7 +60,7 @@ class CAEConfig(EstimatorConfig):
     def to_dict(self):
         return {
             "n_epochs": self.n_epochs,
-            "grid_dim": self.grid_dim,
+            "batch_dim": self.batch_dim,
             "n_input_channels": self.n_input_channels,
             "n_output_channels": self.n_output_channels
         }

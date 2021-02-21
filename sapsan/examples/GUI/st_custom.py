@@ -2,9 +2,10 @@ import streamlit as st
 import os
 import sys
 import inspect
+from pathlib import Path
 
 #uncomment if cloned from github!
-sys.path.append("/home/pkarpov/Sapsan/")
+sys.path.append(str(Path.home())+"/Sapsan/")
 
 from sapsan.lib.backends.fake import FakeBackend
 from sapsan.lib.backends.mlflow import MLflowBackend
@@ -12,7 +13,7 @@ from sapsan.lib.data.hdf5_dataset import HDF5Dataset
 from sapsan.lib.data import EquidistanceSampling
 from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
-from sapsan.lib.experiments.evaluate_3d import Evaluate3d
+from sapsan.lib.experiments.evaluate import Evaluate
 from sapsan.lib.experiments.train import Train
 
 import pandas as pd
@@ -200,7 +201,7 @@ def custom():
                            features=features,
                            target=target,
                            checkpoints=checkpoints,
-                           grid_size=int(widget_values['grid_size']),
+                           batch_size=int(widget_values['batch_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
         x, y = data_loader.load()
@@ -235,7 +236,7 @@ def custom():
                            features=features,
                            target=target,
                            checkpoints=checkpoints, 
-                           grid_size=int(widget_values['grid_size']),
+                           batch_size=int(widget_values['batch_size']),
                            checkpoint_data_size=int(widget_values['checkpoint_data_size']),
                            sampler=sampler)
         x, y = data_loader.load()
@@ -318,7 +319,7 @@ def custom():
                                                                      'widget':number, 'min_value':1},
                                     {'label':'sample_to', 'default':config['sample_to'], 
                                                                      'widget':number, 'min_value':1},
-                                    {'label':'grid_size', 'default':config['grid_size'], 
+                                    {'label':'batch_size', 'default':config['batch_size'], 
                                                                      'widget':number, 'min_value':1}])
     
 
@@ -334,7 +335,7 @@ def custom():
                                        int(widget_values['sample_to']), int(widget_values['axis']))
     
     estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         grid_dim=int(widget_values['grid_size']), 
+                                         batch_dim=int(widget_values['batch_size']), 
                                          patience=int(widget_values['patience']), 
                                          min_delta=float(widget_values['min_delta'])))
         
@@ -347,7 +348,7 @@ def custom():
         ['Dimensionality of the data', widget_values['axis']],
         ['Size of the data per axis', widget_values['checkpoint_data_size']],
         ['Reduce each dimension to', widget_values['sample_to']],
-        ['Batch size per dimension', widget_values['grid_size']],
+        ['Batch size per dimension', widget_values['batch_size']],
         ['number of epochs', widget_values['n_epochs']],
         ['patience', widget_values['patience']],
         ['min_delta', widget_values['min_delta']],
