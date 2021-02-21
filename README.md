@@ -6,11 +6,11 @@ Feel free to check out a website version at [sapsan.app](http://sapsan.app). The
 
 Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
 
-### [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
+## [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
 
 Please refer to Sapsan's wiki to learn more about framework's details and capabilities.
 
-### Quick Start
+## Quick Start
 
 #### 1. Clone from git (recommended)
 ```shell script
@@ -33,9 +33,13 @@ Note: make sure you are using the latest release version
 
 #### Run Examples
 
-To make sure everything is alright and to familiarize yourself with the interface, please run an example
+To make sure everything is alright and to familiarize yourself with the interface, please run the following CNN example on 3D data:
 ```shell script
 jupyter notebook sapsan/examples/cnn_example.ipynb
+```
+or a KRR example on 2D data:
+```shell script
+jupyter notebook sapsan/examples/krr_example.ipynb
 ```
 
 
