@@ -8,9 +8,9 @@ Note: currently Sapsan is in alpha, but we are actively working on it and introd
 
 ## [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
 
-Please refer to Sapsan's wiki to learn more about framework's details and capabilities.
+Please refer to Sapsan's github wiki to learn more about framework's details and capabilities.
 
-## Quick Start
+## [Quick Start](https://github.com/pikarpov-LANL/Sapsan/wiki/Quick-Start)
 
 #### 1. Clone from git (recommended)
 ```shell script
@@ -46,6 +46,7 @@ jupyter notebook sapsan/examples/krr_example.ipynb
 
 
 -------
+Sapsan has a BSD-style license, as found in the [LICENSE](https://github.com/pikarpov-LANL/Sapsan/blob/master/LICENSE) file.
 
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved.
 This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos
