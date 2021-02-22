@@ -399,7 +399,7 @@ def cnn3d():
                                                       'min_value':1024, 'max_value':65535}])
         
         if st.button('Edit'):
-            os.system('jupyter notebook ../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
+            os.system('jupyter notebook ../../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
             webbrowser.open('http://localhost:%d'%widget_values['edit_port'], new=2)
             
     else:
