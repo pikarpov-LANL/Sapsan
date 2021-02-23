@@ -33,5 +33,3 @@ setuptools.setup(
         sapsan=sapsan.core.cli.cli:sapsan
     '''
 )
-
-
