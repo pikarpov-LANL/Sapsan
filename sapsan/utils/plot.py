@@ -12,9 +12,11 @@ import matplotlib as mpl
 import plotly.express as px
 import pandas as pd
 import numpy as np
+import warnings
 
 from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
+from hiddenlayer import transforms
 
 params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
           'axes.titlesize':24, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
@@ -156,6 +158,42 @@ def log_plot(show_history = True):
         if show_history: fig.show()
 
         return fig
+
+    
+def model_graph(model, shape: np.array, transforms = None):
+    import sapsan.utils.hiddenlayer as hl
+    import torch
+    
+    if len(np.shape(shape)) != 1: raise ValueError("Error: please provide the 'shape', "
+                                                   "not the input data array itself.")    
+    
+    if transforms == None:
+        transforms = [
+                        hl.transforms.Fold("Conv > MaxPool > Relu", "ConvPoolRelu"),
+                        hl.transforms.Fold("Conv > MaxPool", "ConvPool"),    
+                        hl.transforms.Prune("Shape"),
+                        hl.transforms.Prune("Constant"),
+                        hl.transforms.Prune("Gather"),
+                        hl.transforms.Prune("Unsqueeze"),
+                        hl.transforms.Prune("Concat"),
+                        hl.transforms.Rename("Cast", to="Input"),
+                        hl.transforms.FoldDuplicates()
+                     ]
+
+    shape = np.array(shape)
+    if shape[1] != 1:
+        shape[1] = 1
+        warnings.warn("shape was changed to %s to draw a model graph."%str(shape))
+    
+    if len(shape) == 5: unit_input = torch.zeros([shape[0], 1, shape[2], shape[3], shape[4]])
+    elif len(shape) == 4: unit_input = torch.zeros([shape[0], 1, shape[2], shape[3]])
+    else: raise ValueError('Input shape can be either of 2D or 3D data')
+        
+    graph = hl.build_graph(model, unit_input, transforms = transforms)
+    graph.theme = hl.graph.THEMES["blue"].copy()
+    
+    return graph
+    
     
 class PlotUtils(object):
     @classmethod
