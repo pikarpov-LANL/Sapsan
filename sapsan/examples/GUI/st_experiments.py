@@ -15,9 +15,9 @@ from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
 from sapsan.lib.experiments.evaluate import Evaluate
 from sapsan.lib.experiments.train import Train
+from sapsan.utils.plot import model_graph
 
 import pandas as pd
-import hiddenlayer as hl
 import torch
 import matplotlib.pyplot as plt
 import configparser
@@ -208,7 +208,26 @@ def cnn3d():
             
             time.sleep(0.1) 
             
-
+    def load_data(checkpoints):
+        #Load the data      
+        features = widget_values['features'].split(',')
+        features = [i.strip() for i in features]
+        
+        target = widget_values['target'].split(',')
+        target = [i.strip() for i in target]     
+        
+        checkpoints = np.array([int(i) for i in checkpoints.split(',')])
+        
+        data_loader = HDF5Dataset(path=widget_values['path'],
+                           features=features,
+                           target=target,
+                           checkpoints=checkpoints,
+                           batch_size=int(widget_values['batch_size']),
+                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
+                           sampler=sampler)
+        x, y = data_loader.load()
+        return x, y, data_loader
+    
             
     def run_experiment():
         
@@ -219,21 +238,8 @@ def cnn3d():
             tracking_backend = MLflowBackend(widget_values['experiment name'], 
             widget_values['mlflow_host'],widget_values['mlflow_port'])
         
-        #Load the data      
-        features = widget_values['features'].split(',')
-        features = [i.strip() for i in features]
-        
-        target = widget_values['target'].split(',')
-        target = [i.strip() for i in target]        
-        
-        data_loader = HDF5Dataset(path=widget_values['path'],
-                           features=features,
-                           target=target,
-                           checkpoints=[0],
-                           batch_size=int(widget_values['batch_size']),
-                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
-                           sampler=sampler)
-        x, y = data_loader.load()
+        #Load the data 
+        x, y, data_loader = load_data(widget_values['checkpoints'])
         st.write("Dataset loaded...")
         
         #Set the experiment
@@ -261,14 +267,7 @@ def cnn3d():
         #def evaluate_experiment():
         #--- Test the model ---
         #Load the test data
-        data_loader = HDF5Dataset(path=widget_values['path'],
-                           features=features,
-                           target=target,
-                           checkpoints=[0], 
-                           batch_size=int(widget_values['batch_size']),
-                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
-                           sampler=sampler)
-        x, y = data_loader.load()
+        x, y, data_loader = load_data(widget_values['checkpoint_test'])
 
         #Set the test experiment
         evaluation_experiment = Evaluate(name=widget_values["experiment name"],
@@ -340,7 +339,8 @@ def cnn3d():
                                                                     'min_value':1024, 'max_value':65535}]) 
 
     
-    widget_history_checkbox('Data',[{'label':'path', 'default':config['path'], 'widget':text},
+    widget_history_checkbox('Data: train',[{'label':'path', 'default':config['path'], 'widget':text},
+                                    {'label':'checkpoints', 'default':config['checkpoints'],'widget':text},
                                     {'label':'features', 'default':config['features'], 'widget':text},
                                     {'label':'target', 'default':config['target'], 'widget':text},
                                     {'label':'checkpoint_data_size', 'default':config['checkpoint_data_size'], 
@@ -349,6 +349,9 @@ def cnn3d():
                                                                      'widget':number, 'min_value':1},
                                     {'label':'batch_size', 'default':config['batch_size'], 
                                                                      'widget':number, 'min_value':1}])
+    
+    widget_history_checkbox('Data: test',[{'label':'checkpoint_test', 
+                                           'default':config['checkpoint_test'],'widget':text}])
     
 
         
@@ -370,6 +373,7 @@ def cnn3d():
     show_config = [
         ['experiment name',  widget_values["experiment name"]],
         ['data path', widget_values['path']],
+        ['checkpoints', widget_values['checkpoints']],
         ['features', widget_values['features']],
         ['target', widget_values['target']],
         ['Dimensionality of the data', widget_values['axis']],
@@ -379,7 +383,8 @@ def cnn3d():
         ['number of epochs', widget_values['n_epochs']],
         ['patience', widget_values['patience']],
         ['min_delta', widget_values['min_delta']],
-        ['backend_selection', widget_values['backend_selection']]
+        ['backend_selection', widget_values['backend_selection']],
+        ['checkpoint: test', widget_values['checkpoint_test']],
         ]
         
     if widget_values['backend_selection']=='MLflow': 
@@ -390,8 +395,25 @@ def cnn3d():
         st.table(pd.DataFrame(show_config, columns=["key", "value"]))
 
     if st.checkbox("Show model graph"):
-        res = hl.build_graph(estimator.model, torch.zeros([72, 1, 2, 2, 2]))
-        st.graphviz_chart(res.build_dot())
+        st.write('Please load the data first or enter the data shape manualy, comma separated.')
+        #st.write('Note: the number of features will be changed to 1 in the graph')
+        
+        widget_history_checked([{'label':'Data Shape', 
+                                 'default':'16,1,8,8,8', 'widget':text_main}])
+
+        shape = widget_values['Data Shape']
+        shape = np.array([int(i) for i in shape.split(',')])
+        shape[1] = 1
+        
+        #Load the data  
+        if st.button('Load Data'):
+            x, y, data_loader = load_data(widget_values['checkpoints'])
+            shape = x.shape
+        
+        try:
+            graph = model_graph(estimator.model, shape)
+            st.graphviz_chart(graph.build_dot())
+        except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
 
     if st.checkbox("Show code of model"):           
         st.code(inspect.getsource(CNN3dModel), language='python')        
@@ -399,7 +421,7 @@ def cnn3d():
                                                       'min_value':1024, 'max_value':65535}])
         
         if st.button('Edit'):
-            os.system('jupyter notebook ../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
+            os.system('jupyter notebook ../../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
             webbrowser.open('http://localhost:%d'%widget_values['edit_port'], new=2)
             
     else:
