@@ -15,9 +15,9 @@ from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
 from sapsan.lib.experiments.evaluate import Evaluate
 from sapsan.lib.experiments.train import Train
+from sapsan.utils.plot import model_graph
 
 import pandas as pd
-import hiddenlayer as hl
 import torch
 import matplotlib.pyplot as plt
 import configparser
@@ -363,8 +363,25 @@ def custom():
         st.table(pd.DataFrame(show_config, columns=["key", "value"]))
 
     if st.checkbox("Show model graph"):
-        res = hl.build_graph(estimator.model, torch.zeros([72, 1, 2, 2, 2]))
-        st.graphviz_chart(res.build_dot())
+        st.write('Please load the data first or enter the data shape manualy, comma separated.')
+        #st.write('Note: the number of features will be changed to 1 in the graph')
+        
+        widget_history_checked([{'label':'Data Shape', 
+                                 'default':'16,1,8,8,8', 'widget':text_main}])
+
+        shape = widget_values['Data Shape']
+        shape = np.array([int(i) for i in shape.split(',')])
+        shape[1] = 1
+        
+        #Load the data  
+        if st.button('Load Data'):
+            x, y, data_loader = load_data(widget_values['checkpoints'])
+            shape = x.shape
+        
+        try:
+            graph = model_graph(estimator.model, shape)
+            st.graphviz_chart(graph.build_dot())
+        except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
 
     if st.checkbox("Show code of model"):           
         st.code(inspect.getsource(CNN3dModel), language='python')        
