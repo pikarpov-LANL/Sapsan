@@ -2,7 +2,7 @@
 HiddenLayer
 PyTorch graph importer.
  
-Written by Waleed Abdulla
+Written by Waleed Abdulla. Additions by Platon Karpov.
 Licensed under the MIT License
 """
 

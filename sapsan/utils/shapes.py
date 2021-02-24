@@ -57,14 +57,12 @@ def combine_cubes(cubes: np.ndarray,
 
 def slice_of_cube(data: np.ndarray,
                   feature: Optional[int] = None,
-                  n_slice: Optional[int] = None,
-                  name: Optional[str] = None):
+                  n_slice: Optional[int] = None):
     """ Slice of 3d cube
 
     @param data: numpy array
     @param feature: feature of cube to use in case of multifeature plot
     @param n_slice: slice to use
-    @param name: name of plot
     @return: pyplot object
     """
     if len(data.shape) not in [3, 4]:

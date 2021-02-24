@@ -208,12 +208,11 @@ def custom():
         st.write("Dataset loaded...")
         
         #Set the experiment
-        training_experiment = Train(name=widget_values["experiment name"],
-                                     backend=tracking_backend,
-                                     model=estimator,
-                                     inputs=x, targets=y,
-                                     data_parameters = data_loader.get_parameters(),
-                                     show_history = False)
+        training_experiment = Train(backend=tracking_backend,
+                                    model=estimator,
+                                    inputs=x, targets=y,
+                                    data_parameters = data_loader.get_parameters(),
+                                    show_history = False)
         
         #Plot progress        
         progress_slot = st.empty()
@@ -242,8 +241,7 @@ def custom():
         x, y = data_loader.load()
 
         #Set the test experiment
-        evaluation_experiment = Evaluate3d(name=widget_values["experiment name"],
-                                           backend=tracking_backend,
+        evaluation_experiment = Evaluate3d(backend=tracking_backend,
                                            model=training_experiment.model,
                                            inputs=x, targets=y,
                                            data_parameters = data_loader.get_parameters())
