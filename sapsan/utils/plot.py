@@ -18,6 +18,7 @@ from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
 import sapsan.utils.hiddenlayer as hl
 
+
 params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
           'axes.titlesize':24, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
           'xtick.major.width': 1,'ytick.major.width': 1,'xtick.minor.width': 1,'ytick.minor.width': 1,
