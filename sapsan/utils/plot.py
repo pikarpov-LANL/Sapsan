@@ -124,8 +124,7 @@ def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap
     return plt
 
 
-def log_plot(show_history = True):
-    log_path = 'logs/log.txt'
+def log_plot(show_history = True, log_path = 'logs/log.txt'):
     plot_data = {'epoch':[], 'train_loss':[]}
 
     with open(log_path) as file:
