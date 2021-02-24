@@ -243,12 +243,11 @@ def cnn3d():
         st.write("Dataset loaded...")
         
         #Set the experiment
-        training_experiment = Train(name=widget_values["experiment name"],
-                                     backend=tracking_backend,
-                                     model=estimator,
-                                     inputs=x, targets=y,
-                                     data_parameters = data_loader.get_parameters(),
-                                     show_history = False)
+        training_experiment = Train(backend=tracking_backend,
+                                    model=estimator,
+                                    inputs=x, targets=y,
+                                    data_parameters = data_loader.get_parameters(),
+                                    show_history = False)
         
         #Plot progress        
         progress_slot = st.empty()
@@ -270,11 +269,10 @@ def cnn3d():
         x, y, data_loader = load_data(widget_values['checkpoint_test'])
 
         #Set the test experiment
-        evaluation_experiment = Evaluate(name=widget_values["experiment name"],
-                                           backend=tracking_backend,
-                                           model=training_experiment.model,
-                                           inputs=x, targets=y,
-                                           data_parameters = data_loader.get_parameters())
+        evaluation_experiment = Evaluate(backend=tracking_backend,
+                                         model=training_experiment.model,
+                                         inputs=x, targets=y,
+                                         data_parameters = data_loader.get_parameters())
         
         #Test the model
         evaluation_experiment.run()

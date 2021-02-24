@@ -4,6 +4,7 @@ from typing import Dict, List
 import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.utils.plot import log_plot
+from sapsan.lib.backends.fake import FakeBackend
 
 import os
 import sys
@@ -11,14 +12,14 @@ import sys
 class Train(Experiment):
 
     def __init__(self,
-                 name: str,
                  backend: ExperimentBackend,
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
                  data_parameters: dict,
-                 show_history = True):
-        super().__init__(name, backend)
+                 show_history = True,
+                ):
+        super().__init__(backend.name, backend)
         self.model = model
         self.inputs = inputs
         self.targets = targets

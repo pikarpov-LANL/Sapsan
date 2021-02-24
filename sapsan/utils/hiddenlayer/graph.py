@@ -2,7 +2,7 @@
 HiddenLayer
 Implementation of the Graph class. A framework independent directed graph to
 represent a neural network.
-Written by Waleed Abdulla. Additions by Phil Ferriere.
+Written by Waleed Abdulla. Additions by Phil Ferriere and Platon Karpov.
 Licensed under the MIT License
 """
 from __future__ import absolute_import, division, print_function

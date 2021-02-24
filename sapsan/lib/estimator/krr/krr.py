@@ -52,6 +52,7 @@ class KRR(Estimator):
     def train(self, inputs, targets=None):
         model = self.model.fit(self._move_axis_to_sklearn(inputs), self._move_axis_to_sklearn(targets))
         self.model = model
+        return model
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics

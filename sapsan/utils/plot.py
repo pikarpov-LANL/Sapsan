@@ -16,7 +16,8 @@ import warnings
 
 from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
-from .hiddenlayer import transforms
+import sapsan.utils.hiddenlayer as hl
+
 
 params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
           'axes.titlesize':24, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
@@ -124,8 +125,8 @@ def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap
     return plt
 
 
-def log_plot(show_history = True):
-    log_path = 'logs/log.txt'
+def log_plot(show_history = True, log_path = 'logs/log.txt'):
+    
     plot_data = {'epoch':[], 'train_loss':[]}
 
     with open(log_path) as file:
@@ -161,7 +162,6 @@ def log_plot(show_history = True):
 
     
 def model_graph(model, shape: np.array, transforms = None):
-    import sapsan.utils.hiddenlayer as hl
     import torch
     
     if len(np.shape(shape)) != 1: raise ValueError("Error: please provide the 'shape', "

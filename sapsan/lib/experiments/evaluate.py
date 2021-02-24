@@ -26,7 +26,6 @@ from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 class Evaluate(Experiment):
     def __init__(self,
-                 name: str,
                  backend: ExperimentBackend,
                  model: Estimator,
                  inputs: np.ndarray,
@@ -35,7 +34,7 @@ class Evaluate(Experiment):
                  cmap: str = 'plasma',
                  axis: int = 3,
                  flat: bool = False):
-        super().__init__(name, backend)
+        super().__init__(backend.name, backend)
         self.model = model
         self.inputs = inputs
         self.targets = targets
