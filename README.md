@@ -10,7 +10,7 @@ Note: currently Sapsan is in alpha, but we are actively working on it and introd
 
 Please refer to Sapsan's github wiki to learn more about framework's details and capabilities.
 
-## [Quick Start](https://github.com/pikarpov-LANL/Sapsan/wiki/Quick-Start)
+## Quick Start
 
 #### 1. Clone from git (recommended)
 ```shell script
