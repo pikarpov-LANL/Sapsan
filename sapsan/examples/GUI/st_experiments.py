@@ -44,12 +44,23 @@ def intro():
     st.sidebar.success("Select an experiment above")
 
     st.markdown(
+        
         """
+        # Welcome to Sapsan!
+        
+        ---
+        
         Sapsan is a pipeline for easy Machine Learning implementation in scientific projects.
         That being said, its primary goal and featured models are geared towards dynamic MHD 
         turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning
         models in its set of tools to accurately capture the turbulent nature appicable to 
         Core-Collapse Supernovae.
+        
+        > ## **Purpose**
+        
+        > Sapsan takes out all the hard work from data preparation and analysis in turbulence 
+        > and astrophysical applications, leaving you focused on ML model design, layer by layer.
+        
 
         Note: currently Sapsan is in alpha, but we are actively working on it and introduce new 
         feature on a daily basis.        
@@ -57,6 +68,7 @@ def intro():
         **👈 Select an experiment from the dropdown on the left** to see what Sapsan can do!
         ### Want to learn more?
         - Check out Sapsan on [Github](https://github.com/pikarpov-LANL/Sapsan)
+        - Find the details on the [Wiki] (https://github.com/pikarpov-LANL/Sapsan/wiki)
     """
     )
     
@@ -64,6 +76,8 @@ def intro():
     if show_license:
         st.markdown(
             """
+Sapsan has a BSD-style license, as found in the [LICENSE] (https://github.com/pikarpov-LANL/Sapsan/blob/master/LICENSE) file.            
+            
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved. This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S. Department of Energy/National Nuclear Security Administration. All rights in the program are reserved by Triad National Security, LLC, and the U.S. Department of Energy/National Nuclear Security Administration. The Government is granted for itself and others acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license in this material to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.
         """
         )
@@ -148,7 +162,15 @@ def cnn3d():
         while log_exists == False:
             if os.path.exists(log_path):
                 log_exists = True
+            
             time.sleep(0.1)
+        
+        first_entry = False
+        while first_entry == False:
+            with open(log_path) as file:
+                if len(list(file))>=4: 
+                    first_entry = True
+            time.sleep(0.05)
             
         plot_data = {'epoch':[], 'train_loss':[]}
         last_epoch = 0
@@ -159,31 +181,14 @@ def cnn3d():
             with open(log_path) as file:
                 #get the date of the latest event
                 lines = list(file)
-                latest_time = lines[-4].replace(",",".")
-                latest_time = datetime.strptime(latest_time, '[%Y-%m-%d %H:%M:%S.%f] ')
-
-                #check for the newest entry
-                if start_time > latest_time:
-                    continue
-                else:
-                    current_epoch = int(lines[-2].split('/')[0])
-                    train_loss = float(lines[-2].split('loss=')[-1])
-                    valid_loss = float(lines[-1].split('loss=')[-1])
-
-                '''
-                #to read a .json file
-                data = OrderedDict(json.load(file))
-                elem = list(data.keys())
-
-                if 'epoch' in elem[-1]:
-                    current_epoch = int(elem[-1].rpartition('_')[-1]) + 1
-                else:
-                    current_epoch = -1
-                '''
-            if current_epoch == last_epoch or current_epoch == -1:
+                
+                current_epoch = int(lines[-2].split('/')[0])
+                train_loss = float(lines[-2].split('loss=')[-1])
+                valid_loss = float(lines[-1].split('loss=')[-1])
+                                
+            if current_epoch == last_epoch:
                 pass
             else:     
-                #metrics = data['epoch_%d'%(current_epoch-1)][-1]
                 metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
                 epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
                 plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
@@ -205,7 +210,7 @@ def cnn3d():
 
             if current_epoch == widget_values['n_epochs']: 
                 return
-            
+                        
             time.sleep(0.1) 
             
     def load_data(checkpoints):
@@ -430,8 +435,11 @@ def cnn3d():
 
     if st.button("Run experiment"):
         start = time.time()
-        try: os.remove('logs/logs.txt')
-        except: pass
+        
+        log_path = './logs/log.txt'
+        if os.path.exists(log_path): 
+            os.remove(log_path)
+        else: pass
         
         #p = Process(target=run_experiment)
         #p.start()
@@ -665,3 +673,74 @@ def index_history_checked(params):
         #                        'widget':selectbox, 
         #                        'options':widget_values['backend_list']}])
 '''
+"""
+    #show loss vs epoch progress with plotly
+    def show_log(progress_slot, epoch_slot):
+        from datetime import datetime
+        
+        #log_path = 'logs/checkpoints/_metrics.json'
+        log_path = 'logs/log.txt'
+        log_exists = False
+        while log_exists == False:
+            if os.path.exists(log_path):
+                log_exists = True
+            time.sleep(0.1)
+            
+        plot_data = {'epoch':[], 'train_loss':[]}
+        last_epoch = 0
+        running = True
+        
+        start_time= datetime.now()
+        while running:
+            with open(log_path) as file:
+                #get the date of the latest event
+                lines = list(file)
+                latest_time = lines[-4].replace(",",".")
+                latest_time = datetime.strptime(latest_time, '[%Y-%m-%d %H:%M:%S.%f] ')
+
+                #check for the newest entry
+                if start_time > latest_time:
+                    continue
+                else:
+                    current_epoch = int(lines[-2].split('/')[0])
+                    train_loss = float(lines[-2].split('loss=')[-1])
+                    valid_loss = float(lines[-1].split('loss=')[-1])
+
+                '''
+                #to read a .json file
+                data = OrderedDict(json.load(file))
+                elem = list(data.keys())
+
+                if 'epoch' in elem[-1]:
+                    current_epoch = int(elem[-1].rpartition('_')[-1]) + 1
+                else:
+                    current_epoch = -1
+                '''
+            if current_epoch == last_epoch or current_epoch == -1:
+                pass
+            else:     
+                #metrics = data['epoch_%d'%(current_epoch-1)][-1]
+                metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
+                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
+                plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
+                plot_data['train_loss'] = np.append(plot_data['train_loss'], metrics['train_loss'])                
+                df = pd.DataFrame(plot_data)
+                
+                if len(plot_data['epoch']) == 1:
+                    plotting_routine = px.scatter
+                else:
+                    plotting_routine = px.line
+                
+                fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
+                              title='Training Progress', width=700, height=400)
+                fig.update_layout(yaxis=dict(exponentformat='e'))
+                fig.layout.hovermode = 'x'
+                progress_slot.plotly_chart(fig)
+                
+                last_epoch = current_epoch
+
+            if current_epoch == widget_values['n_epochs']: 
+                return
+            
+            time.sleep(0.1) 
+"""

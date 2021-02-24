@@ -11,8 +11,8 @@ EXPERIMENTS = OrderedDict(
         ("Welcome", (experiments.intro, None)),
         ("Examples", (experiments.cnn3d, None)),
         ("Custom", (custom.custom, None)),        
-        ("test", (experiments.test, None)),
-        ("1D CCSN", (experiments.ccsn, None)),
+        #("test", (experiments.test, None)),
+        #("1D CCSN", (experiments.ccsn, None)),
         
     ]
 )
@@ -23,7 +23,6 @@ def run():
     
     if experiment_name == 'Welcome':
         show_code = False
-        st.markdown("# Welcome to Sapsan!")
     else:
         pass
     
