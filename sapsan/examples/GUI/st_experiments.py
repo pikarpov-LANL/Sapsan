@@ -44,12 +44,23 @@ def intro():
     st.sidebar.success("Select an experiment above")
 
     st.markdown(
+        
         """
+        # Welcome to Sapsan!
+        
+        ---
+        
         Sapsan is a pipeline for easy Machine Learning implementation in scientific projects.
         That being said, its primary goal and featured models are geared towards dynamic MHD 
         turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning
         models in its set of tools to accurately capture the turbulent nature appicable to 
         Core-Collapse Supernovae.
+        
+        > ## **Purpose**
+        
+        > Sapsan takes out all the hard work from data preparation and analysis in turbulence 
+        > and astrophysical applications, leaving you focused on ML model design, layer by layer.
+        
 
         Note: currently Sapsan is in alpha, but we are actively working on it and introduce new 
         feature on a daily basis.        
@@ -57,6 +68,7 @@ def intro():
         **👈 Select an experiment from the dropdown on the left** to see what Sapsan can do!
         ### Want to learn more?
         - Check out Sapsan on [Github](https://github.com/pikarpov-LANL/Sapsan)
+        - Find the details on the [Wiki] (https://github.com/pikarpov-LANL/Sapsan/wiki)
     """
     )
     
@@ -64,6 +76,8 @@ def intro():
     if show_license:
         st.markdown(
             """
+Sapsan has a BSD-style license, as found in the [LICENSE] (https://github.com/pikarpov-LANL/Sapsan/blob/master/LICENSE) file.            
+            
 © (or copyright) 2019. Triad National Security, LLC. All rights reserved. This program was produced under U.S. Government contract 89233218CNA000001 for Los Alamos National Laboratory (LANL), which is operated by Triad National Security, LLC for the U.S. Department of Energy/National Nuclear Security Administration. All rights in the program are reserved by Triad National Security, LLC, and the U.S. Department of Energy/National Nuclear Security Administration. The Government is granted for itself and others acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license in this material to reproduce, prepare derivative works, distribute copies to the public, perform publicly and display publicly, and to permit others to do so.
         """
         )
