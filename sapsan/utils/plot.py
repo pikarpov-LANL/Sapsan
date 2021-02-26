@@ -124,7 +124,7 @@ def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap
     
     return plt
 
-def line_plot(series: List[np.ndarray])
+#def line_plot(series: List[np.ndarray])
 
 
 def log_plot(show_log = True, log_path = 'logs/log.txt'):
