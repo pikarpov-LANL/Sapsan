@@ -2,6 +2,8 @@
 Plotting routines
 
 You can adjust the style to your liking by changing 'param'.
+
+-pikarpov
 '''
 
 from logging import warning
@@ -124,9 +126,25 @@ def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap
     
     return plt
 
-#def line_plot(series: List[np.ndarray])
 
+def line_plot(series: List[np.ndarray], names: Optional[List[str]] = None, plot_type = 'plot'):
+    mpl.rcParams.update(params)
+    if not names:
+        names = ["Data {}".format(i) for i in range(len(series))]
+        
+    fig = plt.figure(figsize = (6, 6))
+    for idx, data in enumerate(series):
+        if plot_type == 'plot': plt.plot(data[0], data[1], label = names[idx])
+        elif plot_type == 'semilogx': plt.semilogx(data[0], data[1], label = names[idx])
+        elif plot_type == 'semilogy': plt.semilogy(data[0], data[1], label = names[idx])
+        elif plot_type == 'loglog': plt.loglog(data[0], data[1], label = names[idx])
+            
+    plt.legend(loc=0)
+    plt.tight_layout()
+    
+    return plt
 
+        
 def log_plot(show_log = True, log_path = 'logs/log.txt'):
     
     plot_data = {'epoch':[], 'train_loss':[]}
