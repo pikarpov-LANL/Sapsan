@@ -17,7 +17,7 @@ class Train(Experiment):
                  inputs: np.ndarray,
                  targets: np.ndarray,
                  data_parameters: dict,
-                 show_history = True,
+                 show_log = True,
                 ):
         super().__init__(backend.name, backend)
         self.model = model
@@ -25,7 +25,7 @@ class Train(Experiment):
         self.targets = targets
         self.data_parameters = data_parameters
         self.artifacts = []
-        self.show_history = show_history
+        self.show_log = show_log
 
     def get_metrics(self) -> Dict[str, float]:
         return self.model.metrics()
@@ -54,8 +54,8 @@ class Train(Experiment):
         if os.path.exists('model_details.txt'):
             self.artifacts.append('model_details.txt')
             
-            #plot the training history if pytorch is used
-            log = log_plot(self.show_history)
+            #plot the training log if pytorch is used
+            log = log_plot(self.show_log)
             log.write_html("runtime_log.html")
             self.artifacts.append("runtime_log.html")
         else: pass
