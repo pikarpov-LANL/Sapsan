@@ -212,7 +212,7 @@ def custom():
                                     model=estimator,
                                     inputs=x, targets=y,
                                     data_parameters = data_loader.get_parameters(),
-                                    show_history = False)
+                                    show_log = False)
         
         #Plot progress        
         progress_slot = st.empty()

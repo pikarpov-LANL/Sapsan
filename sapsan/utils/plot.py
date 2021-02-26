@@ -124,8 +124,10 @@ def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap
     
     return plt
 
+def line_plot(series: List[np.ndarray])
 
-def log_plot(show_history = True, log_path = 'logs/log.txt'):
+
+def log_plot(show_log = True, log_path = 'logs/log.txt'):
     
     plot_data = {'epoch':[], 'train_loss':[]}
 
@@ -156,7 +158,7 @@ def log_plot(show_history = True, log_path = 'logs/log.txt'):
         fig.update_layout(yaxis=dict(exponentformat='e'))
         fig.layout.hovermode = 'x' 
         
-        if show_history: fig.show()
+        if show_log: fig.show()
 
         return fig
 
