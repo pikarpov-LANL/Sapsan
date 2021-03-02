@@ -4,7 +4,8 @@ torch==1.7.1
 torchvision==0.8.2
 catalyst==20.7
 h5py>=2.10.0
-notebook<=6.1.6
+notebook<6.1.6
+jupyter==1.0.0
 tornado<6.0.0
 matplotlib==3.3.2
 mlflow==1.11.0
