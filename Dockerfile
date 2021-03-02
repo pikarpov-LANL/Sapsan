@@ -6,7 +6,6 @@ EXPOSE 7654
 ENV GIT_PYTHON_REFRESH=quiet
 RUN pip install -U pip
 
-#COPY requirements.txt app/requirements.txt
 RUN pip install sapsan
 
 # copy into a directory of its own (so it isn't in the toplevel dir)
