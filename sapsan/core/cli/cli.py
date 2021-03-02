@@ -1,7 +1,7 @@
 import os
 import click
 
-from sapsan.core.cli.templates.algorithm import get_template as get_algorithm_template
+from sapsan.core.cli.templates.estimator import get_template as get_estimator_template
 from sapsan.core.cli.templates.dataset import get_template as get_dataset_template
 from sapsan.core.cli.templates.experiment import get_template as get_experiment_template
 from sapsan.core.cli.templates.runner import get_template as get_runner_template
@@ -24,14 +24,14 @@ def setup_project(name: str):
     os.mkdir('./{name}/.github/workflows'.format(name=name))
     os.mkdir("./{name}/tests/".format(name=name))
     os.mkdir("./{name}/{name}".format(name=name))
-    os.mkdir("./{name}/{name}/algorithm".format(name=name))
+    os.mkdir("./{name}/{name}/estimator".format(name=name))
     os.mkdir("./{name}/{name}/dataset".format(name=name))
     os.mkdir("./{name}/{name}/experiment".format(name=name))
     click.echo("Folders has been created.")
 
     create_init("./{name}/tests".format(name=name))
     create_init("./{name}/{name}".format(name=name))
-    create_init("./{name}/{name}/algorithm".format(name=name))
+    create_init("./{name}/{name}/estimator".format(name=name))
     create_init("./{name}/{name}/dataset".format(name=name))
     create_init("./{name}/{name}/experiment".format(name=name))
     click.echo("Marked folders as packages.")
@@ -40,9 +40,9 @@ def setup_project(name: str):
         file.write("0.0.1")
         click.echo("Created version file.")
 
-    with open("./{name}/{name}/algorithm/{name}_algorithm.py".format(name=name), "w") as file:
-        file.write(get_algorithm_template(name))
-        click.echo("Created algorithm file.")
+    with open("./{name}/{name}/estimator/{name}_estimator.py".format(name=name), "w") as file:
+        file.write(get_estimator_template(name))
+        click.echo("Created estimator file.")
 
     with open("./{name}/{name}/dataset/{name}_dataset.py".format(name=name), "w") as file:
         file.write(get_dataset_template(name))
