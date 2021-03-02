@@ -9,6 +9,8 @@ RUN pip install -U pip
 #COPY requirements.txt app/requirements.txt
 RUN pip install sapsan
 
+RUN pip install tornado -U
+
 # copy into a directory of its own (so it isn't in the toplevel dir)
 COPY sapsan/examples/cnn_example.ipynb sapsan_docker_examples/
 COPY sapsan/examples/krr_example.ipynb sapsan_docker_examples/
