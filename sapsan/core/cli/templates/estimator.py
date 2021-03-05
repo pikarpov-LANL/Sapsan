@@ -54,11 +54,11 @@ class """AlgorithmNameConfig"""(EstimatorConfig):
         self.min_delta = min_delta
         
         #a few custom names for parameters to record in mlflow
-        self.parameters = {
+        self.parameters = {{
                         "model - n_epochs": self.n_epochs,
                         "model - min_delta": self.min_delta,
                         "model - patience": self.patience,
-                    }
+                    }}
 
     @classmethod
     def load(cls, path: str):

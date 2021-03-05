@@ -100,7 +100,9 @@ def sapsan():
     click.echo("========================================================")
 
 
+
 @sapsan.command("create")
 @click.argument("name")
 def create(name):
     setup_project(name=name.lower())
+    
