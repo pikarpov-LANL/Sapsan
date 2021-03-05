@@ -1,4 +1,4 @@
-# Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/master/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
+# Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/images/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
 
 Sapsan is a pipeline for easy Machine Learning implementation in scientific projects. That being said, its primary goal and featured models are geared towards dynamic MHD turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
 
