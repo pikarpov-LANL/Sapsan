@@ -50,8 +50,8 @@ class CNN3dModel(torch.nn.Module):
     
 class CNN3dConfig(EstimatorConfig):
     def __init__(self,
-                 batch_dim,
                  n_epochs: int = 1,
+                 batch_dim: tuple = (8,8,8),
                  patience: int = 10,
                  min_delta: float = 1e-5, 
                  logdir: str = "./logs/",

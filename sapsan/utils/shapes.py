@@ -4,8 +4,8 @@ from logging import warning
 from typing import List, Tuple, Dict, Optional
 
 def split_cube_by_batch(data: np.ndarray,
-                        size,
-                        batch_size,
+                        size: tuple,
+                        batch_size: tuple,
                         n_features: int) -> np.ndarray:
     """ --3D-- Splits big cube into smaller ones into batches.
 
@@ -19,8 +19,8 @@ def split_cube_by_batch(data: np.ndarray,
                                     batch_size[0], batch_size[1], batch_size[2])
 
 def split_square_by_batch(data: np.ndarray,
-                       size,
-                       batch_size,
+                       size: tuple,
+                       batch_size: tuple,
                        n_features: int) -> np.ndarray:
     """ --2D-- Splits big square into smaller ones into batches.
 
@@ -35,8 +35,8 @@ def split_square_by_batch(data: np.ndarray,
 
 
 def combine_cubes(cubes: np.ndarray,
-                  checkpoint_size,
-                  batch_size) -> np.ndarray:
+                  checkpoint_size: tuple,
+                  batch_size: tuple) -> np.ndarray:
     """ Combines batches into one big cube.
 
     Reverse of split_cube_by_batch function.

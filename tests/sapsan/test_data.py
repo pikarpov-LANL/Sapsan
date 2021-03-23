@@ -44,7 +44,7 @@ class TestDatasetUtils(unittest.TestCase):
 
     def test_cube_split(self):
         """ Test correctness of checkpoint cube split. """
-        batched = split_cube_by_batch(self.cube, 32, 16, 3)
+        batched = split_cube_by_batch(self.cube, (32,32,32), (16,16,16), 3)
         for subcube in batched:
             subcube = subcube.reshape(-1)
             value = subcube[0]
@@ -52,8 +52,8 @@ class TestDatasetUtils(unittest.TestCase):
 
     def test_cube_split_and_combine(self):
         """ Test correctness of split and restore. """
-        batched = split_cube_by_batch(self.cube, 32, 16, 3)
-        restored_cube = combine_cubes(batched, 32, 16)
+        batched = split_cube_by_batch(self.cube, (32,32,32), (16,16,16), 3)
+        restored_cube = combine_cubes(batched, (32,32,32), (16,16,16))
         self.assertTrue(np.all(restored_cube == self.cube))
 
 
