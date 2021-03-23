@@ -1,1 +1,1 @@
-from .sampling.equidistant_sampler import EquidistanceSampling
+from .sampling.equidistant_sampler import EquidistantSampling

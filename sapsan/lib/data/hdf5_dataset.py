@@ -9,7 +9,6 @@ Usage:
                       batch_size=BATCH_SIZE,
                       checkpoint_data_size=CHECKPOINT_DATA_SIZE,
                       sampler=sampler,
-                      axis = AXIS,
                       flat = False)
 
     x, y = data_loader.load()
@@ -82,13 +81,12 @@ class HDF5Dataset(Dataset):
                  features: List[str],
                  target: List[str],
                  checkpoints: List[int],
+                 checkpoint_data_size,
                  batch_size: int = None,
-                 checkpoint_data_size: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
                  features_label: Optional[List[str]] = None,
                  target_label: Optional[List[str]] = None,
-                 axis: int = 3,
                  flat: bool = False):
         """
         @param path:
@@ -107,7 +105,7 @@ class HDF5Dataset(Dataset):
         self.sampler = sampler
         self.checkpoint_data_size = checkpoint_data_size
         self.initial_size = checkpoint_data_size
-        self.axis = axis
+        self.axis = len(self.checkpoint_data_size)
         self.flat = flat
 
         if sampler:
@@ -163,7 +161,7 @@ class HDF5Dataset(Dataset):
         # downsample if needed
         if self.sampler:
             checkpoint_data = self.sampler.sample(checkpoint_data)
-            
+ 
         if self.flat: return self.flatten(checkpoint_data)
         else: return self.split_batch(checkpoint_data)
 
