@@ -81,7 +81,7 @@ class HDF5Dataset(Dataset):
                  features: List[str],
                  target: List[str],
                  checkpoints: List[int],
-                 checkpoint_data_size,
+                 input_size,
                  batch_size: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
@@ -103,13 +103,13 @@ class HDF5Dataset(Dataset):
         self.checkpoints = checkpoints
         self.batch_size = batch_size
         self.sampler = sampler
-        self.checkpoint_data_size = checkpoint_data_size
-        self.initial_size = checkpoint_data_size
-        self.axis = len(self.checkpoint_data_size)
+        self.input_size = input_size
+        self.initial_size = input_size
+        self.axis = len(self.input_size)
         self.flat = flat
 
         if sampler:
-            self.checkpoint_data_size = self.sampler.sample_dim
+            self.input_size = self.sampler.sample_dim
         self.time_granularity = time_granularity
     
     def get_parameters(self):
@@ -122,7 +122,7 @@ class HDF5Dataset(Dataset):
             "data - axis": self.axis,
             "chkpnt - time": self.checkpoints,
             "chkpnt - initial size": self.initial_size,
-            "chkpnt - sample to size": self.checkpoint_data_size,
+            "chkpnt - sample to size": self.input_size,
             "chkpnt - time_granularity": self.time_granularity,
             "chkpnt - batch size": self.batch_size
         }
@@ -137,7 +137,7 @@ class HDF5Dataset(Dataset):
         relative_path = self.path.format(checkpoint=timestep, feature=feature)
         return relative_path
 
-    def _get_checkpoint_data(self, checkpoint, columns, labels):
+    def _get_input_data(self, checkpoint, columns, labels):
         all_data = []
         # combine all features into cube with channels
                 
@@ -155,44 +155,45 @@ class HDF5Dataset(Dataset):
                 data = [data]     
             all_data.append(data)
             
-        # checkpoint_data shape ex: (features, 128, 128, 128)        
-        checkpoint_data = np.vstack(all_data)
+        # input_data shape ex: (features, 128, 128, 128)        
+        input_data = np.vstack(all_data)
 
         # downsample if needed
         if self.sampler:
-            checkpoint_data = self.sampler.sample(checkpoint_data)
+            input_data = self.sampler.sample(input_data)
  
-        if self.flat: return self.flatten(checkpoint_data)
-        else: return self.split_batch(checkpoint_data)
+        if self.flat: return self.flatten(input_data)
+        elif self.batch_size == self.input_size: return input_data
+        else: return self.split_batch(input_data)
 
 
-    def flatten(self, checkpoint_data):
+    def flatten(self, input_data):
         if self.axis == 3:
-            cd_shape = checkpoint_data.shape
-            return checkpoint_data.reshape(cd_shape[0],
-                                           cd_shape[1]*cd_shape[2]*cd_shape[3])
+            cd_shape = input_data.shape
+            return input_data.reshape(cd_shape[0],
+                                      cd_shape[1]*cd_shape[2]*cd_shape[3])
         if self.axis == 2:
-            cd_shape = checkpoint_data.shape
-            return checkpoint_data.reshape(cd_shape[0], 
+            cd_shape = input_data.shape
+            return input_data.reshape(cd_shape[0], 
                                            cd_shape[1]*cd_shape[2])
         
-    def split_batch(self, checkpoint_data):
+    def split_batch(self, input_data):
         # columns_length ex: 12 features * 3 dim = 36  
-        columns_length = checkpoint_data.shape[0]
+        columns_length = input_data.shape[0]
         if self.axis == 3:
-            return split_cube_by_batch(checkpoint_data, self.checkpoint_data_size,
+            return split_cube_by_batch(input_data, self.input_size,
                                       self.batch_size, columns_length)
         if self.axis == 2:
-            return split_square_by_batch(checkpoint_data, self.checkpoint_data_size,
+            return split_square_by_batch(input_data, self.input_size,
                                       self.batch_size, columns_length)
 
     def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()
         y = list()
         for checkpoint in self.checkpoints:
-            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+            features_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                   self.features, self.features_label)
-            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
+            target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                 self.target, self.target_label)
             
             x.append(features_checkpoint_batch)
