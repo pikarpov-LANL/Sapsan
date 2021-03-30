@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
 
-from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
+from sapsan.lib.data import DatasetPytorchSplitterPlugin, FlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -29,16 +29,22 @@ class TorchEstimator(Estimator):
         self.model = model
            
     def predict(self, inputs):
-        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
-        else: data = torch.as_tensor(inputs).cuda()
-        
-        return self.model(data).cpu().data.numpy()
+        self.model.eval()
+        if str(self.device) == 'cpu': 
+            data = torch.as_tensor(inputs)
+            return self.model(data).cpu().data.numpy()
+        else: 
+            data = torch.as_tensor(inputs).cuda()
+            return self.model(data).cuda().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
         
-    def torch_train(self, inputs, targets, model, optimizer, loss_func, scheduler, config):
+    def torch_train(self, inputs, targets, model, 
+                    optimizer, loss_func, scheduler, 
+                    config, data_parameters):
         self.config = config
+        self.data_parameters = data_parameters
         self.model = model        
         self.optimizer = optimizer
         self.loss_func = loss_func
@@ -46,8 +52,10 @@ class TorchEstimator(Estimator):
         
         print('Device used:', self.device)
                 
-        output_flatter = OutputFlatterDatasetPlugin()
-        splitter_pytorch = HDF5DatasetPyTorchSplitterPlugin(4)
+        output_flatter = FlatterDatasetPlugin()
+        
+        splitter_pytorch = DatasetPytorchSplitterPlugin(num_batches = self.data_parameters['chkpnt - num_batches'], 
+                                                            shuffle = False)
         _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
         loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 

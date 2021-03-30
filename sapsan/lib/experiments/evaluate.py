@@ -40,7 +40,7 @@ class Evaluate(Experiment):
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
         self.checkpoint_data_size = self.data_parameters["chkpnt - sample to size"]
-        self.batch_size = self.data_parameters["chkpnt - batch size"]
+        self.batch_size = self.data_parameters["chkpnt - batch_size"]
         self.cmap = cmap
         self.axis = len(self.checkpoint_data_size)
         self.flat = flat

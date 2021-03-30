@@ -26,6 +26,11 @@ class Train(Experiment):
         self.data_parameters = data_parameters
         self.artifacts = []
         self.show_log = show_log
+        
+        axis = len(self.data_parameters['chkpnt - sample to size'])
+        self.data_parameters['chkpnt - num_batches'] = 1
+        #self.data_parameters['chkpnt - num_batches'] = (self.data_parameters['chkpnt - sample to size']/self.data_parameters['chkpnt - batch_size'])**axis
+
 
     def get_metrics(self) -> Dict[str, float]:
         return self.model.metrics()
@@ -46,7 +51,9 @@ class Train(Experiment):
         
         self.backend.start('train')
                 
-        self.model.train(self.inputs, self.targets)
+        self.model.train(data_parameters = self.data_parameters,
+                         inputs = self.inputs, 
+                         targets = self.targets)
         end = time.time()
         runtime = end - start
         

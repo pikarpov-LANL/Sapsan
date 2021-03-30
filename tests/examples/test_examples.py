@@ -23,7 +23,7 @@ class TestExamples(unittest.TestCase):
         shutil.rmtree("./runtime_test_resources")
         shutil.rmtree("./data")
 
-    def test_cnn_example(self):
+    def test_examples(self):
         """Tests cnn example."""
         for nt in self.notebooks():
             _, errors = run_notebook(notebook_path="./runtime_test_resources/"+nt,

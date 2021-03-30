@@ -79,7 +79,7 @@ class """AlgorithmName"""(TorchEstimator):
     def setup_model(self, n_input_channels, n_output_channels):
         return """AlgorithmNameModel"""(n_input_channels, self.config.batch_dim ** 3 * n_output_channels)
 
-    def train(self, inputs, targets=None):
+    def train(self, data_parameters, inputs, targets=None):
 
         self.model = self.setup_model(inputs.shape[1], targets.shape[1])
         optimizer = """ optimizer """

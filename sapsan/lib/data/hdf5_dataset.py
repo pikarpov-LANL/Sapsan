@@ -7,7 +7,7 @@ Usage:
                       target=['c'],
                       checkpoints=[0.0, 0.01],
                       batch_size=BATCH_SIZE,
-                      checkpoint_data_size=CHECKPOINT_DATA_SIZE,
+                      input_size=INPUT_SIZE,
                       sampler=sampler,
                       flat = False)
 
@@ -17,63 +17,9 @@ Usage:
 from typing import List, Tuple, Dict, Optional
 import numpy as np
 import h5py as h5
-from skimage.util.shape import view_as_blocks
-from sklearn.model_selection import train_test_split
-from torch import from_numpy
-from torch.utils.data import DataLoader, TensorDataset
 
-from sapsan.core.models import Dataset, DatasetPlugin, Sampling, ExperimentBackend
+from sapsan.core.models import Dataset, Sampling
 from sapsan.utils.shapes import split_cube_by_batch, split_square_by_batch
-
-
-class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
-    def __init__(self,
-                 batch_size: int,
-                 train_size: float = 0.5,
-                 shuffle: bool = True):
-        self.batch_size = batch_size
-        self.train_size = train_size
-        self.shuffle = shuffle
-
-    def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
-        #x_train, x_test, y_train, y_test = train_test_split(x, y,
-        #                                                    train_size=self.train_size,
-        #                                                    shuffle=True)
-
-        x_train = x_test = x
-        y_train = y_test = y
-        train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
-                                                        from_numpy(y_train).float()),
-                                  batch_size=self.batch_size,
-                                  shuffle=self.shuffle,
-                                  num_workers=4)
-
-        val_loader = DataLoader(dataset=TensorDataset(from_numpy(x_test).float(),
-                                                      from_numpy(y_test).float()),
-                                batch_size=self.batch_size,
-                                shuffle=self.shuffle,
-                                num_workers=4)
-
-        return {"train": train_loader, "valid": val_loader}
-
-    def apply(self, dataset: Dataset) -> Dict[str, DataLoader]:
-        x, y = dataset.load()
-        return self.apply_on_x_y(x, y)
-
-
-class OutputFlatterDatasetPlugin(DatasetPlugin):
-
-    @staticmethod
-    def _flatten_output(output: np.ndarray):
-        return output.reshape(output.shape[0], -1)
-
-    def apply(self, dataset: Dataset):
-        x, y = dataset.load()
-        return x, self._flatten_output(y)
-
-    def apply_on_x_y(self, x, y):
-        return x, self._flatten_output(y)
-
 
 class HDF5Dataset(Dataset):
     def __init__(self,
@@ -124,7 +70,7 @@ class HDF5Dataset(Dataset):
             "chkpnt - initial size": self.initial_size,
             "chkpnt - sample to size": self.input_size,
             "chkpnt - time_granularity": self.time_granularity,
-            "chkpnt - batch size": self.batch_size
+            "chkpnt - batch_size": self.batch_size
         }
         return parameters
         

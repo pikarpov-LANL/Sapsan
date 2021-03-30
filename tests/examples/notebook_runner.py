@@ -24,5 +24,5 @@ def run_notebook(notebook_path: str,
         if 'outputs' in cell:
             for output in cell['outputs']:
                 if output.output_type == 'error':
-                    errors.append(output)
+                    errors.append(output)        
     return nb, errors

@@ -49,7 +49,7 @@ class KRR(Estimator):
     def predict(self, inputs):
         return self.model.predict(self._move_axis_to_sklearn(inputs))
 
-    def train(self, inputs, targets=None):
+    def train(self, data_parameters, inputs, targets=None):
         model = self.model.fit(self._move_axis_to_sklearn(inputs), self._move_axis_to_sklearn(targets))
         self.model = model
         return model

@@ -12,7 +12,7 @@ import torch
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
-
+from sapsan.lib.data import DatasetPytorchSplitterPlugin, FlatterDatasetPlugin
 
 class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in, D_out):
@@ -86,7 +86,7 @@ class CNN3d(TorchEstimator):
     def setup_model(self, n_input_channels, n_output_channels):
         return CNN3dModel(n_input_channels, np.prod(self.config.batch_dim) * n_output_channels)
 
-    def train(self, inputs, targets=None):
+    def train(self, data_parameters, inputs, targets=None):
 
         self.model = self.setup_model(inputs.shape[1], targets.shape[1])
         optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
@@ -96,6 +96,7 @@ class CNN3d(TorchEstimator):
                                                                min_lr=1e-5) 
         
         model = self.torch_train(inputs, targets, 
-                                 self.model, optimizer, loss_func, scheduler, self.config)
+                                 self.model, optimizer, loss_func, scheduler, 
+                                 self.config, data_parameters)
                 
         return model
