@@ -11,8 +11,6 @@ import numpy as np
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
-
-from sapsan.lib.data.hdf5_dataset import HDF5DatasetPyTorchSplitterPlugin, OutputFlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -29,15 +27,20 @@ class TorchEstimator(Estimator):
         self.model = model
            
     def predict(self, inputs):
-        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
-        else: data = torch.as_tensor(inputs).cuda()
-        
-        return self.model(data).cpu().data.numpy()
+        self.model.eval()
+        if str(self.device) == 'cpu': 
+            data = torch.as_tensor(inputs)
+            return self.model(data).cpu().data.numpy()
+        else: 
+            data = torch.as_tensor(inputs).cuda()
+            return self.model(data).cuda().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
         
-    def torch_train(self, inputs, targets, model, optimizer, loss_func, scheduler, config):
+    def torch_train(self, loaders, model, 
+                    optimizer, loss_func, scheduler, 
+                    config):
         self.config = config
         self.model = model        
         self.optimizer = optimizer
@@ -45,11 +48,6 @@ class TorchEstimator(Estimator):
         self.scheduler = scheduler
         
         print('Device used:', self.device)
-                
-        output_flatter = OutputFlatterDatasetPlugin()
-        splitter_pytorch = HDF5DatasetPyTorchSplitterPlugin(4)
-        _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
-        loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
         model = self.model
         if torch.cuda.device_count() > 1:

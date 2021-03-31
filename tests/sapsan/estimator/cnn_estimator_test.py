@@ -3,7 +3,7 @@ import shutil
 import unittest
 
 from sapsan.lib.estimator import CNN3d, CNN3dConfig
-from sapsan.lib.estimator import CAE, CAEConfig
+#from sapsan.lib.estimator import CAE, CAEConfig
 
 
 class TestCnnEstimator(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestCnnEstimator(unittest.TestCase):
         os.mkdir(self.resources_path)
 
     def test_encoder_save_and_load(self):
-        estimator = CNN3d(CNN3dConfig(1))
+        estimator = CNN3d(CNN3dConfig(n_epochs = 1))
         estimator.save(self.resources_path)
 
         loaded_estimator = CNN3d.load(self.resources_path, model=CNN3d, config=CNN3dConfig)
@@ -22,8 +22,9 @@ class TestCnnEstimator(unittest.TestCase):
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
         #self.assertEqual(estimator.config.n_output_channels, loaded_estimator.config.n_output_channels)
 
-    def test_auto_encoder_save_and_load(self):
-        estimator = CAE(CAEConfig(1))
+    '''
+	def test_auto_encoder_save_and_load(self):
+		estimator = CAE(CAEConfig(1))
         estimator.save(self.resources_path)
 
         loaded_estimator = CAE.load(self.resources_path)
@@ -31,6 +32,7 @@ class TestCnnEstimator(unittest.TestCase):
         self.assertEqual(estimator.config.batch_dim, loaded_estimator.config.batch_dim)
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
         self.assertEqual(estimator.config.n_output_channels, loaded_estimator.config.n_output_channels)
+	'''
 
     def tearDown(self) -> None:
         shutil.rmtree(self.resources_path)

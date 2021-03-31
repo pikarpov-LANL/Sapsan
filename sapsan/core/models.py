@@ -61,7 +61,7 @@ class Estimator(ABC):
 class Dataset(ABC):
     """ Abstract class for sapsan dataset loader """
     @abstractmethod
-    def load(self):
+    def load_numpy(self):
         """
         Loads dataset
         @return:
@@ -118,12 +118,16 @@ class DatasetPlugin(ABC):
     Example: convert dataset x, y to pytorch loaders
     """
     @abstractmethod
-    def apply(self, dataset: Dataset):
+    def apply(self, x: np.ndarray, y: np.ndarray):
         pass
+    
+    #@abstractmethod
+    #def apply(self, dataset: Dataset):
+    #    pass
 
-    @abstractmethod
-    def apply_on_x_y(self, x: np.ndarray, y: np.ndarray):
-        pass
+    #@abstractmethod
+    #def apply_on_x_y(self, x: np.ndarray, y: np.ndarray):
+    #    pass
 
 
 class Callback(ABC):

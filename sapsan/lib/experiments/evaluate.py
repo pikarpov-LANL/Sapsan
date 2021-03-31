@@ -30,9 +30,8 @@ class Evaluate(Experiment):
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
-                 data_parameters: dict,
+                 data_parameters,
                  cmap: str = 'plasma',
-                 axis: int = 3,
                  flat: bool = False):
         super().__init__(backend.name, backend)
         self.model = model
@@ -40,10 +39,10 @@ class Evaluate(Experiment):
         self.targets = targets
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
-        self.checkpoint_data_size = self.data_parameters["chkpnt - sample to size"]
-        self.batch_size = self.data_parameters["chkpnt - batch size"]
+        self.checkpoint_data_size = self.data_parameters.sampler.sample_dim
+        self.batch_size = self.data_parameters.batch_size
         self.cmap = cmap
-        self.axis = axis
+        self.axis = len(self.checkpoint_data_size)
         self.flat = flat
         if self.flat: self.n_output_channels = targets.shape[0] #flat arrays don't have batches
         else: self.n_output_channels = targets.shape[1]
@@ -56,7 +55,7 @@ class Evaluate(Experiment):
 
     def get_parameters(self) -> Dict[str, str]:
         return {
-            **self.data_parameters, **{"n_output_channels": str(self.n_output_channels)}
+            **self.data_parameters.get_parameters(), **{"n_output_channels": str(self.n_output_channels)}
         }
 
     def get_artifacts(self) -> List[str]:
@@ -116,11 +115,11 @@ class Evaluate(Experiment):
     
     
     def flatten(self, pred):
-        if self.axis == 3:
-            cube_shape = (self.n_output_channels, self.checkpoint_data_size,
-                          self.checkpoint_data_size, self.checkpoint_data_size)
-        if self.axis == 2: 
-            cube_shape = (self.n_output_channels, self.checkpoint_data_size, self.checkpoint_data_size)
+        if len(self.checkpoint_data_size) == 3:
+            cube_shape = (self.n_output_channels, self.checkpoint_data_size[0],
+                          self.checkpoint_data_size[1], self.checkpoint_data_size[2])
+        if len(self.checkpoint_data_size) == 2: 
+            cube_shape = (self.n_output_channels, self.checkpoint_data_size[0], self.checkpoint_data_size[1])
             
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
@@ -134,7 +133,7 @@ class Evaluate(Experiment):
     def split_batch(self, pred):
         n_entries = self.inputs.shape[0]
         cube_shape = (n_entries, self.n_output_channels,
-              self.batch_size, self.batch_size, self.batch_size)
+              self.batch_size[0], self.batch_size[1], self.batch_size[2])
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
 
