@@ -12,10 +12,10 @@ import torch
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
-from sapsan.lib.data import DatasetPytorchSplitterPlugin, FlatterDatasetPlugin
+from sapsan.lib.data import get_shape
 
 class CNN3dModel(torch.nn.Module):
-    def __init__(self, D_in, D_out):
+    def __init__(self, D_in = 1, D_out = 1):
         super(CNN3dModel, self).__init__()
         
         self.conv3d = torch.nn.Conv3d(D_in, D_in*2, kernel_size=2, stride=2, padding=1)
@@ -78,25 +78,24 @@ class CNN3dConfig(EstimatorConfig):
     
     
 class CNN3d(TorchEstimator):
-    def __init__(self, config: CNN3dConfig, model=None):
+    def __init__(self, config = CNN3dConfig(), 
+                       model = CNN3dModel()):
         super().__init__(config, model)
         self.config = config
-        self.model = CNN3dModel(1, 1) #perhaps we want to re-think our save-load test; no need to load the model here
+
+    def train(self, loaders):
+
+        x_shape, y_shape = get_shape(loaders)
+        model = CNN3dModel(x_shape[1], y_shape[1])
         
-    def setup_model(self, n_input_channels, n_output_channels):
-        return CNN3dModel(n_input_channels, np.prod(self.config.batch_dim) * n_output_channels)
-
-    def train(self, data_parameters, inputs, targets=None):
-
-        self.model = self.setup_model(inputs.shape[1], targets.shape[1])
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         loss_func = torch.nn.MSELoss()  # torch.nn.SmoothL1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                patience=3,
                                                                min_lr=1e-5) 
         
-        model = self.torch_train(inputs, targets, 
-                                 self.model, optimizer, loss_func, scheduler, 
-                                 self.config, data_parameters)
+        trained_model = self.torch_train(loaders, model, 
+                                         optimizer, loss_func, scheduler, 
+                                         self.config)
                 
-        return model
+        return trained_model

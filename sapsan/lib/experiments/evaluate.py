@@ -30,7 +30,7 @@ class Evaluate(Experiment):
                  model: Estimator,
                  inputs: np.ndarray,
                  targets: np.ndarray,
-                 data_parameters: dict,
+                 data_parameters,
                  cmap: str = 'plasma',
                  flat: bool = False):
         super().__init__(backend.name, backend)
@@ -39,8 +39,8 @@ class Evaluate(Experiment):
         self.targets = targets
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
-        self.checkpoint_data_size = self.data_parameters["chkpnt - sample to size"]
-        self.batch_size = self.data_parameters["chkpnt - batch_size"]
+        self.checkpoint_data_size = self.data_parameters.sampler.sample_dim
+        self.batch_size = self.data_parameters.batch_size
         self.cmap = cmap
         self.axis = len(self.checkpoint_data_size)
         self.flat = flat
@@ -55,7 +55,7 @@ class Evaluate(Experiment):
 
     def get_parameters(self) -> Dict[str, str]:
         return {
-            **self.data_parameters, **{"n_output_channels": str(self.n_output_channels)}
+            **self.data_parameters.get_parameters(), **{"n_output_channels": str(self.n_output_channels)}
         }
 
     def get_artifacts(self) -> List[str]:

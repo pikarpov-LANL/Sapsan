@@ -34,7 +34,7 @@ class FakeInferenceExperiment(Experiment):
         self.metrics = {}
 
     def run(self):
-        x, y = self.dataset.load()
+        x, y = self.dataset.load_numpy()
         predictions = self.estimator.predict(x).reshape(-1)
         mse = mean_squared_error(y.reshape(-1), predictions)
         self.metrics["mse"] = mse

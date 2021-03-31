@@ -1,55 +1,52 @@
 from typing import List, Tuple, Dict, Optional
 import numpy as np
+from collections import OrderedDict
 from sklearn.model_selection import train_test_split
 from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 from sapsan.core.models import Dataset, DatasetPlugin
+     
 
-class DatasetPytorchSplitterPlugin(DatasetPlugin):
-    def __init__(self,
-                 num_batches: int,
-                 train_fraction = None,
-                 shuffle: bool = False):
-        self.num_batches = num_batches
-        self.train_fraction = train_fraction
-        self.shuffle = shuffle
+def torch_splitter(x, y, 
+                   num_batches: int,
+                   train_fraction = None,
+                   shuffle: bool = False):
+    
+    if train_fraction != None:
+            x_train, x_valid, y_train, y_valid = train_test_split(x, y,
+                                                                  train_size=train_fraction,
+                                                                  shuffle=shuffle)
+    else:
+        x_train = x_valid = x
+        y_train = y_valid = y
 
-    def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
-        if self.train_fraction != None:
-            x_train, x_test, y_train, y_test = train_test_split(x, y,
-                                                                train_fraction=self.train_fraction,
-                                                                shuffle=self.shuffle)
-        else:
-            x_train = x_test = x
-            y_train = y_test = y
-        train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
-                                                        from_numpy(y_train).float()),
-                                  batch_size=self.num_batches,
-                                  shuffle=self.shuffle,
-                                  num_workers=4)
+    train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
+                                                    from_numpy(y_train).float()),
+                              batch_size=num_batches,
+                              shuffle=shuffle,
+                              num_workers=4)
 
-        val_loader = DataLoader(dataset=TensorDataset(from_numpy(x_test).float(),
-                                                      from_numpy(y_test).float()),
-                                batch_size=self.num_batches,
-                                shuffle=self.shuffle,
-                                num_workers=4)
+    valid_loader = DataLoader(dataset=TensorDataset(from_numpy(x_valid).float(),
+                                                  from_numpy(y_valid).float()),
+                            batch_size=num_batches,
+                            shuffle=shuffle,
+                            num_workers=4)
+    print('Train data shapes: ', x_train.shape, y_train.shape)
+    print('Valid data shapes: ', x_valid.shape, y_valid.shape)
+    
+    return OrderedDict({"train": train_loader, "valid": valid_loader})
+    
+    
+def flatten(data: np.ndarray):
+    return data.reshape(data.shape[0], -1)
 
-        return {"train": train_loader, "valid": val_loader}
-
-    def apply(self, dataset: Dataset) -> Dict[str, DataLoader]:
-        x, y = dataset.load()
-        return self.apply_on_x_y(x, y)
-
-
-class FlatterDatasetPlugin(DatasetPlugin):
-
-    @staticmethod
-    def _flatten_output(output: np.ndarray):
-        return output.reshape(output.shape[0], -1)
-
-    def apply(self, dataset: Dataset):
-        x, y = dataset.load()
-        return x, self._flatten_output(y)
-
-    def apply_on_x_y(self, x, y):
-        return x, self._flatten_output(y)
+    
+def get_shape(loaders, name = None):
+    # Get shape of the Pytorch Dataloader based on the first dataset: 'train' by default
+    if name == None:
+        name = next(iter(loaders))
+    else: pass     
+    
+    x, y = iter(loaders['%s'%name]).next()
+    
+    return x.shape, y.shape

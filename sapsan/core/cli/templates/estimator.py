@@ -16,13 +16,13 @@ from sapsan.lib.estimator.cnn.pytorch_estimator import TorchEstimator
 
 class """AlgorithmNameModel"""(torch.nn.Module):
     # input channels, output channels
-    def __init__(self, D_in, D_out):
+    def __init__(self):
         super("""AlgorithmNameModel""", self).__init__()
         
         # define your layers
         """
-        self.layer_1 = torch.nn.Linear(D_in*4, D_in*8)
-        self.layer_2 = torch.nn.Linear(D_in*8, D_out)
+        self.layer_1 = torch.nn.Linear(4, 8)
+        self.layer_2 = torch.nn.Linear(8, 16)
         """
 
     def forward(self, x): 
@@ -71,23 +71,23 @@ class """AlgorithmNameConfig"""(EstimatorConfig):
     
     
 class """AlgorithmName"""(TorchEstimator):
-    def __init__(self, config: """AlgorithmNameConfig""", model=None):
+    def __init__(self, config = """AlgorithmNameConfig"""(), 
+                       model = """AlgorithmNameModel"""()):
         super().__init__(config, model)
         self.config = config
-        self.model = """AlgorithmNameModel"""(1, 1)
         
-    def setup_model(self, n_input_channels, n_output_channels):
-        return """AlgorithmNameModel"""(n_input_channels, self.config.batch_dim ** 3 * n_output_channels)
+    def train(self, loaders):
 
-    def train(self, data_parameters, inputs, targets=None):
-
-        self.model = self.setup_model(inputs.shape[1], targets.shape[1])
+        #uncomment if you need dataloader shapes for model input
+        #x_shape, y_shape = get_shape(loaders)
+        
+        model = """AlgorithmNameModel"""()
         optimizer = """ optimizer """
         loss_func = """ loss finctions """
         scheduler = """ scheduler """
         
-        model = self.torch_train(inputs, targets, 
-                                 self.model, optimizer, loss_func, scheduler, self.config)
+        model = self.torch_train(loaders, model, 
+                                 optimizer, loss_func, scheduler, self.config)
                 
         return model
 

@@ -14,29 +14,22 @@ class Train(Experiment):
     def __init__(self,
                  backend: ExperimentBackend,
                  model: Estimator,
-                 inputs: np.ndarray,
-                 targets: np.ndarray,
-                 data_parameters: dict,
+                 loaders,
+                 data_parameters,
                  show_log = True,
                 ):
         super().__init__(backend.name, backend)
         self.model = model
-        self.inputs = inputs
-        self.targets = targets
+        self.loaders = loaders
         self.data_parameters = data_parameters
         self.artifacts = []
         self.show_log = show_log
-        
-        axis = len(self.data_parameters['chkpnt - sample to size'])
-        self.data_parameters['chkpnt - num_batches'] = 1
-        #self.data_parameters['chkpnt - num_batches'] = (self.data_parameters['chkpnt - sample to size']/self.data_parameters['chkpnt - batch_size'])**axis
-
 
     def get_metrics(self) -> Dict[str, float]:
         return self.model.metrics()
 
     def get_parameters(self) -> Dict[str, str]:
-        return {**self.data_parameters, **self.model.config.to_dict()}
+        return {**self.data_parameters.get_parameters(), **self.model.config.to_dict()}
 
     def get_artifacts(self) -> List[str]:
         return self.artifacts
@@ -47,13 +40,12 @@ class Train(Experiment):
         return len(self.artifacts)
     
     def run(self):
-        start = time.time()
         
+        start = time.time()        
         self.backend.start('train')
-                
-        self.model.train(data_parameters = self.data_parameters,
-                         inputs = self.inputs, 
-                         targets = self.targets)
+        
+        self.model.train(loaders = self.loaders) 
+        
         end = time.time()
         runtime = end - start
         
@@ -65,9 +57,7 @@ class Train(Experiment):
             log = log_plot(self.show_log)
             log.write_html("runtime_log.html")
             self.artifacts.append("runtime_log.html")
-        else: pass
-        
-
+        else: pass        
 
         for metric, value in self.get_metrics().items():
             self.backend.log_metric(metric, value)
@@ -83,6 +73,6 @@ class Train(Experiment):
         self.backend.end()
         self._cleanup()
 
-        return {
-            'runtime': runtime
-        }
+        print('runtime %.4f seconds'%runtime)
+        
+        return self.model

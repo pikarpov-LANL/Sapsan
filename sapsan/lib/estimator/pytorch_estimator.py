@@ -11,8 +11,6 @@ import numpy as np
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
-
-from sapsan.lib.data import DatasetPytorchSplitterPlugin, FlatterDatasetPlugin
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -40,24 +38,16 @@ class TorchEstimator(Estimator):
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
         
-    def torch_train(self, inputs, targets, model, 
+    def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
-                    config, data_parameters):
+                    config):
         self.config = config
-        self.data_parameters = data_parameters
         self.model = model        
         self.optimizer = optimizer
         self.loss_func = loss_func
         self.scheduler = scheduler
         
         print('Device used:', self.device)
-                
-        output_flatter = FlatterDatasetPlugin()
-        
-        splitter_pytorch = DatasetPytorchSplitterPlugin(num_batches = self.data_parameters['chkpnt - num_batches'], 
-                                                            shuffle = False)
-        _, flatten_targets = output_flatter.apply_on_x_y(inputs, targets)
-        loaders = splitter_pytorch.apply_on_x_y(inputs, flatten_targets)
 
         model = self.model
         if torch.cuda.device_count() > 1:
