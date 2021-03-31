@@ -14,6 +14,7 @@ from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
 from sapsan.lib.data import get_shape
 
+
 class CNN3dModel(torch.nn.Module):
     def __init__(self, D_in = 1, D_out = 1):
         super(CNN3dModel, self).__init__()

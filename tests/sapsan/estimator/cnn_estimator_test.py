@@ -18,6 +18,7 @@ class TestCnnEstimator(unittest.TestCase):
 
         loaded_estimator = CNN3d.load(self.resources_path, model=CNN3d, config=CNN3dConfig)
         #self.assertEqual(estimator.config.n_input_channels, loaded_estimator.config.n_input_channels)
+        print(estimator.config.batch_dim, loaded_estimator.config.batch_dim)
         self.assertEqual(estimator.config.batch_dim, loaded_estimator.config.batch_dim)
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
         #self.assertEqual(estimator.config.n_output_channels, loaded_estimator.config.n_output_channels)

@@ -37,6 +37,7 @@ class HDF5Dataset(Dataset):
                  flat: bool = False,
                  shuffle: bool = False,
                  train_fraction = None):
+
         """
         @param path:
         @param features:
