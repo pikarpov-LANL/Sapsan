@@ -99,8 +99,8 @@ class HDF5Dataset(Dataset):
     
     def load(self):
         #load numpy, split into batches, convert to torch dataloader, and return it        
-        loaders = self.load_numpy(self)
-        return self.convert_to_torch(self, loaders)                
+        loaders = self.load_numpy()
+        return self.convert_to_torch(loaders)                
     
         
     def split_batch(self, input_data):

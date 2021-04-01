@@ -28,24 +28,29 @@ class Evaluate(Experiment):
     def __init__(self,
                  backend: ExperimentBackend,
                  model: Estimator,
-                 inputs: np.ndarray,
-                 targets: np.ndarray,
+                 loaders: np.ndarray,
                  data_parameters,
                  cmap: str = 'plasma',
                  flat: bool = False):
         super().__init__(backend.name, backend)
         self.model = model
-        self.inputs = inputs
-        self.targets = targets
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
-        self.checkpoint_data_size = self.data_parameters.sampler.sample_dim
+        self.input_size = self.data_parameters.sampler.sample_dim
         self.batch_size = self.data_parameters.batch_size
         self.cmap = cmap
-        self.axis = len(self.checkpoint_data_size)
+        self.axis = len(self.input_size)
+        
+        self.loaders = loaders
+        try:
+            self.inputs = self.loaders[0]
+            self.targets = self.loaders[1]
+        except:
+            raise TypeError("Evaluate only accepts 'lists' and 'np.ndarrays' for loaders")
+        
         self.flat = flat
-        if self.flat: self.n_output_channels = targets.shape[0] #flat arrays don't have batches
-        else: self.n_output_channels = targets.shape[1]
+        if self.flat: self.n_output_channels = self.targets.shape[0] #flat arrays don't have batches
+        else: self.n_output_channels = self.targets.shape[1]
 
         self.artifacts = []
         
@@ -115,11 +120,11 @@ class Evaluate(Experiment):
     
     
     def flatten(self, pred):
-        if len(self.checkpoint_data_size) == 3:
-            cube_shape = (self.n_output_channels, self.checkpoint_data_size[0],
-                          self.checkpoint_data_size[1], self.checkpoint_data_size[2])
-        if len(self.checkpoint_data_size) == 2: 
-            cube_shape = (self.n_output_channels, self.checkpoint_data_size[0], self.checkpoint_data_size[1])
+        if self.axis == 3:
+            cube_shape = (self.n_output_channels, self.input_size[0],
+                          self.input_size[1], self.input_size[2])
+        if self.axis == 2: 
+            cube_shape = (self.n_output_channels, self.input_size[0], self.input_size[1])
             
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
@@ -138,8 +143,8 @@ class Evaluate(Experiment):
         target_cube = self.targets.reshape(cube_shape)
 
         pred_slice = slice_of_cube(combine_cubes(pred_cube,
-                                                 self.checkpoint_data_size, self.batch_size))
+                                                 self.input_size, self.batch_size))
         target_slice = slice_of_cube(combine_cubes(target_cube,
-                                                   self.checkpoint_data_size, self.batch_size))
+                                                   self.input_size, self.batch_size))
         return pred_slice, target_slice, pred_cube, target_cube
 
