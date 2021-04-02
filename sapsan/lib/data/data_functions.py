@@ -8,7 +8,7 @@ from sapsan.core.models import Dataset, DatasetPlugin
      
 
 def torch_splitter(x, y, 
-                   num_batches: int,
+                   batch_num: int,
                    train_fraction = None,
                    shuffle: bool = False):
     
@@ -22,13 +22,13 @@ def torch_splitter(x, y,
 
     train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
                                                     from_numpy(y_train).float()),
-                              batch_size=num_batches,
+                              batch_size=batch_num,
                               shuffle=shuffle,
                               num_workers=4)
 
     valid_loader = DataLoader(dataset=TensorDataset(from_numpy(x_valid).float(),
                                                   from_numpy(y_valid).float()),
-                            batch_size=num_batches,
+                            batch_size=batch_num,
                             shuffle=shuffle,
                             num_workers=4)
     print('Train data shapes: ', x_train.shape, y_train.shape)
@@ -41,7 +41,7 @@ def flatten(data: np.ndarray):
     return data.reshape(data.shape[0], -1)
 
     
-def get_shape(loaders, name = None):
+def get_loader_shape(loaders, name = None):
     # Get shape of the Pytorch Dataloader based on the first dataset: 'train' by default
     if name == None:
         name = next(iter(loaders))
