@@ -57,12 +57,13 @@ class PICAEModel(torch.nn.Module):
                 cell_inpsize = self.nfilters
                 cell_outputsize = self.nfilters
                 stridelen = 2
-            
+       
             encoder_cell_list.append(self.te.to_device(self, torch.nn.Conv3d(
                                                              out_channels = cell_outputsize, 
                                                              in_channels = cell_inpsize, 
                                                              kernel_size = self.kernel_size, 
                                                              stride = stridelen)))
+
         # accumulate layers
         self.encoder_cell_list = torch.nn.ModuleList(encoder_cell_list)
 
@@ -145,7 +146,7 @@ class PICAEModel(torch.nn.Module):
     def padHITperiodic(self,field):
         oldSize = field.size(-1)
         newSize = oldSize + 3 #2nd order accurate periodic padding at boundary
-        newField = torch.zeros(self.batch,                               self.input_size,newSize,newSize,newSize).type(self.te.tensor_to_device(self))
+        newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).type(self.te.tensor_to_device(self))
         
         # fill interior cells
         newField[:,:,:-3,:-3,:-3] = field
@@ -239,8 +240,8 @@ class PICAE(TorchEstimator):
     
     def train(self, loaders):
                             
-        train_shape, valid_shape = np.array(get_loader_shape(loaders))
-                
+        train_shape, valid_shape = np.array(get_loader_shape(loaders))     
+
         model = PICAEModel(input_dim = train_shape[2:], 
                            input_size = train_shape[1], 
                            batch = train_shape[0], 
