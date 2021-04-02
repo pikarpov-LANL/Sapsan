@@ -26,9 +26,9 @@ from .data_functions import torch_splitter, flatten
 class HDF5Dataset(Dataset):
     def __init__(self,
                  path: str,
-                 checkpoints: List[int],
                  input_size,
-                 features: List[str],
+                 checkpoints: List[int] = [0],
+                 features: List[str]=['not_specified_data'],
                  target = None,
                  batch_size: int = None,
                  batch_num: int = None,
@@ -169,7 +169,7 @@ class HDF5Dataset(Dataset):
         y = list()
         for checkpoint in self.checkpoints:
             features_checkpoint_batch = self._get_input_data(checkpoint, 
-                                                                  self.features, self.features_label)
+                                                             self.features, self.features_label)
             x.append(features_checkpoint_batch)
             x = np.vstack(x)
             print('Loaded INPUT data shape', x.shape)
@@ -178,7 +178,7 @@ class HDF5Dataset(Dataset):
             
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
-                                                                    self.target, self.target_label)
+                                                               self.target, self.target_label)
                 y.append(target_checkpoint_batch)
                 y = np.vstack(y)                        
                 print('Loaded TARGET data shape', y.shape)
