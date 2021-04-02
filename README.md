@@ -37,6 +37,10 @@ To make sure everything is alright and to familiarize yourself with the interfac
 ```shell script
 jupyter notebook sapsan/examples/cnn_example.ipynb
 ```
+alternatively, you can try out the physics-informed convolutional auto-encoder (PICAE) example on random 3D data:
+```shell script
+jupyter notebook sapsan/examples/picae_example.ipynb
+```
 or a KRR example on 2D data:
 ```shell script
 jupyter notebook sapsan/examples/krr_example.ipynb
