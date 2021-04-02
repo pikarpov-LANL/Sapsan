@@ -70,27 +70,25 @@ e.g. a model to predict turbulent behavior at the under-resolved simulation scal
 
 * __Data Module__
   * __Data:__ 3D time-variable magnetohydrodynamic (MHD) turbulence data. ``Sapsan`` is ready to process common 3D HD and MHD turbulence data, 
-    in simulation-code-specific data formats, such as HDF5 \& ATHDF (with more to come per community need).
-  * __Features:__ usually, the necessary physical features needed for training have to be calculated at the data pre-processing 
-    stage, such as energy, tensor components, and others. These operations are automated within ``Sapsan``.
+    in simulation-code-specific data formats, such as HDF5 (with more to come per community need).
   * __Filter:__ in order to build a subgrid model, one will have to filter the data, e.g. remove small-scale perturbations. 
     An example of a filter would be either a box or spectral filter.  The data can be filtered on the fly within the framework.
     
 * __Machine Learning Module__
 
-  * __Model Selection:__ different ML models would be appropriate for different physical regimes. Even though ``Sapsan`` cannot 
+  * __Model Set Up:__ different ML models would be appropriate for different physical regimes. Even though ``Sapsan`` cannot 
     account for every single physical setup, we have constrained our focus to those suitable for the study of core-collapse supernovae. 
     The framework provides templates for a selection of both conventional and physics-based models with more to come.
-  * __Optimize:__ every ML model has to be optimized. While basic hyperparameter optimization via cross-validation is currently included in ``Sapsan``, 
-  physics-based optimizations will continue to be developed.
   * __Uncertainty:__ conventional and physics-based uncertainty estimation.
 
 * __Model Module__
-  *  __Closure Model:__ a turbulence subgrid model telling us how small-scale structure affects the large scale quantities, i.e. it completes 
+  *  __Trained Model:__ a turbulence subgrid model telling us how small-scale structure affects the large scale quantities, i.e. it completes 
     or ''closes'' the governing large-scale equations of motion with small-scale terms. The prediction from a trained ML model is 
     used to provide the needed quantities.
+  *  __Analytical Tools:__ compare the trained model with conventional analytic turbulence models, such as Dynamic Smagorisnky [@lilly1966]. Futhermore, conduct other physics-based test, for example compute the power spectrum of your prediction.
 
-![High level overview of ``Sapsan's`` workflow.](high_level_structure.png)
+
+![High level overview of ``Sapsan's`` workflow.](Sapsan_overview_white.png)
 
 
 # Applications
