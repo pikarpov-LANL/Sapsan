@@ -28,15 +28,21 @@ class TorchEstimator(Estimator):
            
     def predict(self, inputs):
         self.model.eval()
-        if str(self.device) == 'cpu': 
-            data = torch.as_tensor(inputs)
-            return self.model(data).cpu().data.numpy()
-        else: 
-            data = torch.as_tensor(inputs).cuda()
-            return self.model(data).cuda().data.numpy()
+        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
+        else: data = torch.as_tensor(inputs).cuda()
+            
+        return self.model(data).cpu().data.numpy()
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
+    
+    def to_device(self, var):
+        if str(self.device) == 'cpu': return var
+        else: return var.cuda()
+        
+    def tensor_to_device(self):
+        if str(self.device) == 'cpu': return torch.FloatTensor
+        else: return torch.cuda.FloatTensor 
         
     def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
