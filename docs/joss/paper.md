@@ -27,6 +27,10 @@ date: 7/30/2020
 bibliography: paper.bib
 ---
 
+# Summary
+[Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible for researchers in physical sciences, with a focus on turbulence and astrophysical applications. It takes out all the hard work from data preparation and analysis, leaving one focused on ML model design, layer by layer.
+
+
 # Introduction
 
 It has been challenging for domain sciences to adapt Machine Learning (ML) for their respective projects. 
@@ -46,17 +50,19 @@ a theoretical medium of physics and astronomy community on a practical level. Fo
 evaluation and interpretability tools are not standardized nor they are widely available. As a result, it is a common 
 struggle to verify published results, with the setup not fully disclosed, the code being poorly structured and/or commented or 
 even worse - not publicly available; the problem ML community can relate to as well [@Hutson725]. Thus, it is not surprising that there is considerable skepticism 
-against ML in physical sciences is very abundant, with astrophysics being no exception [@carleo2019].
+against ML in physical sciences, with astrophysics being no exception [@carleo2019].
 
 In pursuit of our supernova (SNe) study, the issues outlined above became painfully apparent. Thus, we attempted to simplify 
 the barrier to entry for new researchers in domain science fields to employ ML, with the main 
 focus on astrophysical applications. As a result, an ML python-based pipeline called ``Sapsan`` has been developed. The goals have 
-been to make it accessible and catered to the community through both command-line-interface (CLI) and graphical-user-interface (GUI) 
+been to make it accessible and catered to the community through Jupyter Notebooks, command-line-interface (CLI) and graphical-user-interface (GUI)\footnote{demo available at [sapsan.app](https://sapsan.app/])} 
 available for the end-user. ``Sapsan`` includes built-in optimized ML models for turbulence treatment, both conventional and 
 physics-based. More importantly, at its core, the framework is meant to be flexible and modular, hence there is an intuitive 
 interface for users to work on their own ML algorithms. In addition, ``Sapsan`` brings best practices from the industry when it 
 comes to ML development frameworks. For example, ``Sapsan`` includes docker containers for reproducible release, as well as 
-MLflow\footnote{https://mlflow.org/} for experiment tracking.
+[MLflow](https://mlflow.org/) for experiment tracking.
+
+`Sapsan` is distributed through [Github](https://github.com/pikarpov-LANL/Sapsan) and [pip](https://pypi.org/project/sapsan/). For further reference, [wiki](https://github.com/pikarpov-LANL/Sapsan/wiki) is mainted on Github as well.
 
 # Framework
 
@@ -64,7 +70,7 @@ MLflow\footnote{https://mlflow.org/} for experiment tracking.
 how each of these is achieved.
 
 The idea behind Sapsan's approach is simple - organization of workflow within experiments 
-which encapsulate data preparation and optimization \& training leading to a ready-to-go model, which can be represented by three respective modules (Fig.1). 
+which encapsulate data preparation and optimization \& training leading to a ready-to-go model. This can be represented by three respective modules, wrapping them in Docker for reproducibility, as shown in Figure 1. 
 Now, let's consider a physical context in which we are working. In particular, let's take the example of turbulence subgrid modeling, 
 e.g. a model to predict turbulent behavior at the under-resolved simulation scales.
 
