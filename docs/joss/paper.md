@@ -88,7 +88,7 @@ e.g. a model to predict turbulent behavior at the under-resolved simulation scal
   *  __Analytical Tools:__ compare the trained model with conventional analytic turbulence models, such as Dynamic Smagorisnky [@lilly1966]. Futhermore, conduct other physics-based test, for example compute the power spectrum of your prediction.
 
 
-![High level overview of ``Sapsan's`` workflow.](Sapsan_overview_white.png)
+![High level overview of ``Sapsan's`` workflow.](Sapsan_highlevel_overview.png)
 
 
 # Applications
