@@ -12,7 +12,7 @@ import torch
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
-from sapsan.lib.data import get_shape
+from sapsan.lib.data import get_loader_shape
 
 
 class CNN3dModel(torch.nn.Module):
@@ -52,13 +52,11 @@ class CNN3dModel(torch.nn.Module):
 class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int = 1,
-                 batch_dim: tuple = (8,8,8),
                  patience: int = 10,
                  min_delta: float = 1e-5, 
                  logdir: str = "./logs/",
                  *args, **kwargs):
         self.n_epochs = n_epochs
-        self.batch_dim = batch_dim
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
@@ -86,7 +84,7 @@ class CNN3d(TorchEstimator):
 
     def train(self, loaders):
 
-        x_shape, y_shape = get_shape(loaders)
+        x_shape, y_shape = get_loader_shape(loaders)
         model = CNN3dModel(x_shape[1], y_shape[1])
         
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

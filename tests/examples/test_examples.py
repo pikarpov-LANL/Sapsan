@@ -9,7 +9,7 @@ class TestExamples(unittest.TestCase):
     """Tests example notebooks."""
 
     def notebooks(self):
-        return ['cnn_example.ipynb', 'krr_example.ipynb']
+        return ['cnn_example.ipynb', 'picae_example.ipynb','krr_example.ipynb']
     
     def setUp(self) -> None:
         os.mkdir("./runtime_test_resources")
@@ -24,7 +24,7 @@ class TestExamples(unittest.TestCase):
         shutil.rmtree("./data")
 
     def test_examples(self):
-        """Tests cnn example."""
+        """Tests examples"""
         for nt in self.notebooks():
             _, errors = run_notebook(notebook_path="./runtime_test_resources/"+nt,
                                      resources_path="./")

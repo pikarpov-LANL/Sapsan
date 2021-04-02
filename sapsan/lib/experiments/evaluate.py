@@ -38,6 +38,7 @@ class Evaluate(Experiment):
         self.data_parameters = data_parameters
         self.input_size = self.data_parameters.sampler.sample_dim
         self.batch_size = self.data_parameters.batch_size
+        self.batch_num = self.data_parameters.batch_num
         self.cmap = cmap
         self.axis = len(self.input_size)
         
@@ -138,7 +139,7 @@ class Evaluate(Experiment):
     def split_batch(self, pred):
         n_entries = self.inputs.shape[0]
         cube_shape = (n_entries, self.n_output_channels,
-              self.batch_size[0], self.batch_size[1], self.batch_size[2])
+                      self.batch_size[0], self.batch_size[1], self.batch_size[2])
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
 
@@ -147,4 +148,3 @@ class Evaluate(Experiment):
         target_slice = slice_of_cube(combine_cubes(target_cube,
                                                    self.input_size, self.batch_size))
         return pred_slice, target_slice, pred_cube, target_cube
-

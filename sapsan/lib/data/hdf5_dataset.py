@@ -17,6 +17,7 @@ Usage:
 from typing import List, Tuple, Dict, Optional
 import numpy as np
 import h5py as h5
+import warnings
 
 from sapsan.core.models import Dataset, Sampling
 from sapsan.utils.shapes import split_cube_by_batch, split_square_by_batch
@@ -30,6 +31,7 @@ class HDF5Dataset(Dataset):
                  features: List[str],
                  target = None,
                  batch_size: int = None,
+                 batch_num: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
                  features_label: Optional[List[str]] = None,
@@ -52,6 +54,7 @@ class HDF5Dataset(Dataset):
         self.target_label = target_label
         self.checkpoints = checkpoints
         self.batch_size = batch_size
+        self.batch_num = batch_num
         self.sampler = sampler
         self.input_size = input_size
         self.initial_size = input_size
@@ -62,8 +65,12 @@ class HDF5Dataset(Dataset):
 
         if sampler:
             self.input_size = self.sampler.sample_dim
-        if batch_size==None: self.num_batches = 1
-        else: self.num_batches = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
+            
+        if self.batch_size==None and self.batch_num==None: 
+            self.batch_num = 1
+        elif self.batch_num==None: 
+            self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
+                
         self.time_granularity = time_granularity
     
     def get_parameters(self):
@@ -80,7 +87,7 @@ class HDF5Dataset(Dataset):
             "chkpnt - sample to size": self.input_size,
             "chkpnt - time_granularity": self.time_granularity,
             "chkpnt - batch_size": self.batch_size,
-            "chkpnt - num_batches" : self.num_batches
+            "chkpnt - batch_num" : self.batch_num
         }
         return parameters
     
@@ -92,7 +99,7 @@ class HDF5Dataset(Dataset):
     def convert_to_torch(self, loaders: np.ndarray):
         #split into batches and convert numpy to torch dataloader
         loaders = torch_splitter(loaders[0], loaders[1], 
-                                 num_batches = self.num_batches, 
+                                 batch_num = self.batch_num, 
                                  train_fraction = self.train_fraction,
                                  shuffle = self.shuffle)
         return loaders
@@ -147,7 +154,14 @@ class HDF5Dataset(Dataset):
                 
         if self.flat: return flatten(input_data)
         elif self.batch_size == self.input_size: return input_data
-        else: return self.split_batch(input_data)
+        elif len(input_data.shape)==(self.axis+2):             
+            nsnaps_to_use = self._check_batch_num(input_data.shape)
+            input_data = input_data[:nsnaps_to_use]
+            self.batch_size = self.input_size
+            return input_data
+        else: 
+            self._check_batch_size()
+            return self.split_batch(input_data)
 
 
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -172,3 +186,25 @@ class HDF5Dataset(Dataset):
                 loaded_data = np.array([loaded_data, y])
                 
         return loaded_data
+    
+    
+    def _check_batch_size(self):
+        if self.batch_size == None:
+            single_batch_dim = (np.prod(self.input_size)/self.batch_num)**(1/self.axis)
+            if single_batch_dim.is_integer() == False: 
+                raise ValueError('Incorrect number of batches - input data cannot be evenly split')
+            self.batch_size = []
+            for i in range(self.axis):
+                self.batch_size.append(int(single_batch_dim))    
+        else: return
+        
+        
+    def _check_batch_num(self, shape):
+        nsnaps = shape[0]        
+        nsnaps_to_use = nsnaps - nsnaps%self.batch_num
+        
+        if nsnaps_to_use != nsnaps: 
+            warnings.warn("WARNING: Only %d snapshots will be used, instead of %d. Adjust 'batch_num'."%(nsnaps_to_use, nsnaps))
+            
+        return nsnaps_to_use
+            

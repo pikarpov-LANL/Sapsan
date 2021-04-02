@@ -26,6 +26,6 @@ class EquidistantSampling(Sampling):
             one_dim = i
         
         if len(self.original_dim) == 3:
-            return data[:, ::self.scale, ::self.scale, ::self.scale]
+            return data[..., ::self.scale, ::self.scale, ::self.scale]
         if len(self.original_dim) == 2:
-            return data[:, ::self.scale, ::self.scale]
+            return data[..., ::self.scale, ::self.scale]
