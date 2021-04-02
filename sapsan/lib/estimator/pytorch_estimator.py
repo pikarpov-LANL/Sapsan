@@ -37,6 +37,14 @@ class TorchEstimator(Estimator):
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
+    
+    def to_device(self, var):
+        if str(self.device) == 'cpu': return var
+        else: return var.cuda()
+        
+    def tensor_to_device(self):
+        if str(self.device) == 'cpu': return torch.FloatTensor
+        else: return torch.cuda.FloatTensor 
         
     def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
