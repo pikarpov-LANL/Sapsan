@@ -4,8 +4,6 @@ Sapsan is a pipeline for easy Machine Learning implementation in scientific proj
 
 Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
 
-Note: currently Sapsan is in alpha, but we are actively working on it and introduce new feature on a daily basis.
-
 ## [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
 
 Please refer to Sapsan's github wiki to learn more about framework's details and capabilities.
