@@ -8,13 +8,16 @@ tags:
   - turbulence
 authors:
   - name: Platon I. Karpov
-    orcid: to-fill
+    orcid: 0000-0003-4311-8490
     affiliation: 1, 2
   - name: Iskandar Sitdikov
+    orcid: 0000-0002-6809-8943
     affiliation: 3
   - name: Chengkun Huang
+    orcid: 0000-0002-3176-8042
     affiliation: 2
   - name: Chris L. Fryer
+    orcid: 0000-0003-2624-0056
     affiliation: 2
 affiliations:
   - name: Department of Astornomy & Astrophysics, University of California, Santa Cruz, CA
@@ -23,7 +26,7 @@ affiliations:
     index: 2
   - name: Provectus IT Inc., Palo Alto, CA
     index: 3
-date: 7/30/2020
+date: 4/8/2021
 bibliography: paper.bib
 ---
 
