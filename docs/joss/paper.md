@@ -33,8 +33,7 @@ bibliography: paper.bib
 # Summary
 [Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible for researchers in physical sciences, with a focus on turbulence and astrophysical applications. It takes out all the hard work from data preparation and analysis, leaving one focused on ML model design, layer by layer.
 
-
-# Introduction
+# Statement of Need
 
 It has been challenging for domain sciences to adapt Machine Learning (ML) for their respective projects. 
 From the authors' background, it has been particularly difficult to employ ML for physical simulations. 
@@ -45,20 +44,22 @@ the community.
 
 Turbulence is ubiquitous in astrophysical environments; however, it involves physics at a vast range of temporal and spatial 
 scales, making accurate fully-resolved modeling difficult. Various analytical turbulence models have been developed to be used 
-in simulations using time or spatial averaged governing equations, such as in RANS (Reynolds-averaged Navier-Stokes) and LES (Large Eddy Simulation), but accuracy is lacking. In search of better methods to model 
+in simulations using time or spatial averaged governing equations, such as in RANS (Reynolds-averaged Navier-Stokes) and LES (Large Eddy Simulation), 
+but accuracy is lacking. In search of better methods to model 
 turbulence in core-collapse supernovae, it became apparent that ML has great potential 
 to produce more accurate turbulence models on an unaveraged subgrid-scale than the current methods. Scientists from both industry and 
 academia [@king2016], [@zhang2018] have already begun using ML for applied turbulent problems, but none reach out to 
 a theoretical medium of physics and astronomy community on a practical level. For example, physics-based model 
 evaluation and interpretability tools are not standardized nor they are widely available. As a result, it is a common 
 struggle to verify published results, with the setup not fully disclosed, the code being poorly structured and/or commented or 
-even worse - not publicly available; the problem ML community can relate to as well [@Hutson725]. Thus, it is not surprising that there is considerable skepticism 
-against ML in physical sciences, with astrophysics being no exception [@carleo2019].
+even worse - not publicly available; the problem ML community can relate to as well [@Hutson725]. Thus, it is not surprising that there is considerable 
+skepticism against ML in physical sciences, with astrophysics being no exception [@carleo2019].
 
 In pursuit of our supernova (SNe) study, the issues outlined above became painfully apparent. Thus, we attempted to simplify 
 the barrier to entry for new researchers in domain science fields to employ ML, with the main 
 focus on astrophysical applications. As a result, an ML python-based pipeline called ``Sapsan`` has been developed. The goals have 
-been to make it accessible and catered to the community through Jupyter Notebooks, command-line-interface (CLI) and graphical-user-interface (GUI)\footnote{demo available at [sapsan.app](https://sapsan.app/])} 
+been to make it accessible and catered to the community through Jupyter Notebooks, command-line-interface (CLI) and graphical-user-interface 
+(GUI)\footnote{demo available at [sapsan.app](https://sapsan.app/])} 
 available for the end-user. ``Sapsan`` includes built-in optimized ML models for turbulence treatment, both conventional and 
 physics-based. More importantly, at its core, the framework is meant to be flexible and modular, hence there is an intuitive 
 interface for users to work on their own ML algorithms. In addition, ``Sapsan`` brings best practices from the industry when it 
