@@ -144,7 +144,7 @@ def build_graph(model=None, args=None, input_names=None,
         from .tf_builder import import_graph, FRAMEWORK_TRANSFORMS
         import_graph(g, model)
     else:
-        raise ValueError("`model` input param must be a PyTorch, TensorFlow, or Keras-with-TensorFlow-backend model.") 
+        raise ValueError("`model` input param must be a PyTorch, TensorFlow, or Keras-with-TensorFlow-backend model. Did you use estimator.model as an input, instead of just the estimator itself?") 
 
     # Apply Transforms
     if framework_transforms:

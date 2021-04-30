@@ -9,8 +9,7 @@ sys.path.append(str(Path.home())+"/Sapsan/")
 
 from sapsan.lib.backends.fake import FakeBackend
 from sapsan.lib.backends.mlflow import MLflowBackend
-from sapsan.lib.data.hdf5_dataset import HDF5Dataset
-from sapsan.lib.data import EquidistanceSampling
+from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
 from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
 from sapsan.lib.experiments.evaluate import Evaluate
@@ -59,11 +58,7 @@ def intro():
         > ## **Purpose**
         
         > Sapsan takes out all the hard work from data preparation and analysis in turbulence 
-        > and astrophysical applications, leaving you focused on ML model design, layer by layer.
-        
-
-        Note: currently Sapsan is in alpha, but we are actively working on it and introduce new 
-        feature on a daily basis.        
+        > and astrophysical applications, leaving you focused on ML model design, layer by layer.             
 
         **👈 Select an experiment from the dropdown on the left** to see what Sapsan can do!
         ### Want to learn more?
@@ -152,6 +147,12 @@ def cnn3d():
         widget_values['backend_list'] = ['Fake', 'MLflow']
         widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
         
+    def text_to_list(value):
+        to_clean = ['(', ')', '[', ']', ' ']
+        for i in to_clean: value = value.translate({ord(i) : None})
+        value = list([int(i) for i in value.split(',')])
+        return value
+        
     #show loss vs epoch progress with plotly
     def show_log(progress_slot, epoch_slot):
         from datetime import datetime
@@ -227,10 +228,12 @@ def cnn3d():
                            features=features,
                            target=target,
                            checkpoints=checkpoints,
-                           batch_size=int(widget_values['batch_size']),
-                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
-                           sampler=sampler)
-        x, y = data_loader.load()
+                           batch_size=text_to_list(widget_values['batch_size']),
+                           input_size=text_to_list(widget_values['input_size']),
+                           sampler=sampler,
+                           shuffle = False,
+                           train_fraction = 1)
+        x, y = data_loader.load_numpy()
         return x, y, data_loader
     
             
@@ -245,13 +248,16 @@ def cnn3d():
         
         #Load the data 
         x, y, data_loader = load_data(widget_values['checkpoints'])
+        y = flatten(y)
+        loaders = data_loader.convert_to_torch([x, y])
+        
         st.write("Dataset loaded...")
         
         #Set the experiment
         training_experiment = Train(backend=tracking_backend,
                                     model=estimator,
-                                    inputs=x, targets=y,
-                                    data_parameters = data_loader.get_parameters(),
+                                    loaders = loaders,
+                                    data_parameters = data_loader,
                                     show_log = False)
         
         #Plot progress        
@@ -272,12 +278,13 @@ def cnn3d():
         #--- Test the model ---
         #Load the test data
         x, y, data_loader = load_data(widget_values['checkpoint_test'])
+        loaders = [x, y]
 
         #Set the test experiment
         evaluation_experiment = Evaluate(backend=tracking_backend,
                                          model=training_experiment.model,
-                                         inputs=x, targets=y,
-                                         data_parameters = data_loader.get_parameters())
+                                         loaders = loaders,
+                                         data_parameters = data_loader)
         
         #Test the model
         evaluation_experiment.run()
@@ -346,12 +353,9 @@ def cnn3d():
                                     {'label':'checkpoints', 'default':config['checkpoints'],'widget':text},
                                     {'label':'features', 'default':config['features'], 'widget':text},
                                     {'label':'target', 'default':config['target'], 'widget':text},
-                                    {'label':'checkpoint_data_size', 'default':config['checkpoint_data_size'], 
-                                                                     'widget':number, 'min_value':1},
-                                    {'label':'sample_to', 'default':config['sample_to'], 
-                                                                     'widget':number, 'min_value':1},
-                                    {'label':'batch_size', 'default':config['batch_size'], 
-                                                                     'widget':number, 'min_value':1}])
+                                    {'label':'input_size', 'default':config['input_size'], 'widget':text},
+                                    {'label':'sample_to', 'default':config['sample_to'], 'widget':text},
+                                    {'label':'batch_size', 'default':config['batch_size'], 'widget':text}])
     
     widget_history_checkbox('Data: test',[{'label':'checkpoint_test', 
                                            'default':config['checkpoint_test'],'widget':text}])
@@ -365,11 +369,10 @@ def cnn3d():
 
     #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
     if widget_values['sampler_selection'] == "Equidistant3D":
-        sampler = EquidistanceSampling(int(widget_values['checkpoint_data_size']), 
-                                       int(widget_values['sample_to']), int(widget_values['axis']))
+        sampler = EquidistantSampling(text_to_list(widget_values['input_size']), 
+                                      text_to_list(widget_values['sample_to']))
     
     estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         batch_dim=int(widget_values['batch_size']), 
                                          patience=int(widget_values['patience']), 
                                          min_delta=float(widget_values['min_delta'])))
         
@@ -379,8 +382,6 @@ def cnn3d():
         ['checkpoints', widget_values['checkpoints']],
         ['features', widget_values['features']],
         ['target', widget_values['target']],
-        ['Dimensionality of the data', widget_values['axis']],
-        ['Size of the data per axis', widget_values['checkpoint_data_size']],
         ['Reduce each dimension to', widget_values['sample_to']],
         ['Batch size per dimension', widget_values['batch_size']],
         ['number of epochs', widget_values['n_epochs']],
@@ -522,7 +523,7 @@ def test():
     BATCH_SIZE = 8
 
     #Sampler to use for reduction
-    sampler = EquidistanceSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO, AXIS)
+    sampler = EquidistantSampling(CHECKPOINT_DATA_SIZE, SAMPLE_TO, AXIS)
     estimator = CNN3d(
     config=CNN3dConfig(n_epochs=20, batch_dim=BATCH_SIZE, patience=10, min_delta=1e-5)
     )
@@ -533,7 +534,7 @@ def test():
                        target=target,
                        checkpoints=[0],
                        batch_size=BATCH_SIZE,
-                       checkpoint_data_size=CHECKPOINT_DATA_SIZE,
+                       input_size=INPUT_SIZE,
                        sampler=sampler)
     x, y = data_loader.load()
 

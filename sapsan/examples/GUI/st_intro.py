@@ -12,8 +12,7 @@ EXPERIMENTS = OrderedDict(
         ("Examples", (experiments.cnn3d, None)),
         ("Custom", (custom.custom, None)),        
         #("test", (experiments.test, None)),
-        #("1D CCSN", (experiments.ccsn, None)),
-        
+        #("1D CCSN", (experiments.ccsn, None)),      
     ]
 )
 

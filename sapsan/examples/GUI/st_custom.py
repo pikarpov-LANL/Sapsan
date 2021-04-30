@@ -9,8 +9,7 @@ sys.path.append(str(Path.home())+"/Sapsan/")
 
 from sapsan.lib.backends.fake import FakeBackend
 from sapsan.lib.backends.mlflow import MLflowBackend
-from sapsan.lib.data.hdf5_dataset import HDF5Dataset
-from sapsan.lib.data import EquidistanceSampling
+from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
 from sapsan.lib.estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
 from sapsan.lib.experiments.evaluate import Evaluate
@@ -107,6 +106,13 @@ def custom():
         widget_values['backend_list'] = ['Fake', 'MLflow']
         widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
         
+    def text_to_list(value):
+        to_clean = ['(', ')', '[', ']', ' ']
+        for i in to_clean: value = value.translate({ord(i) : None})
+        value = list([int(i) for i in value.split(',')])
+        return value
+        
+    #show loss vs epoch progress with plotly
     def show_log(progress_slot, epoch_slot):
         from datetime import datetime
         
@@ -116,7 +122,15 @@ def custom():
         while log_exists == False:
             if os.path.exists(log_path):
                 log_exists = True
+            
             time.sleep(0.1)
+        
+        first_entry = False
+        while first_entry == False:
+            with open(log_path) as file:
+                if len(list(file))>=4: 
+                    first_entry = True
+            time.sleep(0.05)
             
         plot_data = {'epoch':[], 'train_loss':[]}
         last_epoch = 0
@@ -127,31 +141,14 @@ def custom():
             with open(log_path) as file:
                 #get the date of the latest event
                 lines = list(file)
-                latest_time = lines[-4].replace(",",".")
-                latest_time = datetime.strptime(latest_time, '[%Y-%m-%d %H:%M:%S.%f] ')
-
-                #check for the newest entry
-                if start_time > latest_time:
-                    continue
-                else:
-                    current_epoch = int(lines[-2].split('/')[0])
-                    train_loss = float(lines[-2].split('loss=')[-1])
-                    valid_loss = float(lines[-1].split('loss=')[-1])
-
-                '''
-                #to read a .json file
-                data = OrderedDict(json.load(file))
-                elem = list(data.keys())
-
-                if 'epoch' in elem[-1]:
-                    current_epoch = int(elem[-1].rpartition('_')[-1]) + 1
-                else:
-                    current_epoch = -1
-                '''
-            if current_epoch == last_epoch or current_epoch == -1:
+                
+                current_epoch = int(lines[-2].split('/')[0])
+                train_loss = float(lines[-2].split('loss=')[-1])
+                valid_loss = float(lines[-1].split('loss=')[-1])
+                                
+            if current_epoch == last_epoch:
                 pass
             else:     
-                #metrics = data['epoch_%d'%(current_epoch-1)][-1]
                 metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
                 epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
                 plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
@@ -171,49 +168,56 @@ def custom():
                 
                 last_epoch = current_epoch
 
-            if current_epoch == widget_values['n_epochs']:
+            if current_epoch == widget_values['n_epochs']: 
                 return
-            
+                        
             time.sleep(0.1) 
             
-    def run_experiment():
-        
-        #os.system("mlflow ui --port=%s &"%widget_values['mlflow_port'])
-        
-        if widget_values['backend_selection'] == 'Fake':
-            tracking_backend = FakeBackend(widget_values['experiment name'])
-            
-        elif widget_values['backend_selection'] == 'MLflow':
-            tracking_backend = MLflowBackend(widget_values['experiment name'], 
-                                             widget_values['mlflow_host'],widget_values['mlflow_port'])
-        
-        #Load the data
+    def load_data(checkpoints):
+        #Load the data      
         features = widget_values['features'].split(',')
         features = [i.strip() for i in features]
         
         target = widget_values['target'].split(',')
         target = [i.strip() for i in target]     
         
-        checkpoints = widget_values['checkpoints'].split(',')
-        checkpoints = [float(i.strip()) for i in checkpoints]    
+        checkpoints = np.array([int(i) for i in checkpoints.split(',')])
         
         data_loader = HDF5Dataset(path=widget_values['path'],
                            features=features,
                            target=target,
                            checkpoints=checkpoints,
-                           batch_size=int(widget_values['batch_size']),
-                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
-                           sampler=sampler)
-        x, y = data_loader.load()
+                           batch_size=text_to_list(widget_values['batch_size']),
+                           input_size=text_to_list(widget_values['input_size']),
+                           sampler=sampler,
+                           shuffle = False,
+                           train_fraction = 1)
+        x, y = data_loader.load_numpy()
+        return x, y, data_loader
+    
+            
+    def run_experiment():
+        
+        if widget_values['backend_selection'] == 'Fake':
+            tracking_backend = FakeBackend(widget_values['experiment name'])
+            
+        elif widget_values['backend_selection'] == 'MLflow':
+            tracking_backend = MLflowBackend(widget_values['experiment name'], 
+            widget_values['mlflow_host'],widget_values['mlflow_port'])
+        
+        #Load the data 
+        x, y, data_loader = load_data(widget_values['checkpoints'])
+        y = flatten(y)
+        loaders = data_loader.convert_to_torch([x, y])
+        
         st.write("Dataset loaded...")
         
         #Set the experiment
         training_experiment = Train(backend=tracking_backend,
                                     model=estimator,
-                                    inputs=x, targets=y,
-                                    data_parameters = data_loader.get_parameters(),
+                                    loaders = loaders,
+                                    data_parameters = data_loader,
                                     show_log = False)
-
         
         #Plot progress        
         progress_slot = st.empty()
@@ -222,9 +226,9 @@ def custom():
         thread = Thread(target=show_log, args=(progress_slot, epoch_slot))
         add_report_ctx(thread)
         thread.start()
-
-        #Train the model
+        
         start = time.time()
+        #Train the model
         training_experiment.run()
         st.write('Trained in %.2f sec'%((time.time()-start)))
         st.success('Done! Plotting...')
@@ -232,20 +236,14 @@ def custom():
         #def evaluate_experiment():
         #--- Test the model ---
         #Load the test data
-        data_loader = HDF5Dataset(path=widget_values['path'],
-                           features=features,
-                           target=target,
-                           checkpoints=checkpoints, 
-                           batch_size=int(widget_values['batch_size']),
-                           checkpoint_data_size=int(widget_values['checkpoint_data_size']),
-                           sampler=sampler)
-        x, y = data_loader.load()
+        x, y, data_loader = load_data(widget_values['checkpoint_test'])
+        loaders = [x, y]
 
         #Set the test experiment
-        evaluation_experiment = Evaluate3d(backend=tracking_backend,
-                                           model=training_experiment.model,
-                                           inputs=x, targets=y,
-                                           data_parameters = data_loader.get_parameters())
+        evaluation_experiment = Evaluate(backend=tracking_backend,
+                                         model=training_experiment.model,
+                                         loaders = loaders,
+                                         data_parameters = data_loader)
         
         #Test the model
         evaluation_experiment.run()
@@ -310,16 +308,16 @@ def custom():
                                                                     'min_value':1024, 'max_value':65535}]) 
 
     
-    widget_history_checkbox('Data',[{'label':'path', 'default':config['path'], 'widget':text},
-                                    {'label':'checkpoints', 'default':config['checkpoints'], 'widget':text},
+    widget_history_checkbox('Data: train',[{'label':'path', 'default':config['path'], 'widget':text},
+                                    {'label':'checkpoints', 'default':config['checkpoints'],'widget':text},
                                     {'label':'features', 'default':config['features'], 'widget':text},
                                     {'label':'target', 'default':config['target'], 'widget':text},
-                                    {'label':'checkpoint_data_size', 'default':config['checkpoint_data_size'], 
-                                                                     'widget':number, 'min_value':1},
-                                    {'label':'sample_to', 'default':config['sample_to'], 
-                                                                     'widget':number, 'min_value':1},
-                                    {'label':'batch_size', 'default':config['batch_size'], 
-                                                                     'widget':number, 'min_value':1}])
+                                    {'label':'input_size', 'default':config['input_size'], 'widget':text},
+                                    {'label':'sample_to', 'default':config['sample_to'], 'widget':text},
+                                    {'label':'batch_size', 'default':config['batch_size'], 'widget':text}])
+    
+    widget_history_checkbox('Data: test',[{'label':'checkpoint_test', 
+                                           'default':config['checkpoint_test'],'widget':text}])
     
 
         
@@ -330,11 +328,10 @@ def custom():
 
     #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
     if widget_values['sampler_selection'] == "Equidistant3D":
-        sampler = EquidistanceSampling(int(widget_values['checkpoint_data_size']), 
-                                       int(widget_values['sample_to']), int(widget_values['axis']))
+        sampler = EquidistantSampling(text_to_list(widget_values['input_size']), 
+                                      text_to_list(widget_values['sample_to']))
     
     estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         batch_dim=int(widget_values['batch_size']), 
                                          patience=int(widget_values['patience']), 
                                          min_delta=float(widget_values['min_delta'])))
         
@@ -344,14 +341,13 @@ def custom():
         ['checkpoints', widget_values['checkpoints']],
         ['features', widget_values['features']],
         ['target', widget_values['target']],
-        ['Dimensionality of the data', widget_values['axis']],
-        ['Size of the data per axis', widget_values['checkpoint_data_size']],
         ['Reduce each dimension to', widget_values['sample_to']],
         ['Batch size per dimension', widget_values['batch_size']],
         ['number of epochs', widget_values['n_epochs']],
         ['patience', widget_values['patience']],
         ['min_delta', widget_values['min_delta']],
-        ['backend_selection', widget_values['backend_selection']]
+        ['backend_selection', widget_values['backend_selection']],
+        ['checkpoint: test', widget_values['checkpoint_test']],
         ]
         
     if widget_values['backend_selection']=='MLflow': 
@@ -388,7 +384,7 @@ def custom():
                                                       'min_value':1024, 'max_value':65535}])
         
         if st.button('Edit'):
-            os.system('jupyter notebook ../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
+            os.system('jupyter notebook ../../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
             webbrowser.open('http://localhost:%d'%widget_values['edit_port'], new=2)
             
     else:
@@ -399,16 +395,19 @@ def custom():
 
     if st.button("Run experiment"):
         start = time.time()
-        try: os.remove('logs/logs.txt')
-        except: pass
+        
+        log_path = './logs/log.txt'
+        if os.path.exists(log_path): 
+            os.remove(log_path)
+        else: pass
         
         #p = Process(target=run_experiment)
         #p.start()
         #state.pid = p.pid
-        
+
         run_experiment()
         
-        st.write('Finished in %.2f mins'%((time.time()-start)/60)) 
+        st.write('Finished in %.2f sec'%((time.time()-start))) 
     
     #if st.button("Stop experiment"):
             #sys.exit('Experiment stopped')
