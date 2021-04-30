@@ -15,6 +15,7 @@ setuptools.setup(
     author="Platon Karpov, Iskandar Sitdikov",
     author_email="plkarpov@ucsc.edu",
     description="Sapsan project",
+	license = "BSD",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/pikarpov-LANL/Sapsan",
