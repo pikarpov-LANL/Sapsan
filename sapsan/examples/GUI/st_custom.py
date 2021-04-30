@@ -265,7 +265,7 @@ def custom():
     checkbox = make_recording_widget(st.sidebar.checkbox)
     selectbox = make_recording_widget(st.sidebar.selectbox)
     
-    config_file = st.sidebar.text_input('Configuration file', "st_config.txt", type='default')
+    config_file = st.sidebar.text_input('Configuration file', "st_config_custom.txt", type='default')
         
     if st.sidebar.button('reload config'):
         #st.caching.clear_cache()
