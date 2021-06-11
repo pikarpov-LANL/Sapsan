@@ -24,6 +24,10 @@ jobs:
         --user
         --upgrade
         setuptools wheel
+    - name: Install PyTorch
+      run: >-
+        python -m
+        pip3 install torch==1.8.1+cpu torchvision==0.9.1+cpu torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
     - name: Set version for release
       run: >-
         rm version &&
@@ -40,41 +44,6 @@ jobs:
       run: >-
         python
         setup.py
-        sdist bdist_wheel
-    - name: Publish distribution 📦 to PyPI
-#      if: startsWith(github.event.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.pypi_password }}
-        
-  build-n-publish-gpu:
-    name: Build and publish Sapsan-gpu Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-20.04
-    env:
-      release_version_gpu: ${{ github.event.release.tag_name }}
-
-    steps:
-    - uses: actions/checkout@master
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Install wheel
-      run: >-
-        python -m
-        pip install
-        --user
-        --upgrade
-        setuptools wheel
-    - name: Set version for release
-      run: >-
-        rm version &&
-        echo $release_version_gpu >> version &&
-        echo $release_version_gpu
-    - name: Build a binary wheel and a source tarball
-      run: >-
-        python
-        setup_gpu.py
         sdist bdist_wheel
     - name: Publish distribution 📦 to PyPI
 #      if: startsWith(github.event.ref, 'refs/tags')
