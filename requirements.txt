@@ -1,6 +1,6 @@
 numpy>=1.19.2
 Click>=7.1.2
-catalyst>=20.7
+catalyst>=21.5
 h5py>=2.10.0
 notebook<6.1.6
 jupyter>=1.0.0
