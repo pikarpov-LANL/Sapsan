@@ -59,7 +59,7 @@ class TorchEstimator(Estimator):
         print('Device used:', self.device)
         
         if self.loader_key != 'train': 
-            warnings.warn("WARNING: loader to be used to early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
+            warnings.warn("WARNING: loader to be used for early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
 
         model = self.model
         if torch.cuda.device_count() > 1:
