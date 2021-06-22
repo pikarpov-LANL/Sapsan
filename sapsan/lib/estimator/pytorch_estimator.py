@@ -9,6 +9,8 @@ import json
 from typing import Dict
 import numpy as np
 import warnings
+import os
+import shutil
 
 import torch
 from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback
@@ -55,6 +57,9 @@ class TorchEstimator(Estimator):
         self.scheduler = scheduler
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'
+        
+        ##checks if logdir exists - deletes it if yes
+        self.check_logdir()
         
         print('Device used:', self.device)
         
@@ -119,3 +124,8 @@ class TorchEstimator(Estimator):
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         estimator.model = model
         return estimator
+    
+    def check_logdir(self):
+        #checks if logdir exists - deletes if yes
+        if os.path.exists(self.config.logdir):
+            shutil.rmtree(self.config.logdir)
