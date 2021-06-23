@@ -158,42 +158,36 @@ def cnn3d():
         from datetime import datetime
         
         #log_path = 'logs/checkpoints/_metrics.json'
-        log_path = 'logs/log.txt'
-        log_exists = False
-        while log_exists == False:
-            if os.path.exists(log_path):
-                log_exists = True
-            
-            time.sleep(0.1)
+        log_path = '/home/pkarpov/Sapsan/sapsan/examples/GUI/logs/logs/train.csv'
         
-        first_entry = False
-        while first_entry == False:
-            with open(log_path) as file:
-                if len(list(file))>=4: 
-                    first_entry = True
-            time.sleep(0.05)
+        if os.path.exists(log_path):
+            os.remove(log_path)
+            
+        log_exists = False            
+        while log_exists == False:            
+            if os.path.exists(log_path):
+                log_exists = True            
+            time.sleep(0.1)
             
         plot_data = {'epoch':[], 'train_loss':[]}
         last_epoch = 0
         running = True
         
-        start_time= datetime.now()
         while running:
-            with open(log_path) as file:
-                #get the date of the latest event
-                lines = list(file)
-                
-                current_epoch = int(lines[-2].split('/')[0])
-                train_loss = float(lines[-2].split('loss=')[-1])
-                valid_loss = float(lines[-1].split('loss=')[-1])
-                                
+            data = np.genfromtxt(log_path, delimiter=',', 
+                                 skip_header=1, dtype=np.float32)
+
+            if len(data.shape)==1: data = np.array([data])
+
+            current_epoch = data[-1, 0]
+            train_loss = data[-1, 1]
+            
             if current_epoch == last_epoch:
                 pass
             else:     
-                metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
-                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
-                plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
-                plot_data['train_loss'] = np.append(plot_data['train_loss'], metrics['train_loss'])                
+                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, train_loss))
+                plot_data['epoch'] = data[:, 0]
+                plot_data['train_loss'] = data[:, 1]
                 df = pd.DataFrame(plot_data)
                 
                 if len(plot_data['epoch']) == 1:
@@ -212,6 +206,7 @@ def cnn3d():
             if current_epoch == widget_values['n_epochs']: 
                 return
                         
+            
             time.sleep(0.1) 
             
     def load_data(checkpoints):
