@@ -8,9 +8,12 @@ Backend for pytorch-based models
 import json
 from typing import Dict
 import numpy as np
+import warnings
+import os
+import shutil
 
 import torch
-from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, IterationCheckpointCallback
+from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -52,8 +55,16 @@ class TorchEstimator(Estimator):
         self.optimizer = optimizer
         self.loss_func = loss_func
         self.scheduler = scheduler
+        self.loader_key = list(loaders)[0]
+        self.metric_key = 'loss'
+        
+        ##checks if logdir exists - deletes it if yes
+        self.check_logdir()
         
         print('Device used:', self.device)
+        
+        if self.loader_key != 'train': 
+            warnings.warn("WARNING: loader to be used for early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
 
         model = self.model
         if torch.cuda.device_count() > 1:
@@ -62,7 +73,7 @@ class TorchEstimator(Estimator):
             model = torch.nn.DataParallel(model)
         
         model.to(self.device)
-
+        
         torch.cuda.empty_cache()
         self.runner.train(model=model,
                           criterion=self.loss_func,
@@ -72,14 +83,19 @@ class TorchEstimator(Estimator):
                           logdir=self.config.logdir,
                           num_epochs=self.config.n_epochs,
                           callbacks=[EarlyStoppingCallback(patience=self.config.patience,
-                                                           min_delta=self.config.min_delta),
-                                    SkipCheckpointCallback()
+                                                           min_delta=self.config.min_delta,
+														   loader_key=self.loader_key,
+														   metric_key=self.metric_key,
+														   minimize=True),
+                                    SchedulerCallback(loader_key=self.loader_key,
+                                                      metric_key=self.metric_key,),
+                                    SkipCheckpointCallback(logdir=self.config.logdir)
                                     ],
                           verbose=False,
                           check=False)
         
         self.config.parameters['model - device'] = self.runner.device         
-        self.model_metrics['final epoch'] = self.runner.epoch-1
+        self.model_metrics['final epoch'] = self.runner.stage_epoch_step
         for key,value in self.runner.epoch_metrics.items():
             self.model_metrics[key] = value
 
@@ -108,3 +124,8 @@ class TorchEstimator(Estimator):
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         estimator.model = model
         return estimator
+    
+    def check_logdir(self):
+        #checks if logdir exists - deletes if yes
+        if os.path.exists(self.config.logdir):
+            shutil.rmtree(self.config.logdir)

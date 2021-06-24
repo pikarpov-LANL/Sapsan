@@ -145,40 +145,32 @@ def line_plot(series: List[np.ndarray], names: Optional[List[str]] = None, plot_
     return plt
 
         
-def log_plot(show_log = True, log_path = 'logs/log.txt'):
+def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
     
     plot_data = {'epoch':[], 'train_loss':[]}
 
-    with open(log_path) as file:
-        lines = list(file)
-        total_lines = len(lines)
-        ind = 0
+    data = np.genfromtxt(log_path, delimiter=',', 
+                      skip_header=1, dtype=np.float32)
+    
+    if len(data.shape)==1: data = np.array([data])
 
-        current_epoch = int(lines[-2].split('/')[0])
-        while current_epoch!=1:
-            current_epoch = int(lines[total_lines-ind-2].split('/')[0])
-            train_loss = float(lines[total_lines-ind-2].split('loss=')[-1])
-            valid_loss = float(lines[total_lines-ind-1].split('loss=')[-1])
+    plot_data['epoch'] = data[:, 0]
+    plot_data['train_loss'] = data[:, 1]
 
-            metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
-            plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
-            plot_data['train_loss'] = np.append(plot_data['train_loss'], metrics['train_loss'])                
-            ind += 4
-        
-        df = pd.DataFrame(plot_data)
+    df = pd.DataFrame(plot_data)
 
-        if len(plot_data['epoch']) == 1:
-            plotting_routine = px.scatter
-        else:
-            plotting_routine = px.line
-        fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
-                      title='Training Progress', width=700, height=400)
-        fig.update_layout(yaxis=dict(exponentformat='e'))
-        fig.layout.hovermode = 'x' 
-        
-        if show_log: fig.show()
+    if len(plot_data['epoch']) == 1:
+        plotting_routine = px.scatter
+    else:
+        plotting_routine = px.line
+    fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
+                  title='Training Progress', width=700, height=400)
+    fig.update_layout(yaxis=dict(exponentformat='e'))
+    fig.layout.hovermode = 'x' 
 
-        return fig
+    if show_log: fig.show()
+
+    return fig
 
     
 def model_graph(model, shape: np.array, transforms = None):

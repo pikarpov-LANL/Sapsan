@@ -28,4 +28,5 @@ class TestExamples(unittest.TestCase):
         for nt in self.notebooks():
             _, errors = run_notebook(notebook_path="./runtime_test_resources/"+nt,
                                      resources_path="./")
-            self.assertEqual(errors, [])
+            try: self.assertEqual(errors, [])
+            except: print(errors)
