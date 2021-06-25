@@ -7,7 +7,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       release_version: ${{ github.event.release.tag_name }}
 
@@ -24,11 +24,21 @@ jobs:
         --user
         --upgrade
         setuptools wheel
+    - name: Install PyTorch
+      run: |
+        pip3 install torch==1.8.1+cpu torchvision==0.9.1+cpu torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
     - name: Set version for release
       run: >-
         rm version &&
-        echo $release_version > version &&
+        echo $release_version >> version &&
         echo $release_version
+    - name: Commit version
+      run: |
+          git config --global user.name 'pikarpov-LANL'
+          git config --global user.email 'pikarpov-LANL@users.noreply.github.com'
+          git add version
+          git commit -am "version update"
+          git push origin HEAD:master
     - name: Build a binary wheel and a source tarball
       run: >-
         python

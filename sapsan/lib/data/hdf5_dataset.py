@@ -2,95 +2,50 @@
 HDF5 dataset classes
 
 Usage:
-    ds = HDF5Dataset(path="/Users/icekhan/Documents/development/myprojects/sapsan/repo/Sapsan/dataset",
-                      features=['u', 'b', 'a',
-                                'du0', 'du1', 'du2',
-                                'db0', 'db1', 'db2',
-                                'da0', 'da1', 'da2'],
-                      target=['tn'],
-                      checkpoints=[0.0, 0.01, 0.025, 0.25])
+    data_loader = HDF5Dataset(path="/path/to/data.h5",
+                      features=['a', 'b'],
+                      target=['c'],
+                      checkpoints=[0.0, 0.01],
+                      batch_size=BATCH_SIZE,
+                      input_size=INPUT_SIZE,
+                      sampler=sampler,
+                      flat = False)
 
-    plugin = HDF5DatasetPyTorchSplitterPlugin(4)
-    loaders = plugin.apply(ds)
+    x, y = data_loader.load_numpy()
 """
 
 from typing import List, Tuple, Dict, Optional
 import numpy as np
 import h5py as h5
-from skimage.util.shape import view_as_blocks
-from sklearn.model_selection import train_test_split
-from torch import from_numpy
-from torch.utils.data import DataLoader, TensorDataset
+import warnings
 
-from sapsan.core.models import Dataset, DatasetPlugin, Sampling
-from sapsan.utils.shapes import split_cube_by_grid, split_square_by_grid
-
-class HDF5DatasetPyTorchSplitterPlugin(DatasetPlugin):
-    def __init__(self,
-                 batch_size: int,
-                 train_size: float = 0.5,
-                 shuffle: bool = True):
-        self.batch_size = batch_size
-        self.train_size = train_size
-        self.shuffle = shuffle
-
-    def apply_on_x_y(self, x, y) -> Dict[str, DataLoader]:
-        x_train, x_test, y_train, y_test = train_test_split(x, y,
-                                                            train_size=self.train_size,
-                                                            shuffle=True)
-
-        train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train),
-                                                        from_numpy(y_train)),
-                                  batch_size=self.batch_size,
-                                  shuffle=self.shuffle,
-                                  num_workers=4)
-
-        val_loader = DataLoader(dataset=TensorDataset(from_numpy(x_test),
-                                                      from_numpy(y_test)),
-                                batch_size=self.batch_size,
-                                shuffle=self.shuffle,
-                                num_workers=4)
-
-        return {"train": train_loader, "valid": val_loader}
-
-    def apply(self, dataset: Dataset) -> Dict[str, DataLoader]:
-        x, y = dataset.load()
-        return self.apply_on_x_y(x, y)
-
-
-class OutputFlatterDatasetPlugin(DatasetPlugin):
-
-    @staticmethod
-    def _flatten_output(output: np.ndarray):
-        return output.reshape(output.shape[0], -1)
-
-    def apply(self, dataset: Dataset):
-        x, y = dataset.load()
-        return x, self._flatten_output(y)
-
-    def apply_on_x_y(self, x, y):
-        return x, self._flatten_output(y)
-
+from sapsan.core.models import Dataset, Sampling
+from sapsan.utils.shapes import split_cube_by_batch, split_square_by_batch
+from .data_functions import torch_splitter, flatten
 
 class HDF5Dataset(Dataset):
     def __init__(self,
                  path: str,
-                 features: List[str],
-                 target: List[str],
-                 checkpoints: List[int],
-                 grid_size: int = 64,
-                 checkpoint_data_size: int = 128,
+                 input_size,
+                 checkpoints: List[int] = [0],
+                 features: List[str]=['not_specified_data'],
+                 target = None,
+                 batch_size: int = None,
+                 batch_num: int = None,
                  sampler: Optional[Sampling] = None,
-                 time_granularity: float = 2.5e-3,
-                 features_label = None,
-                 target_label = None,
-                 axis: int = 3):
+                 time_granularity: float = 1,
+                 features_label: Optional[List[str]] = None,
+                 target_label: Optional[List[str]] = None,
+                 flat: bool = False,
+                 shuffle: bool = False,
+                 train_fraction = None):
+
         """
         @param path:
         @param features:
         @param target:
         @param checkpoints:
-        @param grid_size: size of cube that will be used to separate checkpoint data
+        @param batch_size: size of cube that will be used to separate checkpoint data
         """
         self.path = path
         self.features = features
@@ -98,63 +53,158 @@ class HDF5Dataset(Dataset):
         self.features_label = features_label
         self.target_label = target_label
         self.checkpoints = checkpoints
-        self.grid_size = grid_size
+        self.batch_size = batch_size
+        self.batch_num = batch_num
         self.sampler = sampler
-        self.checkpoint_data_size = checkpoint_data_size
-        self.axis = axis
+        self.input_size = input_size
+        self.initial_size = input_size
+        self.axis = len(self.input_size)
+        self.flat = flat
+        self.shuffle = shuffle
+        self.train_fraction = train_fraction
 
         if sampler:
-            self.checkpoint_data_size = self.sampler.sample_dim
+            self.input_size = self.sampler.sample_dim
+            
+        if self.batch_size==None and self.batch_num==None: 
+            self.batch_num = 1
+        elif self.batch_num==None: 
+            self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
+                
         self.time_granularity = time_granularity
-
-    def load(self) -> Tuple[np.ndarray, np.ndarray]:
-        return self._load_data()
-
+    
+    def get_parameters(self):
+        parameters = {
+            "data - path": self.path,
+            "data - features": str(self.features)[1:-1].replace("'",""),
+            "data - target": str(self.target)[1:-1].replace("'",""),
+            "data - features_label": self.features_label,
+            "data - target_label": self.target_label,
+            "data - axis": self.axis,
+            "data - shuffle": self.shuffle,
+            "chkpnt - time": self.checkpoints,
+            "chkpnt - initial size": self.initial_size,
+            "chkpnt - sample to size": self.input_size,
+            "chkpnt - time_granularity": self.time_granularity,
+            "chkpnt - batch_size": self.batch_size,
+            "chkpnt - batch_num" : self.batch_num
+        }
+        return parameters
+    
+    
+    def load_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
+        #return loaded data as a numpy array only
+        return self._load_data_numpy()
+    
+    def convert_to_torch(self, loaders: np.ndarray):
+        #split into batches and convert numpy to torch dataloader
+        loaders = torch_splitter(loaders[0], loaders[1], 
+                                 batch_num = self.batch_num, 
+                                 train_fraction = self.train_fraction,
+                                 shuffle = self.shuffle)
+        return loaders
+    
+    def load(self):
+        #load numpy, split into batches, convert to torch dataloader, and return it        
+        loaders = self.load_numpy()
+        return self.convert_to_torch(loaders)                
+    
+        
+    def split_batch(self, input_data):
+        # columns_length ex: 12 features * 3 dim = 36  
+        columns_length = input_data.shape[0]
+        if self.axis == 3:
+            return split_cube_by_batch(input_data, self.input_size,
+                                      self.batch_size, columns_length)
+        if self.axis == 2:
+            return split_square_by_batch(input_data, self.input_size,
+                                      self.batch_size, columns_length)
+    
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
         timestep = self.time_granularity * checkpoint
         relative_path = self.path.format(checkpoint=timestep, feature=feature)
-        return relative_path #"{0}/{1}".format(self.path, relative_path)
+        return relative_path
 
-    def _get_checkpoint_data(self, checkpoint, columns, labels):
+    
+    def _get_input_data(self, checkpoint, columns, labels):
         all_data = []
         # combine all features into cube with channels
                 
         for col in range(len(columns)):
-            data = h5.File(self._get_path(checkpoint, columns[col]), 'r')
+            file = h5.File(self._get_path(checkpoint, columns[col]), 'r')
             
-            if labels==None: key = list(data.keys())[-1]
+            if labels==None: key = list(file.keys())[-1]
             else: key = label[col]
 
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
             
-            data = data[key]
-            data = np.moveaxis(data, -1, 0)
+            data = file.get(key)
+            
+            if (self.axis==3 and len(np.shape(data))==3) or (self.axis==2 and len(np.shape(data))==2): 
+                data = [data]     
             all_data.append(data)
-        # checkpoint_data shape: (features, 128, 128, 128)
-        checkpoint_data = np.vstack(all_data)
+            
+        # input_data shape ex: (features, 128, 128, 128)        
+        input_data = np.vstack(all_data)
+
         # downsample if needed
         if self.sampler:
-            checkpoint_data = self.sampler.sample(checkpoint_data)
-        # columns_length: 12 features (or 1 label) * 3 dim = 36
-        columns_length = checkpoint_data.shape[0]
+            input_data = self.sampler.sample(input_data)
+                
+        if self.flat: return flatten(input_data)
+        elif self.batch_size == self.input_size: return input_data
+        elif len(input_data.shape)==(self.axis+2):             
+            nsnaps_to_use = self._check_batch_num(input_data.shape)
+            input_data = input_data[:nsnaps_to_use]
+            self.batch_size = self.input_size
+            return input_data
+        else: 
+            self._check_batch_size()
+            return self.split_batch(input_data)
 
-        if self.axis == 3:
-            return split_cube_by_grid(checkpoint_data, self.checkpoint_data_size,
-                                      self.grid_size, columns_length)
-        if self.axis == 2:
-            return split_square_by_grid(checkpoint_data, self.checkpoint_data_size,
-                                      self.grid_size, columns_length)
 
-    def _load_data(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
         x = list()
         y = list()
         for checkpoint in self.checkpoints:
-            features_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
-                                                                  self.features, self.features_label)
-            target_checkpoint_batch = self._get_checkpoint_data(checkpoint, 
-                                                                self.target, self.target_label)
+            features_checkpoint_batch = self._get_input_data(checkpoint, 
+                                                             self.features, self.features_label)
             x.append(features_checkpoint_batch)
-            y.append(target_checkpoint_batch)
-
-        return np.vstack(x), np.vstack(y)
+            x = np.vstack(x)
+            print('Loaded INPUT data shape', x.shape)
+            
+            loaded_data = x
+            
+            if self.target!=None:
+                target_checkpoint_batch = self._get_input_data(checkpoint, 
+                                                               self.target, self.target_label)
+                y.append(target_checkpoint_batch)
+                y = np.vstack(y)                        
+                print('Loaded TARGET data shape', y.shape)
+                
+                loaded_data = np.array([loaded_data, y])
+                
+        return loaded_data
+    
+    
+    def _check_batch_size(self):
+        if self.batch_size == None:
+            single_batch_dim = (np.prod(self.input_size)/self.batch_num)**(1/self.axis)
+            if single_batch_dim.is_integer() == False: 
+                raise ValueError('Incorrect number of batches - input data cannot be evenly split')
+            self.batch_size = []
+            for i in range(self.axis):
+                self.batch_size.append(int(single_batch_dim))    
+        else: return
+        
+        
+    def _check_batch_num(self, shape):
+        nsnaps = shape[0]        
+        nsnaps_to_use = nsnaps - nsnaps%self.batch_num
+        
+        if nsnaps_to_use != nsnaps: 
+            warnings.warn("WARNING: Only %d snapshots will be used, instead of %d. Adjust 'batch_num'."%(nsnaps_to_use, nsnaps))
+            
+        return nsnaps_to_use
+            

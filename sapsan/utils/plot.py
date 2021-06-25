@@ -1,31 +1,56 @@
+'''
+Plotting routines
+
+You can adjust the style to your liking by changing 'param'.
+
+-pikarpov
+'''
+
 from logging import warning
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import plotly.express as px
+import pandas as pd
 import numpy as np
+import warnings
 
 from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
+import sapsan.utils.hiddenlayer as hl
+
+
+params = {'axes.labelsize': 20, 'legend.fontsize': 15, 'xtick.labelsize': 17,'ytick.labelsize': 17,
+          'axes.titlesize':24, 'axes.linewidth': 1, 'lines.linewidth': 1.5,
+          'xtick.major.width': 1,'ytick.major.width': 1,'xtick.minor.width': 1,'ytick.minor.width': 1,
+          'xtick.major.size': 4,'ytick.major.size': 4,'xtick.minor.size': 3,'ytick.minor.size': 3,
+          'axes.formatter.limits' : [-7, 7], 'text.usetex': False}
 
 def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str]] = None):
     """ PDF plot
 
-    @param series: series of numpy arrays to build pds plot from
+    @param series: series of numpy arrays to build a pdf plot from
     @param bins: number of bins
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
-    plt.figure(figsize = (6, 6))
+    mpl.rcParams.update(params)
+    fig = plt.figure(figsize = (6, 6))
+    ax = fig.add_subplot(111)
+
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
 
     for idx, data in enumerate(series):
-        plt.hist(data.flatten(), bins=bins, lw=3, density=True, histtype='step', label=names[idx])
+        ax.hist(data.flatten(), bins=bins, lw=3, density=True, histtype='step', label=names[idx])
 
+    ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
     plt.legend(loc=1)
     plt.yscale("log")
     plt.xlabel("Values")
     plt.ylabel("PDF")
+    plt.tight_layout()
 
     return plt
 
@@ -33,24 +58,26 @@ def pdf_plot(series: List[np.ndarray], bins: int = 100, names: Optional[List[str
 def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
     """ CDF plot
 
-    @param series: series of numpy arrays to build pds plot from
+    @param series: series of numpy arrays to build a cdf plot
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
-    plt.figure()
+    mpl.rcParams.update(params)
+    fig = plt.figure(figsize = (6, 6))
+    ax = fig.add_subplot(111)
+
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
 
     func = []
-    print('shapes', np.shape(series))
-    val = np.zeros((np.shape(series)[0],np.shape(series)[1]*np.shape(series)[2]))
+    val = np.zeros((len(series),np.prod(np.shape(series[0]))))
     for idx, data in enumerate(series):
         val[idx] = np.sort(data.flatten())
 
         #cdf calculation via linear interpolation
         length = len(val[idx])
         yvals = np.linspace(0,length-1, length)/length
-        plt.plot(val[idx], yvals, label=names[idx])
+        ax.plot(val[idx], yvals, label=names[idx])
         func.append(interp1d(val[idx], yvals))  
 
         if idx==1:
@@ -62,50 +89,124 @@ def cdf_plot(series: List[np.ndarray], names: Optional[List[str]] = None):
             D = abs(func[0](xtest)-func[1](xtest))
             Dmax = max(D)
             Dpos = xtest[np.argmax(D)]
-            plt.axvline(x=Dpos, linewidth=1, color='tab:red', linestyle='--')
+            ax.axvline(x=Dpos, linewidth=1, color='tab:red', linestyle='--')
 
             txt = ('pvalue = %.3e\n'%pvalue+
                      r'$\rm ks_{stat}$'+' = %.3e\n'%ks_stat+
-                     r'$\rm ks_{line}$'+' = %.3e\n'%Dmax+
+                     #r'$\rm ks_{line}$'+' = %.3e\n'%Dmax+
                      r'$\rm line_{pos}$'+' = %.3e'%Dpos)
 
-            plt.figtext(0.17, 0.6, txt, fontsize=14)        
+            plt.figtext(0.25, 0.55, txt, fontsize=14)        
 
+    ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
     plt.legend()
     plt.xlabel('Values')
-    plt.ylabel('CDF')        
+    plt.ylabel('CDF')
+    plt.tight_layout()
+    
+    return plt
+
+
+def slice_plot(series: List[np.ndarray], names: Optional[List[str]] = None, cmap = 'plasma'):
+    mpl.rcParams.update(params)
+    if not names:
+        names = ["Data {}".format(i) for i in range(len(series))]
+    
+    #colormap range is based on the target slice
+    vmin = np.amin(series[-1])
+    vmax = np.amax(series[-1])
+    
+    fig = plt.figure(figsize = (16, 6))
+    for idx, data in enumerate(series):
+        fig.add_subplot(121+idx)
+        im = plt.imshow(data, cmap=cmap, vmin=vmin, vmax = vmax)
+        plt.colorbar(im).ax.tick_params(labelsize=14)
+        plt.title(names[idx])
+    plt.tight_layout()
+    
+    return plt
+
+
+def line_plot(series: List[np.ndarray], names: Optional[List[str]] = None, plot_type = 'plot'):
+    mpl.rcParams.update(params)
+    if not names:
+        names = ["Data {}".format(i) for i in range(len(series))]
+        
+    fig = plt.figure(figsize = (6, 6))
+    for idx, data in enumerate(series):
+        if plot_type == 'plot': plt.plot(data[0], data[1], label = names[idx])
+        elif plot_type == 'semilogx': plt.semilogx(data[0], data[1], label = names[idx])
+        elif plot_type == 'semilogy': plt.semilogy(data[0], data[1], label = names[idx])
+        elif plot_type == 'loglog': plt.loglog(data[0], data[1], label = names[idx])
+            
+    plt.legend(loc=0)
+    plt.tight_layout()
+    
+    return plt
+
+        
+def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
+    
+    plot_data = {'epoch':[], 'train_loss':[]}
+
+    data = np.genfromtxt(log_path, delimiter=',', 
+                      skip_header=1, dtype=np.float32)
+    
+    if len(data.shape)==1: data = np.array([data])
+
+    plot_data['epoch'] = data[:, 0]
+    plot_data['train_loss'] = data[:, 1]
+
+    df = pd.DataFrame(plot_data)
+
+    if len(plot_data['epoch']) == 1:
+        plotting_routine = px.scatter
+    else:
+        plotting_routine = px.line
+    fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
+                  title='Training Progress', width=700, height=400)
+    fig.update_layout(yaxis=dict(exponentformat='e'))
+    fig.layout.hovermode = 'x' 
+
+    if show_log: fig.show()
+
+    return fig
 
     
-def slice_of_cube(data: np.ndarray,
-                  feature: Optional[int] = None,
-                  n_slice: Optional[int] = None,
-                  name: Optional[str] = None):
-    """ Slice of 3d cube
+def model_graph(model, shape: np.array, transforms = None):
+    import torch
+    
+    if len(np.shape(shape)) != 1: raise ValueError("Error: please provide the 'shape', "
+                                                   "not the input data array itself.")    
+    
+    if transforms == None:
+        transforms = [
+                        hl.transforms.Fold("Conv > MaxPool > Relu", "ConvPoolRelu"),
+                        hl.transforms.Fold("Conv > MaxPool", "ConvPool"),    
+                        hl.transforms.Prune("Shape"),
+                        hl.transforms.Prune("Constant"),
+                        hl.transforms.Prune("Gather"),
+                        hl.transforms.Prune("Unsqueeze"),
+                        hl.transforms.Prune("Concat"),
+                        hl.transforms.Rename("Cast", to="Input"),
+                        hl.transforms.FoldDuplicates()
+                     ]
 
-    @param data: numpy array
-    @param feature: feature of cube to use in case of multifeature plot
-    @param n_slice: slice to use
-    @param name: name of plot
-    @return: pyplot object
-    """
-    if len(data.shape) not in [3, 4]:
-        return None
-
-    if len(data.shape) == 4:
-        if feature is None:
-            warning("Feature was not provided. First one will be used")
-            feature = 0
-        data = data[feature, :, :, :]
-
-    if n_slice is None:
-        warning("Slice is not selected first one will be used")
-        n_slice = 0
-
-    slice_to_plot = data[n_slice]
-
-    return slice_to_plot
-
-
+    shape = np.array(shape)
+    if shape[1] != 1:
+        shape[1] = 1
+        warnings.warn("shape was changed to %s to draw a model graph."%str(shape))
+    
+    if len(shape) == 5: unit_input = torch.zeros(tuple(shape))
+    elif len(shape) == 4: unit_input = torch.zeros(tuple(shape))
+    else: raise ValueError('Input shape can be either of 2D or 3D data')
+        
+    graph = hl.build_graph(model, unit_input, transforms = transforms)
+    graph.theme = hl.graph.THEMES["blue"].copy()
+    
+    return graph
+    
+    
 class PlotUtils(object):
     @classmethod
     def plot_histograms(cls):
@@ -114,7 +215,15 @@ class PlotUtils(object):
     @classmethod
     def plot_pdf(cls, data):
         return pdf_plot(data)
+    
+    @classmethod
+    def plot_cdf(cls, data):
+        return cdf_plot(data)
 
     @classmethod
-    def plot_slices(cls):
-        pass
+    def plot_slice(cls, data):
+        return slice_plot(data)
+    
+    @classmethod
+    def plot_log(cls, data):
+        return log_plot(data)

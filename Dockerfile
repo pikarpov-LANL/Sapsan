@@ -1,19 +1,19 @@
-FROM pytorch/pytorch:latest
+FROM python:3.8.5-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		 git \
-         libsm6 \
-         libxext6 \
-         libxrender-dev \
-         ffmpeg && \
-     rm -rf /var/lib/apt/lists/*
+# remember to expose the port your app'll be exposed on.
+EXPOSE 7654
 
-WORKDIR /app
+ENV GIT_PYTHON_REFRESH=quiet
+RUN pip install -U pip
 
-RUN pip install numpy jupyter
+RUN pip install sapsan
 
-COPY ./requirements.txt /app/
+# copy into a directory of its own (so it isn't in the toplevel dir)
+COPY sapsan/examples/cnn_example.ipynb sapsan_docker_examples/
+COPY sapsan/examples/krr_example.ipynb sapsan_docker_examples/
+COPY sapsan/examples/GUI sapsan_docker_examples/GUI/
+COPY sapsan/examples/data sapsan_docker_examples/data/
+WORKDIR /sapsan_docker_examples
 
-RUN pip install -r requirements.txt
-
-COPY . /app
+# run it!
+ENTRYPOINT ["jupyter", "notebook", "cnn_example.ipynb", "--port=7654", "--ip=0.0.0.0", "--allow-root", "--NotebookApp.token=''", "--NotebookApp.password=''", "--no-browser"]
