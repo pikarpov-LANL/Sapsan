@@ -49,11 +49,11 @@ def intro():
         
         ---
         
-        Sapsan is a pipeline for easy Machine Learning implementation in scientific projects.
-        That being said, its primary goal and featured models are geared towards dynamic MHD 
-        turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning
-        models in its set of tools to accurately capture the turbulent nature appicable to 
-        Core-Collapse Supernovae.
+        Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While turbulence 
+        is important in a wide range of mediums, the pipeline primarily focuses on astrophysical application. 
+        With Sapsan, one can create their own custom models or use either conventional or physics-informed 
+        ML approaches for turbulence modeling included with the pipeline ([estimators](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators)).
+        For example, Sapsan features ML models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
         
         > ## **Purpose**
         
@@ -154,11 +154,8 @@ def cnn3d():
         return value
         
     #show loss vs epoch progress with plotly
-    def show_log(progress_slot, epoch_slot):
-        from datetime import datetime
-        
-        #log_path = 'logs/checkpoints/_metrics.json'
-        log_path = '/home/pkarpov/Sapsan/sapsan/examples/GUI/logs/logs/train.csv'
+    def show_log(progress_slot, epoch_slot):        
+        log_path = 'logs/logs/train.csv'
         
         if os.path.exists(log_path):
             os.remove(log_path)
