@@ -1,6 +1,6 @@
 # Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/images/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
 
-Sapsan is a pipeline for easy Machine Learning implementation in scientific projects. That being said, its primary goal and featured models are geared towards dynamic MHD turbulence subgrid modeling. Sapsan will soon feature Physics-Informed Machine Learning models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
+Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While turbulence is important in a wide range of mediums, the pipeline primarily focuses on astrophysical application. With Sapsan, one can create their own custom models or use either conventional or physics-informed ML approaches for turbulence modeling included with the pipeline ([estimators](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators)). For example, Sapsan features ML models in its set of tools to accurately capture the turbulent nature applicable to Core-Collapse Supernovae.
 
 Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is indentical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
 
@@ -10,24 +10,22 @@ Please refer to Sapsan's github wiki to learn more about framework's details and
 
 ## Quick Start
 
-#### 1. Clone from git (recommended)
+#### 1. Install PyTorch (prerequisite)
+Sapsan can be run on both cpu and gpu. Please follow the instructions on [PyTorch](https://pytorch.org/get-started/locally/) to install the latest version (torch>=1.7.1 & CUDA>=11.0).
+
+#### 2. Clone from git (recommended)
 ```shell script
 git clone https://github.com/pikarpov-LANL/Sapsan.git
 cd Sapsan/
 python setup.py install
 ```
 
-For **GPU** enabled version change the last line to
-```shell script
-python setup_gpu.py install
-```
-
-#### 2. Install via pip (cpu-only)
+#### OR Install via pip
 ```shell script
 pip install sapsan
 ```
 
-Note: make sure you are using the latest release version
+Note: see [Installation Page](https://github.com/pikarpov-LANL/Sapsan/wiki/Installation/) on the Wiki for complete instructions with Graphviz and Docker installation.
 
 #### Run Examples
 
