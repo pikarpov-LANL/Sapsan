@@ -31,7 +31,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-[Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible for researchers in physical sciences, with a focus on turbulence and astrophysical applications. It takes out all the hard work from data preparation and analysis, leaving one focused on ML model design, layer by layer.
+[Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible in the study of turbulence, with a focus on astrophysical applications. Sapsan includes modules to load, filter, sample down, batch, and split your data for training and validation. Furthermore, the evoluation modules, among other features, include construction of power spectra and comparison to established analytical turbulence closure models, such as a gradient model. Thus, Sapsan takes out all the hard work from data preparation and analysis, leaving one focused on ML model design, layer by layer.
 
 # Statement of Need
 
