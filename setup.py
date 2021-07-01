@@ -28,7 +28,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.8',
     ],
     install_requires=requirements,
-    python_requires='>=3.7, !=3.9',
+    python_requires='>=3.7, <3.9',
     entry_points='''
         [console_scripts]
         sapsan=sapsan.core.cli.cli:sapsan
