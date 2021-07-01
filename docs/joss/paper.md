@@ -36,11 +36,10 @@ bibliography: paper.bib
 # Statement of Need
 
 It has been challenging for domain sciences to adapt Machine Learning (ML) for their respective projects. 
-From the authors' background, it has been particularly difficult to employ ML for physical simulations. 
+From the authors' background, it has been particularly difficult to employ ML for physical simulations, modeling turbulence. 
 It is rather challenging to prove that an ML model has arbitrarily learned the laws of physics embedded into the problem 
 with the ability to extrapolate within the parameter-space of the simulation. Inability to directly infer the prediction 
-capabilities of ML is one of the major causes behind the slow adaption rates, however, the effectiveness of ML cannot be ignored by 
-the community.
+capabilities of ML is one of the major causes behind the slow adaption rates, however, the effectiveness of ML cannot be ignored by the community.
 
 Turbulence is ubiquitous in astrophysical environments; however, it involves physics at a vast range of temporal and spatial 
 scales, making accurate fully-resolved modeling difficult. Various analytical turbulence models have been developed to be used 
@@ -56,7 +55,7 @@ even worse - not publicly available; the problem ML community can relate to as w
 skepticism against ML in physical sciences, with astrophysics being no exception [@carleo2019].
 
 In pursuit of our supernova (SNe) study, the issues outlined above became painfully apparent. Thus, we attempted to simplify 
-the barrier to entry for new researchers in domain science fields to employ ML, with the main 
+the barrier to entry for new researchers in domain science fields studying turbulence to employ ML, with the main 
 focus on astrophysical applications. As a result, an ML python-based pipeline called ``Sapsan`` has been developed. The goals have 
 been to make it accessible and catered to the community through Jupyter Notebooks, command-line-interface (CLI) and graphical-user-interface 
 (GUI)\footnote{demo available at [sapsan.app](https://sapsan.app/])} 
