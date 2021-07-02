@@ -68,38 +68,38 @@ comes to ML development frameworks. For example, ``Sapsan`` includes docker cont
 `Sapsan` is distributed through [Github](https://github.com/pikarpov-LANL/Sapsan) and [pip](https://pypi.org/project/sapsan/). For further reference, [wiki](https://github.com/pikarpov-LANL/Sapsan/wiki) is mainted on Github as well.
 
 # Framework
+``Sapsan`` organizes workflow via three repesctive stages: data preparation, machine learning, and analysis. The whole process can be further wrapped in Docker to publish your results for reproducibility, as reflected by Figure 1. Let's brake down each stage in the context of turbulence subgrid modeling, e.g. a model to predict turbulent behavior at the under-resolved simulation scales.
 
-``Sapsan`` is built to be versatile, flexible, and reproducible, while being easy to use. In this section, we will examine 
-how each of these is achieved.
-
-The idea behind Sapsan's approach is simple - organization of workflow within experiments 
-which encapsulate data preparation and optimization \& training leading to a ready-to-go model. This can be represented by three respective modules, wrapping them in Docker for reproducibility, as shown in Figure 1. 
-Now, let's consider a physical context in which we are working. In particular, let's take the example of turbulence subgrid modeling, 
-e.g. a model to predict turbulent behavior at the under-resolved simulation scales.
-
-* __Data Module__
-  * __Data:__ 3D time-variable magnetohydrodynamic (MHD) turbulence data. ``Sapsan`` is ready to process common 3D HD and MHD turbulence data, 
-    in simulation-code-specific data formats, such as HDF5 (with more to come per community need).
-  * __Filter:__ in order to build a subgrid model, one will have to filter the data, e.g. remove small-scale perturbations. 
-    An example of a filter would be either a box or spectral filter.  The data can be filtered on the fly within the framework.
+* __Data Preparation__
+  * __Loading Data:__ ``Sapsan`` is ready to process common 2D & 3D hydrodynamic (HD) and magnetohydrodynamic (MHD) turbulence data, in simulation-code-specific data formats, such as HDF5 (with more to come per community need).
+  * __Transformations:__ a variety of tools are ready for you to ready the data for training
+     * __Filter:__ in order to build a subgrid model, one will have to filter the data, e.g. remove small-scale perturbations. 
+    A few examples would be either a box, spectral, or a gaussian filter.  The data can be filtered on the fly within the framework.
+     * __Sample:__ to run quick tests of your model, you might want to test on a sampled version of the data, wyhile retaining the full spacial domain. Thus, equidistant sampling is ready to go in ``Sapsan``
+     * __Batch:__ the pipeline will spatially batch the data
+     * __Split:__ data is divided into testing and validation datasets
     
-* __Machine Learning Module__
+* __Machine Learning__
 
-  * __Model Set Up:__ different ML models would be appropriate for different physical regimes. Even though ``Sapsan`` cannot account for every single physical setup, we have constrained our focus to those suitable for the study of core-collapse supernovae. 
-    The framework provides templates for a selection of both conventional and physics-based models with more to come.
-  * __Uncertainty:__ conventional and physics-based uncertainty estimation.
+  * __Model Set Up:__ different ML models would be appropriate for different physical regimes. ``Sapsan`` provides templates for a selection of both conventional and physics-based models with more to come. Only important options are left up to the user to edit, with most of the overhead kept in the backend.
+     * __Layers:__  define and order the ML layers
+     * __Tracking:__ add extra parameters to be tracked by MLflow
+     * __Loos Function:__ decide on a conventional or physics-based/custom loss function to model the data
+     * __Optimizer:__ choose how to optimize the training
+     * __Scheduler:__ select how to adjust the learning rate
 
-* __Model Module__
+* __Analysis__
   *  __Trained Model:__ a turbulence subgrid model telling us how small-scale structure affects the large scale quantities, i.e. it completes or ''closes'' the governing large-scale equations of motion with small-scale terms. The prediction from a trained ML model is used to provide the needed quantities.
-  *  __Analytical Tools:__ compare the trained model with conventional analytic turbulence models, such as Dynamic Smagorisnky [@lilly1966]. Furthermore, conduct other physics-based tests, for example, compute the power spectrum of your prediction.
+  *  __Analytical Tools:__ compare the trained model with conventional analytic turbulence models, such as Dynamic Smagorisnky [@lilly1966] or Gradient model [@]. Furthermore, conduct other physics-based tests, for example, compute the power spectrum of your prediction.
 
+For further information on each stage please refer to [Sapsan's Wiki on Gihub](https://github.com/pikarpov-LANL/Sapsan/wiki).
 
 ![High-level overview of ``Sapsan's`` workflow.](Sapsan_highlevel_overview.png)
 
 
 # Applications
 
-While ``Sapsan`` is built to be highly customizable to be used in a wide variety of projects in physical sciences, it is currently optimized for the study of turbulence. 
+While ``Sapsan`` is built to be highly customizable to be used in a wide variety of projects in physical sciences, it is optimized for the study of turbulence. 
 
 ## Hydro simulations
 
