@@ -100,11 +100,17 @@ For further information on each stage please refer to [Sapsan's Wiki on Gihub](h
 Here only the core dependencies will be covered. Please refer to [GitHub](https://github.com/pikarpov-LANL/Sapsan) for the full list.
 
 * __Training__ 
-   * __PyTorch:__ `Sapsan`, at large, relies on PyTorch to configure and train ML models. Thus, the parameters in the aformentioned __Model Set Up__ stage should be configured with PyTorch functions. [Convolutional Neural Network (CNN)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/cnn_example.ipynb) and [Physics-Informed Convolutional Auto Encoder (PICAE)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/picae_example.ipynb) examples included with `Sapsan` are based on PyTorch.
-      * __Catalyst:__ used as part of the backend to configure early-stopping of the model and logging
-   * __scikit-learn:__ the framework supports it, as shown in the [Kernel Ridge Regression (KRR)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/krr_example.ipynb) example in `Sapsan`. However, due to lack of scalability and features, it is advised to use PyTorch based setup.
+   * __PyTorch:__ `Sapsan`, at large, relies on PyTorch to configure and train ML models. Thus, the parameters in the aformentioned __Model Set Up__ stage should be configured with PyTorch functions. [Convolutional Neural Network (CNN)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/cnn_example.ipynb) and [Physics-Informed Convolutional Auto Encoder (PICAE)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/picae_example.ipynb) examples included with `Sapsan` are based on PyTorch. [@pytorch]
+      * __Catalyst:__ used as part of the backend to configure early-stopping of the model and logging [@catalyst]
+   * __Scikit-learn:__ the framework supports it, as shown in the [Kernel Ridge Regression (KRR)](https://github.com/pikarpov-LANL/Sapsan/blob/master/sapsan/examples/krr_example.ipynb) example in `Sapsan`. However, due to lack of scalability and features, it is advised to use PyTorch based setup. [@scikit-learn]
+
 * __Tracking__
-   * __MLflow:__ allows for tracking across large quantities of training and evaluation runs through an intuitive web interface. Beyond the few default parameters, a user can include custom parameters to be tracked. 
+   * __MLflow:__ allows for tracking across large quantities of training and evaluation runs through an intuitive web interface. Beyond the few default parameters, a user can include custom parameters to be tracked. [@mlflow_github]
+
+* __Interface__
+    * __Jupyter Notebook:__ the most direct and versatile way to use `Sapsan`
+    * __Streamlit (GUI):__ a graphical user interface (GUI) for `Sapsan`. While lacking in its flexibility, it is perfect to construct a demo to present your project. To try it out, please visit [sapsan.app](https://sapsan.app) [@streamlit2019]
+    * __Click (CLI):__ a command line interface (CLI) for `Sapsan`. It is used to get the user up and running with templates for a custom project. [@click]
 
 
 
