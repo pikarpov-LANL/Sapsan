@@ -51,6 +51,7 @@ class Evaluate(Experiment):
         
         self.flat = flat
         if self.flat: self.n_output_channels = self.targets.shape[0] #flat arrays don't have batches
+        elif len(self.targets.shape)<(self.axis+2): self.n_output_channels = 1
         else: self.n_output_channels = self.targets.shape[1]
 
         self.artifacts = []
