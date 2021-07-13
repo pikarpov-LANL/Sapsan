@@ -153,7 +153,7 @@ class HDF5Dataset(Dataset):
             input_data = self.sampler.sample(input_data)
                 
         if self.flat: return flatten(input_data)
-        elif self.batch_size == self.input_size: return input_data
+        elif self.batch_size == self.input_size: return np.array([input_data])
         elif len(input_data.shape)==(self.axis+2):             
             nsnaps_to_use = self._check_batch_num(input_data.shape)
             input_data = input_data[:nsnaps_to_use]
