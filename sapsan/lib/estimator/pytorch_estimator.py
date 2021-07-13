@@ -19,12 +19,11 @@ from sapsan.core.models import Estimator, EstimatorConfig
 class SkipCheckpointCallback(CheckpointCallback):
     def on_epoch_end(self, state):
         pass
-    
+ 
 class TorchEstimator(Estimator):
     def __init__(self, config: EstimatorConfig, model):
         super().__init__(config)
 
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
         self.model = model
@@ -57,24 +56,27 @@ class TorchEstimator(Estimator):
         self.scheduler = scheduler
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        print('Device used:', self.device)
         
         ##checks if logdir exists - deletes it if yes
-        self.check_logdir()
-        
-        print('Device used:', self.device)
+        self.check_logdir()               
         
         if self.loader_key != 'train': 
             warnings.warn("WARNING: loader to be used for early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
 
         model = self.model
-        if torch.cuda.device_count() > 1:
-            print("GPUs available: ", torch.cuda.device_count())
-            print("Note: if batch_size == 1, then only 1 GPU will be used")
-            model = torch.nn.DataParallel(model)
         
-        model.to(self.device)
+        '''
+        if torch.cuda.device_count() > 1:
+            print("GPUs to use: ", torch.cuda.device_count())
+            print("Note: if batch_size == 1, then only 1 GPU will be used")
+            device_ids = list(range(torch.cuda.device_count()))
+            model = torch.nn.DataParallel(model, device_ids=device_ids)
+        '''           
         
         torch.cuda.empty_cache()
+                
         self.runner.train(model=model,
                           criterion=self.loss_func,
                           optimizer=self.optimizer,
