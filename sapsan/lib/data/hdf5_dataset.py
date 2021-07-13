@@ -173,9 +173,7 @@ class HDF5Dataset(Dataset):
             x.append(features_checkpoint_batch)
             x = np.vstack(x)
             print('Loaded INPUT data shape', x.shape)
-            
-            loaded_data = x
-            
+                        
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
@@ -183,9 +181,9 @@ class HDF5Dataset(Dataset):
                 y = np.vstack(y)                        
                 print('Loaded TARGET data shape', y.shape)
                 
-                loaded_data = np.array([loaded_data, y])
+                return x, y
                 
-        return loaded_data
+            else: return x
     
     
     def _check_batch_size(self):
