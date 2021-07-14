@@ -1,10 +1,9 @@
 """
 Example:
-evaluation_experiment = Evaluate(name=experiment_name,
-                                 backend=tracking_backend,
+evaluation_experiment = Evaluate(backend=tracking_backend,
                                  model=training_experiment.model,
-                                 inputs=x, targets=y,
-                                 data_parameters = data_loader.get_parameters())
+                                 loaders=[x,y],
+                                 data_parameters = data_loader)
 
 target_cube, pred_cube = evaluation_experiment.run()
 """
@@ -83,7 +82,7 @@ class Evaluate(Experiment):
         end = time.time()
         runtime = end - start
         self.backend.log_metric("runtime", runtime)
-
+                
         pdf = pdf_plot([pred, self.targets], names=['prediction', 'target'])
         pdf.savefig("pdf_plot.png")
         self.artifacts.append("pdf_plot.png")
