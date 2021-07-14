@@ -52,6 +52,7 @@ class """AlgorithmNameConfig"""(EstimatorConfig):
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.kwargs = kwargs
         
         #a few custom names for parameters to record in mlflow
         self.parameters = {{
