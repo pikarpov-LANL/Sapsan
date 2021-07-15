@@ -1,1 +1,1 @@
-from .physics import PowerSpectrum, GradientModel
+from .physics import PowerSpectrum, GradientModel, DynamicSmagorinskyModel, picae_func
