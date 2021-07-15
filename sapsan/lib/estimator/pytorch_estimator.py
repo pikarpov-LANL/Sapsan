@@ -60,6 +60,7 @@ class TorchEstimator(Estimator):
         self.metric_key = 'loss'
         try: self.ddp = self.config.kwargs['ddp']
         except: self.ddp = False
+
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         print('Device used:', self.device)
         
