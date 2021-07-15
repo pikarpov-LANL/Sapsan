@@ -36,7 +36,7 @@ class MLflowBackend(ExperimentBackend):
     def log_metric(self, name: str, value: float):
         mlflow.log_metric(name, value)
 
-    def log_parameter(self, name: str, value: str):
+    def log_parameter(self, name: str, value: str):        
         mlflow.log_param(name, value)
 
     def log_artifact(self, path: str):

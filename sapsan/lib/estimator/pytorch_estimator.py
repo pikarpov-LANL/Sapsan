@@ -30,10 +30,12 @@ class TorchEstimator(Estimator):
            
     def predict(self, inputs):
         self.model.eval()
-        if str(self.device) == 'cpu': data = torch.as_tensor(inputs)
-        else: data = torch.as_tensor(inputs).cuda()
+        if str(self.device) == 'cpu' or self.ddp==True: 
+            data = torch.as_tensor(inputs)            
+        else: 
+            data = torch.as_tensor(inputs).cuda()
             
-        return self.model(data).cpu().data.numpy()
+        return self.model(data).cpu().data.numpy()               
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
@@ -56,6 +58,9 @@ class TorchEstimator(Estimator):
         self.scheduler = scheduler
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'
+        try: self.ddp = self.config.kwargs['ddp']
+        except: self.ddp = False
+
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         print('Device used:', self.device)
         
@@ -65,18 +70,10 @@ class TorchEstimator(Estimator):
         if self.loader_key != 'train': 
             warnings.warn("WARNING: loader to be used for early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
 
-        model = self.model
-        
-        '''
-        if torch.cuda.device_count() > 1:
-            print("GPUs to use: ", torch.cuda.device_count())
-            print("Note: if batch_size == 1, then only 1 GPU will be used")
-            device_ids = list(range(torch.cuda.device_count()))
-            model = torch.nn.DataParallel(model, device_ids=device_ids)
-        '''           
+        model = self.model        
         
         torch.cuda.empty_cache()
-                
+            
         self.runner.train(model=model,
                           criterion=self.loss_func,
                           optimizer=self.optimizer,
@@ -94,7 +91,9 @@ class TorchEstimator(Estimator):
                                     SkipCheckpointCallback(logdir=self.config.logdir)
                                     ],
                           verbose=False,
-                          check=False)
+                          check=False,
+                          ddp=self.ddp
+                          )
         
         self.config.parameters['model - device'] = self.runner.device         
         self.model_metrics['final epoch'] = self.runner.stage_epoch_step

@@ -20,6 +20,9 @@ def torch_splitter(x, y,
         x_train = x_valid = x
         y_train = y_valid = y
 
+    print(np.shape(x_train), np.shape(y_train))
+    dataset=TensorDataset(from_numpy(x_train).float(),
+                                                    from_numpy(y_train).float())
     train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
                                                     from_numpy(y_train).float()),
                               batch_size=batch_num,
@@ -34,7 +37,7 @@ def torch_splitter(x, y,
     print('Train data shapes: ', x_train.shape, y_train.shape)
     print('Valid data shapes: ', x_valid.shape, y_valid.shape)
     
-    return OrderedDict({"train": train_loader, "valid": valid_loader})
+    return OrderedDict({"train": train_loader, "valid": valid_loader})    
     
     
 def flatten(data: np.ndarray):

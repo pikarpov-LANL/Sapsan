@@ -16,7 +16,7 @@ class Train(Experiment):
                  model: Estimator,
                  loaders,
                  data_parameters,
-                 show_log = True,
+                 show_log = True
                 ):
         super().__init__(backend.name, backend)
         self.model = model
@@ -58,9 +58,11 @@ class Train(Experiment):
             log.write_html("runtime_log.html")
             self.artifacts.append("runtime_log.html")
         else: pass        
-
-        for metric, value in self.get_metrics().items():
-            self.backend.log_metric(metric, value)
+        
+        self.backend.log_metric('final epoch', self.get_metrics()['final epoch'])        
+        for metric, value in self.get_metrics()['train'].items():
+            if "/" in metric: metric = metric.replace("/", " over ")
+            self.backend.log_metric(metric, value)            
 
         for param, value in self.get_parameters().items():
             self.backend.log_parameter(param, value)

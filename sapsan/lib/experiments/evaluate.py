@@ -1,10 +1,9 @@
 """
 Example:
-evaluation_experiment = Evaluate(name=experiment_name,
-                                 backend=tracking_backend,
+evaluation_experiment = Evaluate(backend=tracking_backend,
                                  model=training_experiment.model,
-                                 inputs=x, targets=y,
-                                 data_parameters = data_loader.get_parameters())
+                                 loaders=[x,y],
+                                 data_parameters = data_loader)
 
 target_cube, pred_cube = evaluation_experiment.run()
 """
@@ -51,6 +50,7 @@ class Evaluate(Experiment):
         
         self.flat = flat
         if self.flat: self.n_output_channels = self.targets.shape[0] #flat arrays don't have batches
+        elif len(self.targets.shape)<(self.axis+2): self.n_output_channels = 1
         else: self.n_output_channels = self.targets.shape[1]
 
         self.artifacts = []
@@ -82,7 +82,7 @@ class Evaluate(Experiment):
         end = time.time()
         runtime = end - start
         self.backend.log_metric("runtime", runtime)
-
+                
         pdf = pdf_plot([pred, self.targets], names=['prediction', 'target'])
         pdf.savefig("pdf_plot.png")
         self.artifacts.append("pdf_plot.png")

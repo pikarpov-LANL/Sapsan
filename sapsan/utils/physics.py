@@ -10,6 +10,18 @@ from scipy import fftpack
 import numpy as np
 import torch
 from sapsan.utils.plot import line_plot
+from sapsan.utils.filters import gaussian, spectral
+
+def tensor(u, filt=gaussian, filt_size=2):
+    #calculates stress tensor components
+
+    assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
+    
+    tn = np.empty((3,3,np.shape(x[0])[-3], np.shape(x[0])[-2], np.shape(x[0])[-1]))
+    for i in range(3):
+        for j in range(3):
+            tn[i,j] = filt(u[i]*u[j], filt_size)-filt(u[i], filt_size)*filt(u[j], filt_size)
+    return tn  
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
@@ -85,26 +97,121 @@ class PowerSpectrum():
         
         print('Power Spectrum has been calculated. You can access the data through', 
               'PowerSpectrum.k_bins and PowerSpectrum.Ek_bins variables.')
-                
+        
+        
 class GradientModel():
     def __init__(self, u: np.ndarray, filter_width, delta_u = 1):
+        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
+
         self.u = u
         self.delta_u = delta_u
         self.filter_width = filter_width
-        
+
+        print("Calculating the tensor from Gradient model...")
+        print("Note: input variables have to be filtered!")
+
     def gradient(self):
-        gradient_u = np.concatenate((np.gradient(self.u[0,:,:,:], self.delta_u),
-                                     np.gradient(self.u[1,:,:,:], self.delta_u),
-                                     np.gradient(self.u[2,:,:,:], self.delta_u)),axis=0)
+
+        gradient_u = np.stack((np.gradient(self.u[0,:,:,:], self.delta_u),
+                               np.gradient(self.u[1,:,:,:], self.delta_u),
+                               np.gradient(self.u[2,:,:,:], self.delta_u)),axis=0)
         return gradient_u
 
     def model(self):
         gradient_u = self.gradient()
-        
-        dux = gradient_u[0:3]
-        duy = gradient_u[3:6]
-        return np.array(1/12*self.filter_width**2*dux[2]*duy[2])
 
+        tn = np.empty(gradient_u.shape)
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    tn[i,j] += gradient_u[i,k]*gradient_u[j,k]
+
+        tn = 1/12*self.filter_width**2*tn
+
+        print('Tensor by the gradient model has the shape: [column, row, D, H, W]')
+        print('As calculated: ', tn.shape)
+
+        return tn
+
+    
+class DynamicSmagorinskyModel():    
+    def __init__(self, u, filt=spectral, original_filt_size = 15, filt_ratio = 0.5, **kwargs):
+        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
+
+        self.u = u
+        self.filt = filt
+        self.filt_ratio = filt_ratio
+        self.filt_size = int(np.floor(original_filt_size*self.filt_ratio))
+        self.kwargs = kwargs
+        
+        print("Calculating the tensor from Dynamic Smagorinsky model...")
+        print("Note: input variables have to be filtered!")
+
+    def model(self):
+        if "du" in self.kwargs: du = self.kwargs["du"]
+        else:
+            print('Derivative was not provided: will be calculated via np.gradient()')
+            if "delta_u" in self.kwargs: delta_u = self.kwargs['delta_u']
+            else:
+                print("delta_u (spacing between values) was not provided: setting delta_u = 1")
+                delta_u = 1
+            du = np.stack((np.gradient(self.u[0,:,:,:], delta_u),
+                           np.gradient(self.u[1,:,:,:], delta_u),
+                           np.gradient(self.u[2,:,:,:], delta_u)),axis=0) 
+        self.shape = du.shape
+
+        L = self.Lvar(self.u)
+        S = self.Stn(du)
+        M, Sd = self.Mvar(S)
+
+        Cd = np.empty(self.shape[-3:])
+
+        for i in range(self.shape[-3]):
+            for j in range(self.shape[-2]):
+                for k in range(self.shape[-1]):
+                    Cd[i,j,k] = 1/2*((sum((np.matmul(L[:,:,i,j,k],M[:,:,i,j,k])).flatten())/9)/
+                                     (sum(np.matmul(M[:,:,i,j,k],M[:,:,i,j,k]).flatten())/9))
+
+        tn = np.zeros(self.shape)
+        for i in range(3):
+            for j in range(3):
+                tn[i,j]=-2*Cd*Sd*S[i,j]
+        return tn
+
+    def Lvar(self, u):
+        #calculates stress tensor components
+        tn = np.empty(self.shape)
+        for i in range(3):
+            for j in range(3):
+                tn[i,j] = (self.filt(u[i]*u[j], self.filt_size)-
+                           self.filt(u[i], self.filt_size)*self.filt(u[j], self.filt_size))
+        return tn
+
+    def Stn(self, du):
+        S = np.empty(self.shape)
+
+        for i in range(3):
+            for j in range(3):
+                S[i,j] = 1/2*(du[i,j]+du[j,i])
+        return S
+
+    def Mvar(self, S):
+        length = len(S)
+        M = np.empty(self.shape)
+
+        Sd = np.empty(self.shape[-3:])
+        for i in range(self.shape[-3]):
+            for j in range(self.shape[-2]):
+                for k in range(self.shape[-1]):
+                    Sd[i,j,k] = np.sqrt(2)*np.linalg.norm(S[:,:,i,j,k])
+
+        for i in range(3):
+            for j in range(3):
+                M[i,j] = (self.filt(Sd*S[i,j], self.filt_size) -
+                         (self.filt_ratio)**2*self.filt(Sd, self.filt_size)*self.filt(S[i,j], self.filt_size))
+        return M, Sd 
+    
+    
 class picae_func():
     def minmaxscaler(data):
         """ scale large turbulence dataset by channel"""
@@ -199,75 +306,3 @@ class picae_func():
         #difference
         diff = np.abs(np.abs(DNSDiv) - np.abs(MODDiv))
         return diff    
-    
-    
-'''        
-class DSModel():
-    def __init__(self, dim, fm = 15):
-        self.dim = dim
-        self.fm = fm
-        self.filt = getattr(Filters, 'spectral')
-            
-    def model(self, vals):
-
-        u = vals[:,:3]
-        du = vals[:,3:]
-        u = np.moveaxis(u.reshape(self.dim,self.dim,self.dim, u.shape[-1]),-1,0)
-        du = np.moveaxis(du.reshape(self.dim,self.dim,self.dim, du.shape[-1]),-1,0)
-
-        L = self.Lvar(u)
-        S = self.Stn(du)
-        M, Sd = self.Mvar(S)
-
-        Cd = np.zeros((self.dim, self.dim, self.dim))
-
-        for i in range(self.dim):
-            for j in range(self.dim):
-                for k in range(self.dim):
-
-                    Cd[i,j,k] = 1/2*((sum((np.matmul(L[:,:,i,j,k],M[:,:,i,j,k])).flatten())/9)/
-                                    (sum(np.matmul(M[:,:,i,j,k],M[:,:,i,j,k]).flatten())/9))
-        
-        tn = np.zeros((3,3,self.dim, self.dim, self.dim))
-        for i in range(3):
-            for j in range(3):
-                tn[i,j]=-2*Cd*Sd*S[i,j]
-        return tn
-            
-    #Dynamic Smagorinsky
-    def Lvar(self, u):
-        #calculates stress tensor components
-        length = len(u)
-        tn = np.zeros((length,length,self.dim, self.dim, self.dim))
-        for i in range(3):
-            for j in range(3):
-                tn[i,j] = (self.filt(u[i]*u[j], self.dim)-
-                           self.filt(u[i], self.dim)*self.filt(u[j], self.dim))
-        return tn
-
-    def Stn(self, du):
-        length = 3 #len(u)
-        
-        S = np.zeros((length,length,self.dim, self.dim, self.dim))
-        for i in range(3):
-            for j in range(3):
-                S[i,j] = 1/2*(du[i]+du[j])
-        return S
-
-    def Mvar(self, S):
-        length = len(S)
-        M = np.zeros((length,length,self.dim, self.dim,self.dim))
-
-        Sd = np.zeros((self.dim, self.dim, self.dim))
-        for i in range(self.dim):
-            for j in range(self.dim):
-                for k in range(self.dim):
-                    Sd[i,j,k] = np.sqrt(2)*np.linalg.norm(S[:,:,i,j,k])
-
-        for i in range(3):
-            for j in range(3):
-                #>>>>>>>>1/2 is the ratio of filters!<<<<<<<<<
-                M[i,j] = (self.filt(Sd*S[i,j], self.dim) - 
-                           (1/2)**2*self.filt(Sd, self.dim)*self.filt(S[i,j], self.dim))
-        return M, Sd    
-'''

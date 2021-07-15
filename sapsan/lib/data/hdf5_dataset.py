@@ -153,7 +153,7 @@ class HDF5Dataset(Dataset):
             input_data = self.sampler.sample(input_data)
                 
         if self.flat: return flatten(input_data)
-        elif self.batch_size == self.input_size: return input_data
+        elif self.batch_size == self.input_size: return np.array([input_data])
         elif len(input_data.shape)==(self.axis+2):             
             nsnaps_to_use = self._check_batch_num(input_data.shape)
             input_data = input_data[:nsnaps_to_use]
@@ -173,9 +173,7 @@ class HDF5Dataset(Dataset):
             x.append(features_checkpoint_batch)
             x = np.vstack(x)
             print('Loaded INPUT data shape', x.shape)
-            
-            loaded_data = x
-            
+                        
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
@@ -183,9 +181,9 @@ class HDF5Dataset(Dataset):
                 y = np.vstack(y)                        
                 print('Loaded TARGET data shape', y.shape)
                 
-                loaded_data = np.array([loaded_data, y])
+                return x, y
                 
-        return loaded_data
+            else: return x
     
     
     def _check_batch_size(self):
