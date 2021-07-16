@@ -1,8 +1,14 @@
 '''
 A set of methods to perform various physical calculations,
 such as the Power Spectrum and various analytic turbulence
-subgrid models.
+subgrid models. Currently contains:
 
+functions: tensor
+classes: PowerSpectrum  
+         GradientModel  
+         DynamicSmagorinskyModel 
+         picae_func
+         
 -pikarpov
 '''
 
@@ -25,6 +31,7 @@ def tensor(u, filt=gaussian, filt_size=2):
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
+        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
         self.u = u
         self.axis = len(self.u.shape)-1
         self.dim = self.u.shape[1:]
@@ -53,11 +60,13 @@ class PowerSpectrum():
         k = np.sqrt(k2)
         return k
     
-    def plot_spectrum(self, kolmogorov=True, kl_A = None):
-
-        if kl_A == None: kl_A = np.amax(self.Ek_bins)*1e1
+    def plot_spectrum(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
+        assert len(k_bins.shape) == 1, "k_bins has to be flattened to 1D"
+        assert len(Ek_bins.shape) == 1, "Ek_bins has to be flattened to 1D"
+        
+        if kl_A == None: kl_A = np.amax(Ek_bins)*1e1
             
-        plt = line_plot([[self.k_bins, self.Ek_bins], [self.k_bins, self.kolmogorov(kl_A, self.k_bins)]], 
+        plt = line_plot([[k_bins, Ek_bins], [k_bins, self.kolmogorov(kl_A, k_bins)]], 
                         names = ['data', 'kolmogorov'], plot_type = 'loglog')
         plt.xlim((1e0))
         plt.xlabel('$\mathrm{log(k)}$')
@@ -84,21 +93,22 @@ class PowerSpectrum():
 
         start = 0
         kmax = int(np.ceil(np.amax(k)))
-        self.Ek_bins = np.zeros([kmax+1])
+        Ek_bins = np.zeros([kmax+1])
 
         for i in range(kmax+1):
             for j in range(start, len(ek)):
                 if k[j]>i-0.5 and k[j]<=i+0.5:
-                    self.Ek_bins[i]+=ek[j]
+                    Ek_bins[i]+=ek[j]
                     start+=1
                 else: break
 
-        self.k_bins = np.arange(kmax+1)
+        k_bins = np.arange(kmax+1)
         
-        print('Power Spectrum has been calculated. You can access the data through', 
-              'PowerSpectrum.k_bins and PowerSpectrum.Ek_bins variables.')
+        print('Power Spectrum has been calculated. k and E(k) have been returned')
         
+        return k_bins, Ek_bins
         
+
 class GradientModel():
     def __init__(self, u: np.ndarray, filter_width, delta_u = 1):
         assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
