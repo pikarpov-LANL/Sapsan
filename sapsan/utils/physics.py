@@ -1,8 +1,14 @@
 '''
 A set of methods to perform various physical calculations,
 such as the Power Spectrum and various analytic turbulence
-subgrid models.
+subgrid models. Currently contains:
 
+functions: tensor
+classes: PowerSpectrum  
+         GradientModel  
+         DynamicSmagorinskyModel 
+         picae_func
+         
 -pikarpov
 '''
 
@@ -25,6 +31,7 @@ def tensor(u, filt=gaussian, filt_size=2):
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
+        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
         self.u = u
         self.axis = len(self.u.shape)-1
         self.dim = self.u.shape[1:]
@@ -54,7 +61,9 @@ class PowerSpectrum():
         return k
     
     def plot_spectrum(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
-
+        assert len(k_bins.shape) == 1, "k_bins has to be flattened to 1D"
+        assert len(Ek_bins.shape) == 1, "Ek_bins has to be flattened to 1D"
+        
         if kl_A == None: kl_A = np.amax(Ek_bins)*1e1
             
         plt = line_plot([[k_bins, Ek_bins], [k_bins, self.kolmogorov(kl_A, k_bins)]], 
