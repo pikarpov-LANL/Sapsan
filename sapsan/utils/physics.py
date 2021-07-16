@@ -108,7 +108,7 @@ class PowerSpectrum():
         
         return k_bins, Ek_bins
         
-        
+
 class GradientModel():
     def __init__(self, u: np.ndarray, filter_width, delta_u = 1):
         assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
