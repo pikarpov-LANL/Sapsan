@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
+from sapsan.lib.backends.fake import FakeBackend
 from sapsan.utils.plot import log_plot
 from sapsan.lib.backends.fake import FakeBackend
 
@@ -12,13 +13,13 @@ import sys
 class Train(Experiment):
 
     def __init__(self,
-                 backend: ExperimentBackend,
                  model: Estimator,
                  loaders,
                  data_parameters,
+                 backend = FakeBackend(),
                  show_log = True
                 ):
-        super().__init__(backend.name, backend)
+        self.backend = backend
         self.model = model
         self.loaders = loaders
         self.data_parameters = data_parameters

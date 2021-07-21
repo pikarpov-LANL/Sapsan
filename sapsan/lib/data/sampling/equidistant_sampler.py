@@ -3,8 +3,7 @@ from sapsan.core.models import Sampling
 
 
 class EquidistantSampling(Sampling):
-    def __init__(self, original_dim, target_dim):
-        self.original_dim = original_dim
+    def __init__(self, target_dim):
         self.target_dim = target_dim
 
     @property
@@ -16,6 +15,9 @@ class EquidistantSampling(Sampling):
         return self.target_dim
 
     def sample(self, data: np.ndarray):
+        self.original_dim = data.shape[-len(self.target_dim):]
+
+        print("Sampling the input data of size", self.original_dim, "into size", self.target_dim)
         
         one_dim = self.original_dim[0]
         for i in self.original_dim:

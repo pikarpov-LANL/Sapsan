@@ -23,11 +23,11 @@ def tensor(u, filt=gaussian, filt_size=2):
 
     assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
     
-    tn = np.empty((3,3,np.shape(x[0])[-3], np.shape(x[0])[-2], np.shape(x[0])[-1]))
+    tn = np.empty((3,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
     for i in range(3):
         for j in range(3):
             tn[i,j] = filt(u[i]*u[j], filt_size)-filt(u[i], filt_size)*filt(u[j], filt_size)
-    return tn  
+    return tn
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
