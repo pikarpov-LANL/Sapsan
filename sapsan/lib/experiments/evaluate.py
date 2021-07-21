@@ -19,20 +19,21 @@ import numpy as np
 import torch
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
+from sapsan.lib.backends.fake import FakeBackend
 from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot
 from sapsan.utils.shapes import combine_cubes, slice_of_cube
 
 
 class Evaluate(Experiment):
-    def __init__(self,
-                 backend: ExperimentBackend,
+    def __init__(self,                 
                  model: Estimator,
                  loaders: np.ndarray,
                  data_parameters,
+                 backend = FakeBackend(),
                  cmap: str = 'plasma',
                  flat: bool = False):
-        super().__init__(backend.name, backend)
         self.model = model
+        self.backend = backend
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
         self.input_size = self.data_parameters.sampler.sample_dim

@@ -71,7 +71,7 @@ class Dataset(ABC):
 
 class ExperimentBackend(ABC):
     """ Backend of experiment. """
-    def __init__(self, name: str):
+    def __init__(self, name: str = 'None'):
         self.name = name
 
     @abstractmethod
