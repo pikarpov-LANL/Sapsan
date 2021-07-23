@@ -18,16 +18,21 @@ import torch
 from sapsan.utils.plot import line_plot
 from sapsan.utils.filters import gaussian, spectral
 
-def tensor(u, filt=gaussian, filt_size=2):
+def tensor(u, filt=gaussian, filt_size=2, only_x_components = False):
     #calculates stress tensor components
 
     assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
     
-    tn = np.empty((3,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
-    for i in range(3):
+    if only_x_components: i_dim = 1
+    else: i_dim = 3
+    
+    tn = np.empty((i_dim,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
+
+    for i in range(i_dim):
         for j in range(3):
             tn[i,j] = filt(u[i]*u[j], filt_size)-filt(u[i], filt_size)*filt(u[j], filt_size)
-    return tn
+    if only_x_components: return tn[0]
+    else: return tn
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
