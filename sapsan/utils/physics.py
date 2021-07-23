@@ -34,6 +34,7 @@ def tensor(u, filt=gaussian, filt_size=2, only_x_components = False):
     if only_x_components: return tn[0]
     else: return tn
 
+
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
         assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
