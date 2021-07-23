@@ -68,6 +68,7 @@ class HDF5Dataset(Dataset):
             
         if self.batch_size==None and self.batch_num==None: 
             self.batch_num = 1
+            self.batch_size = self.input_size
         elif self.batch_num==None: 
             self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
                 
@@ -192,6 +193,7 @@ class HDF5Dataset(Dataset):
     def _check_batch_size(self):
         if self.batch_size == None:
             single_batch_dim = (np.prod(self.input_size)/self.batch_num)**(1/self.axis)
+            single_batch_dim = np.around(single_batch_dim, decimals=6)
             if single_batch_dim.is_integer() == False: 
                 raise ValueError('Incorrect number of batches - input data cannot be evenly split')
             self.batch_size = []
