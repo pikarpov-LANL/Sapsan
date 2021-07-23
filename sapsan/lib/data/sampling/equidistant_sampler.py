@@ -14,6 +14,11 @@ class EquidistantSampling(Sampling):
     def sample_dim(self):
         return self.target_dim
 
+    def dim_warning(self, new_dim):
+        if self.target_dim != new_dim: 
+            print("Warning: couldn't cover the whole domain and sample to ", self.target_dim,
+                  ", new sampled shape is ", new_dim)
+    
     def sample(self, data: np.ndarray):
         self.original_dim = data.shape[-len(self.target_dim):]
 
@@ -23,11 +28,16 @@ class EquidistantSampling(Sampling):
         for i in self.original_dim:
             if i==one_dim: pass
             else: 
-                print('Warning: Equidistant sampling can only be applied to axi of equal dimensions. Returning original dataset.')
+                raise ValueError('Error: Equidistant sampling can only be applied to axi of equal dimensions, but recieved', self.original_dim)
                 return data
             one_dim = i
+            
         
         if len(self.original_dim) == 3:
-            return data[..., ::self.scale, ::self.scale, ::self.scale]
+            data = data[..., ::self.scale, ::self.scale, ::self.scale]
         if len(self.original_dim) == 2:
-            return data[..., ::self.scale, ::self.scale]
+            data = data[..., ::self.scale, ::self.scale]
+        
+        self.dim_warning(data.shape)
+        
+        return data
