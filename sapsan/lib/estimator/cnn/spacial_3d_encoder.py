@@ -23,7 +23,7 @@ class CNN3dModel(torch.nn.ModuleDict):
         self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*2, kernel_size=2, stride=2, padding=1)
         self.conv3d3 = torch.nn.Conv3d(D_in*2, D_in*4, kernel_size=2, stride=2, padding=1)
         self.pool = torch.nn.MaxPool3d(kernel_size=2, padding=1)
-        self.pool2 = torch.nn.MaxPool3d(kernel_size=2)
+        self.pool2 = torch.nn.MaxPool3d(kernel_size=2) #kernel_size=2 for 64^3
 
         self.relu = torch.nn.ReLU()
 
@@ -40,8 +40,8 @@ class CNN3dModel(torch.nn.ModuleDict):
         c3 = self.conv3d3(self.relu(p2))
         p3 = self.pool2(c3)
 
-        v1 = p3.view(p3.size(0), -1)
-
+        v1 = p3.view(p3.size(0), -1)  
+        
         l1 = self.relu(self.linear(v1))
         l2 = self.linear2(l1)   
 

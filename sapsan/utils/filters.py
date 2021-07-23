@@ -58,6 +58,5 @@ def gaussian(im: np.ndarray, sigma):
     from scipy import ndimage
     
     #Gaussian Filter
-
     return ndimage.gaussian_filter(im, sigma)
 

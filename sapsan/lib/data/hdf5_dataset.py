@@ -68,6 +68,7 @@ class HDF5Dataset(Dataset):
             
         if self.batch_size==None and self.batch_num==None: 
             self.batch_num = 1
+            self.batch_size = self.input_size
         elif self.batch_num==None: 
             self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
                 
@@ -140,12 +141,16 @@ class HDF5Dataset(Dataset):
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
             
             data = file.get(key)
+            print(data.shape)
+            if (self.axis==3 and len(np.shape(data))==5) or (self.axis==2 and len(np.shape(data))==4):
+                print("Warning: combining axis for %s"%key)
+                data = np.reshape(data, np.append(data.shape[0]*data.shape[1],data.shape[2:]))
             
             if (self.axis==3 and len(np.shape(data))==3) or (self.axis==2 and len(np.shape(data))==2): 
                 data = [data]     
             all_data.append(data)
             
-        # input_data shape ex: (features, 128, 128, 128)        
+        # input_data shape ex: (features, 128, 128, 128) 
         input_data = np.vstack(all_data)
 
         # downsample if needed
@@ -165,30 +170,30 @@ class HDF5Dataset(Dataset):
 
 
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
-        x = list()
-        y = list()
         for checkpoint in self.checkpoints:
             features_checkpoint_batch = self._get_input_data(checkpoint, 
                                                              self.features, self.features_label)
-            x.append(features_checkpoint_batch)
-            x = np.vstack(x)
+            
+            if checkpoint == self.checkpoints[0]: x = features_checkpoint_batch
+            else: x = np.vstack((x, features_checkpoint_batch))
+                
             print('Loaded INPUT data shape', x.shape)
                         
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
-                y.append(target_checkpoint_batch)
-                y = np.vstack(y)                        
+                if checkpoint == self.checkpoints[0]: y = features_checkpoint_batch
+                else: y = np.vstack((y,features_checkpoint_batch))                       
                 print('Loaded TARGET data shape', y.shape)
                 
-                return x, y
-                
-            else: return x
+        if self.target!=None: return x, y
+        else: return x
     
     
     def _check_batch_size(self):
         if self.batch_size == None:
             single_batch_dim = (np.prod(self.input_size)/self.batch_num)**(1/self.axis)
+            single_batch_dim = np.around(single_batch_dim, decimals=6)
             if single_batch_dim.is_integer() == False: 
                 raise ValueError('Incorrect number of batches - input data cannot be evenly split')
             self.batch_size = []
