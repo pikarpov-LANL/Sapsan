@@ -182,8 +182,8 @@ class HDF5Dataset(Dataset):
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
-                if checkpoint == self.checkpoints[0]: y = features_checkpoint_batch
-                else: y = np.vstack((y,features_checkpoint_batch))                       
+                if checkpoint == self.checkpoints[0]: y = target_checkpoint_batch
+                else: y = np.vstack((y,target_checkpoint_batch))                       
                 print('Loaded TARGET data shape', y.shape)
                 
         if self.target!=None: return x, y
