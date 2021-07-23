@@ -36,7 +36,8 @@ class Evaluate(Experiment):
         self.backend = backend
         self.experiment_metrics = dict()
         self.data_parameters = data_parameters
-        self.input_size = self.data_parameters.sampler.sample_dim
+        try: self.input_size = self.data_parameters.sampler.sample_dim
+        except: self.input_size = self.data_parameters.input_size
         self.batch_size = self.data_parameters.batch_size
         self.batch_num = self.data_parameters.batch_num
         self.cmap = cmap
