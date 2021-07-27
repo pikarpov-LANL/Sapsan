@@ -20,9 +20,10 @@ def run_notebook(notebook_path: str,
     with open(output_path, mode='wt') as f:
         nbformat.write(nb, f)
     errors = []
+
     for cell in nb.cells:
         if 'outputs' in cell:
             for output in cell['outputs']:
-                if output.output_type == 'error':
+                if output.output_type == 'error':                    
                     errors.append(output)        
     return nb, errors

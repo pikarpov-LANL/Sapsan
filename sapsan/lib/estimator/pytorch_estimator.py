@@ -40,6 +40,10 @@ class TorchEstimator(Estimator):
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
     
+    def set_device(self, show_device=True):
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        if show_device: print('Device used:', self.device)
+    
     def to_device(self, var):
         if str(self.device) == 'cpu': return var
         else: return var.cuda()
@@ -61,8 +65,7 @@ class TorchEstimator(Estimator):
         try: self.ddp = self.config.kwargs['ddp']
         except: self.ddp = False
 
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-        print('Device used:', self.device)
+        self.set_device()
         
         ##checks if logdir exists - deletes it if yes
         self.check_logdir()               

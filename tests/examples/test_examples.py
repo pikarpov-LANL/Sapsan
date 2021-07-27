@@ -24,9 +24,9 @@ class TestExamples(unittest.TestCase):
         shutil.rmtree("./data")
 
     def test_examples(self):
-        """Tests examples"""
+        """Tests examples"""        
         for nt in self.notebooks():
             _, errors = run_notebook(notebook_path="./runtime_test_resources/"+nt,
-                                     resources_path="./")
-            try: self.assertEqual(errors, [])
-            except: print(errors)
+                                     resources_path="./") 
+            print(errors)
+            self.assertEqual(errors, [])

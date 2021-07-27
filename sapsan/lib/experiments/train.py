@@ -27,6 +27,7 @@ class Train(Experiment):
         self.show_log = show_log
 
     def get_metrics(self) -> Dict[str, float]:
+        print(self.model.metrics())
         return self.model.metrics()
 
     def get_parameters(self) -> Dict[str, str]:
@@ -50,7 +51,7 @@ class Train(Experiment):
         end = time.time()
         runtime = end - start
         
-        #if catalyst.runner is not used, then this file won't exist
+        #only if catalyst.runner is used
         if os.path.exists('model_details.txt'):
             self.artifacts.append('model_details.txt')
             
@@ -60,10 +61,12 @@ class Train(Experiment):
             self.artifacts.append("runtime_log.html")
         else: pass        
         
-        self.backend.log_metric('final epoch', self.get_metrics()['final epoch'])        
-        for metric, value in self.get_metrics()['train'].items():
-            if "/" in metric: metric = metric.replace("/", " over ")
-            self.backend.log_metric(metric, value)            
+        #only if catalyst.runner is used
+        if 'train' in self.get_metrics():
+            self.backend.log_metric('train - final epoch', self.get_metrics()['final epoch'])        
+            for metric, value in self.get_metrics()['train'].items():
+                if "/" in metric: metric = metric.replace("/", " over ")
+                self.backend.log_metric('train - %s'%metric, value)            
 
         for param, value in self.get_parameters().items():
             self.backend.log_parameter(param, value)
@@ -71,7 +74,7 @@ class Train(Experiment):
         for artifact in self.get_artifacts():
             self.backend.log_artifact(artifact)
 
-        self.backend.log_metric("runtime", runtime)
+        self.backend.log_metric("train - runtime", runtime)
         
         self.backend.end()
         self._cleanup()

@@ -12,9 +12,12 @@ from joblib import dump, load
 class KRRConfig(EstimatorConfig):
     def __init__(self,
                  alpha: Optional[float] = None,
-                 gamma: Optional[float] = None):
+                 gamma: Optional[float] = None,
+                 kernel = 'rbf'):
         self.alpha = alpha
         self.gamma = gamma
+        self.kernel = kernel
+        self.parameters = {}
 
     @classmethod
     def load(cls, path: Optional[str] = None) -> 'KRRConfig':
@@ -23,10 +26,7 @@ class KRRConfig(EstimatorConfig):
             return cls(**cfg)
 
     def to_dict(self):
-        return {
-            "alpha": self.alpha,
-            "gamma": self.gamma
-        }
+        return self.parameters
 
 
 class KRR(Estimator):
@@ -40,17 +40,23 @@ class KRR(Estimator):
 
         self.model = KernelRidge(kernel='rbf')
         if config.gamma and config.alpha:
-            self.model = KernelRidge(kernel='rbf', alpha=config.alpha, gamma=config.gamma)
+            self.model = KernelRidge(kernel=config.kernel, alpha=config.alpha, gamma=config.gamma)
+        
+        for param, value in self.model.get_params().items():
+            self.config.parameters["model - %s"%param] = value
         self.model_metrics = dict()
 
     def _move_axis_to_sklearn(self, inputs: np.ndarray) -> np.ndarray:
         return np.moveaxis(inputs, 0, 1)
 
     def predict(self, inputs):
-        return self.model.predict(self._move_axis_to_sklearn(inputs))
+        pred = self.model.predict(self._move_axis_to_sklearn(inputs))
+        self.model_metrics['eval - R2'] = self.model.score(self._move_axis_to_sklearn(inputs), pred)
+        return pred
 
     def train(self, loaders):
-        model = self.model.fit(self._move_axis_to_sklearn(loaders[0]), self._move_axis_to_sklearn(loaders[1]))
+        model = self.model.fit(self._move_axis_to_sklearn(loaders[0]),
+                               self._move_axis_to_sklearn(loaders[1]))
         self.model = model
         return model
 
