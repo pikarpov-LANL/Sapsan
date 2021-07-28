@@ -70,7 +70,7 @@ class Evaluate(Experiment):
     def get_parameters(self) -> Dict[str, str]:
         return {
             **self.data_parameters.get_parameters(), 
-            **self.model.config.to_dict(), 
+            **self.model.config.parameters, 
             **{"n_output_channels": str(self.n_output_channels)}            
         }        
 

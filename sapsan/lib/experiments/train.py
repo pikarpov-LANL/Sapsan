@@ -31,7 +31,7 @@ class Train(Experiment):
         return self.model.metrics()
 
     def get_parameters(self) -> Dict[str, str]:
-        return {**self.data_parameters.get_parameters(), **self.model.config.to_dict()}
+        return {**self.data_parameters.get_parameters(), **self.model.config.parameters}
 
     def get_artifacts(self) -> List[str]:
         return self.artifacts

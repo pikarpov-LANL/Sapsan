@@ -29,7 +29,8 @@ class TestCnnEstimator(unittest.TestCase):
     def test_krr_save_and_load(self):
         estimator = KRR(KRRConfig(gamma=0.1, alpha=0.2))
         estimator.save(self.resources_path)
-        loaded_estimator = KRR.load(self.resources_path)
+
+        loaded_estimator = KRR.load(self.resources_path, model=KRR, config=KRRConfig)
         self.assertEqual(estimator.config.gamma, loaded_estimator.config.gamma)
         self.assertEqual(estimator.config.alpha, loaded_estimator.config.alpha)        
 

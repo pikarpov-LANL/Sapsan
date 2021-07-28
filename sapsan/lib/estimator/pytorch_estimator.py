@@ -121,13 +121,20 @@ class TorchEstimator(Estimator):
     def load(cls, path: str, model=None, config=None):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
-
-        config = config.load(params_save_path)
+        
+        config = model.load_config(params_save_path, config)
 
         estimator = model(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         estimator.model = model
         return estimator
+    
+    @classmethod
+    def load_config(self, path: str, config = None):
+        with open(path, 'r') as f:
+            cfg = json.load(f)
+            del cfg['parameters']
+            return config(**cfg)
     
     def check_logdir(self):
         #checks if logdir exists - deletes if yes
