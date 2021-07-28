@@ -12,7 +12,6 @@ import torch
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
-from sapsan.utils.naming_conventions import get_original_param_names
 from sapsan.lib.data import get_loader_shape
 
 
