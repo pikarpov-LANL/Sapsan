@@ -13,7 +13,6 @@ import torch
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.cnn.pytorch_estimator import TorchEstimator
 
-
 class """AlgorithmNameModel"""(torch.nn.Module):
     # input channels, output channels
     def __init__(self):
@@ -54,21 +53,12 @@ class """AlgorithmNameConfig"""(EstimatorConfig):
         self.min_delta = min_delta
         self.kwargs = kwargs
         
-        #a few custom names for parameters to record in mlflow
+        #everything in self.parameters will get recorded by MLflow
         self.parameters = {{
                         "model - n_epochs": self.n_epochs,
                         "model - min_delta": self.min_delta,
                         "model - patience": self.patience,
-                    }}
-
-    @classmethod
-    def load(cls, path: str):
-        with open(path, 'r') as f:
-            cfg = json.load(f)
-            return cls(**cfg)
-
-    def to_dict(self):
-        return self.parameters    
+                    }} 
     
     
 class """AlgorithmName"""(TorchEstimator):

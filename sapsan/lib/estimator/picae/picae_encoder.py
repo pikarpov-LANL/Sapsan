@@ -27,8 +27,7 @@ class PICAEModel(torch.nn.Module):
                        nfilters = 6, 
                        kernel_size = (3,3,3), 
                        enc_nlayers = 3, 
-                       dec_nlayers = 3, 
-                       device = torch.device('cpu')):        
+                       dec_nlayers = 3):        
         super(PICAEModel, self).__init__()
         self.il = input_dim[0]
         self.jl = input_dim[1]
@@ -42,9 +41,10 @@ class PICAEModel(torch.nn.Module):
         self.decoder_nlayers= dec_nlayers
         self.total_layers = self.encoder_nlayers + self.decoder_nlayers
         self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
-        self.device = device
         
         self.te = TorchEstimator
+        self.device = self.te.set_device(self, show_device=False) 
+
 
         ############## Define Encoder layers
         encoder_cell_list=[]
@@ -215,23 +215,13 @@ class PICAEConfig(EstimatorConfig):
         self.min_delta = min_delta
         self.kwargs = kwargs
         
-        #a few custom names for parameters to record in mlflow
+        #everything in self.parameters will get recorded by MLflow
         self.parameters = {
                         "model - n_epochs": self.n_epochs,
                         "model - min_delta": self.min_delta,
                         "model - patience": self.patience,
                     }
-
-    @classmethod
-    def load(cls, path: str):
-        with open(path, 'r') as f:
-            cfg = json.load(f)
-            return cls(**cfg)
-
-    def to_dict(self):
-        return self.parameters    
-    
-    
+        
     
 class PICAE(TorchEstimator):
     def __init__(self, config = PICAEConfig(), 
@@ -249,8 +239,7 @@ class PICAE(TorchEstimator):
                            nfilters = self.config.nfilters, 
                            kernel_size = self.config.kernel_size, 
                            enc_nlayers = self.config.enc_nlayers, 
-                           dec_nlayers = self.config.dec_nlayers,
-                           device = self.device)
+                           dec_nlayers = self.config.dec_nlayers)
         
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-04, weight_decay=1e-5)
         loss_func = torch.nn.MSELoss()

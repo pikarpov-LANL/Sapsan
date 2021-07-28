@@ -27,6 +27,7 @@ class TorchEstimator(Estimator):
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
         self.model = model
+        self.device = 'not set'
            
     def predict(self, inputs):
         self.model.eval()
@@ -39,6 +40,11 @@ class TorchEstimator(Estimator):
 
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
+    
+    def set_device(self, show_device=True):
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        if show_device: print('Device used:', self.device)
+        return self.device
     
     def to_device(self, var):
         if str(self.device) == 'cpu': return var
@@ -61,8 +67,7 @@ class TorchEstimator(Estimator):
         try: self.ddp = self.config.kwargs['ddp']
         except: self.ddp = False
 
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-        print('Device used:', self.device)
+        self.set_device()
         
         ##checks if logdir exists - deletes it if yes
         self.check_logdir()               
@@ -118,13 +123,20 @@ class TorchEstimator(Estimator):
     def load(cls, path: str, model=None, config=None):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
-
-        config = config.load(params_save_path)
+        
+        config = model.load_config(params_save_path, config)
 
         estimator = model(config)
         model = estimator.model.load_state_dict(torch.load(model_save_path))
         estimator.model = model
         return estimator
+    
+    @classmethod
+    def load_config(self, path: str, config = None):
+        with open(path, 'r') as f:
+            cfg = json.load(f)
+            del cfg['parameters']
+            return config(**cfg)
     
     def check_logdir(self):
         #checks if logdir exists - deletes if yes

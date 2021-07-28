@@ -57,14 +57,22 @@ class Evaluate(Experiment):
 
         self.artifacts = []
         
-
     def get_metrics(self) -> Dict[str, float]:
+        if 'train' in self.model.metrics():
+            self.experiment_metrics['train - final epoch'] = self.model.metrics()['final epoch']
+            for metric, value in self.model.metrics()['train'].items():
+                if "/" in metric: metric = metric.replace("/", " over ")
+                self.experiment_metrics['train - %s'%metric] = value
+        else: self.experiment_metrics = {**self.experiment_metrics, **self.model.metrics()}
+            
         return self.experiment_metrics
 
     def get_parameters(self) -> Dict[str, str]:
         return {
-            **self.data_parameters.get_parameters(), **{"n_output_channels": str(self.n_output_channels)}
-        }
+            **self.data_parameters.get_parameters(), 
+            **self.model.config.parameters, 
+            **{"n_output_channels": str(self.n_output_channels)}            
+        }        
 
     def get_artifacts(self) -> List[str]:
         return self.artifacts
@@ -103,7 +111,7 @@ class Evaluate(Experiment):
         slices.savefig("slices_plot.png")
         self.artifacts.append("slices_plot.png")        
         
-        self.experiment_metrics["MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean()         
+        self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean()         
 
         for metric, value in self.get_metrics().items():
             self.backend.log_metric(metric, value)
@@ -117,7 +125,7 @@ class Evaluate(Experiment):
         self.backend.end()
         self._cleanup()
         
-        print("runtime: ", runtime)
+        print("eval - runtime: ", runtime)
         
         return target_cube, pred_cube
     

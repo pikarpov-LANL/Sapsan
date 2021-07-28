@@ -11,27 +11,21 @@ from joblib import dump, load
 
 class KRRConfig(EstimatorConfig):
     def __init__(self,
-                 alpha: Optional[float] = None,
-                 gamma: Optional[float] = None):
+                 alpha: float = 1.0,
+                 gamma: float = 1.0,
+                 kernel: str = 'rbf',
+                 *args, **kwargs):
         self.alpha = alpha
         self.gamma = gamma
-
-    @classmethod
-    def load(cls, path: Optional[str] = None) -> 'KRRConfig':
-        with open(path, 'r') as f:
-            cfg = json.load(f)
-            return cls(**cfg)
-
-    def to_dict(self):
-        return {
-            "alpha": self.alpha,
-            "gamma": self.gamma
-        }
-
+        self.kernel = kernel
+        self.kwargs = kwargs
+        
+        #everything in self.parameters will get recorded by MLflow
+        #in the case of scikit-learn (KRR), parameters are populated in __init__ of KRR class
+        self.parameters = {}
+        
 
 class KRR(Estimator):
-    _SAVE_PATH_MODEL_SUFFIX = "model"
-    _SAVE_PATH_PARAMS_SUFFIX = "params"
 
     def __init__(self, config: KRRConfig):
         super().__init__(config)
@@ -40,17 +34,23 @@ class KRR(Estimator):
 
         self.model = KernelRidge(kernel='rbf')
         if config.gamma and config.alpha:
-            self.model = KernelRidge(kernel='rbf', alpha=config.alpha, gamma=config.gamma)
+            self.model = KernelRidge(kernel=config.kernel, alpha=config.alpha, gamma=config.gamma)
+        
+        for param, value in self.model.get_params().items():
+            self.config.parameters["model - %s"%param] = value
         self.model_metrics = dict()
 
     def _move_axis_to_sklearn(self, inputs: np.ndarray) -> np.ndarray:
         return np.moveaxis(inputs, 0, 1)
 
     def predict(self, inputs):
-        return self.model.predict(self._move_axis_to_sklearn(inputs))
+        pred = self.model.predict(self._move_axis_to_sklearn(inputs))
+        self.model_metrics['eval - R2'] = self.model.score(self._move_axis_to_sklearn(inputs), pred)
+        return pred
 
     def train(self, loaders):
-        model = self.model.fit(self._move_axis_to_sklearn(loaders[0]), self._move_axis_to_sklearn(loaders[1]))
+        model = self.model.fit(self._move_axis_to_sklearn(loaders[0]),
+                               self._move_axis_to_sklearn(loaders[1]))
         self.model = model
         return model
 
@@ -58,19 +58,27 @@ class KRR(Estimator):
         return self.model_metrics
 
     def save(self, path):
-        model_save_path = "{path}/{suffix}.json".format(path=path, suffix=self._SAVE_PATH_MODEL_SUFFIX)
-        params_save_path = "{path}/{suffix}.json".format(path=path, suffix=self._SAVE_PATH_PARAMS_SUFFIX)
+        model_save_path = "{path}/model.json".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
 
         dump(self.model, model_save_path)
         self.config.save(params_save_path)
-
+        
     @classmethod
-    def load(cls, path):
-        model_save_path = "{path}/{suffix}.json".format(path=path, suffix=cls._SAVE_PATH_MODEL_SUFFIX)
-        params_save_path = "{path}/{suffix}.json".format(path=path, suffix=cls._SAVE_PATH_PARAMS_SUFFIX)
-
+    def load(cls, path: str, model=None, config=None):
+        model_save_path = "{path}/model.json".format(path=path)
+        params_save_path = "{path}/params.json".format(path=path)
+        
+        config = model.load_config(params_save_path, config)
+        
+        estimator = model(config)
         model = load(model_save_path)
-        config = KRRConfig.load(params_save_path)
-        estimator = KRR(config)
         estimator.model = model
         return estimator
+    
+    @classmethod
+    def load_config(self, path: str, config = None):
+        with open(path, 'r') as f:
+            cfg = json.load(f)
+            del cfg['parameters']
+            return config(**cfg)

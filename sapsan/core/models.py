@@ -6,23 +6,12 @@ import numpy as np
 
 class EstimatorConfig(ABC):
     """ Estimator Config class """
-    @classmethod
-    @abstractmethod
-    def load(cls, path: str):
-        """
-        Parse yaml file with Config
-        @param path: path to yaml Config
-        @return: instance of Config
-        """
-        pass
-
-    @abstractmethod
-    def to_dict(self):
-        pass
-
+    def __init__(self):
+        self.parameters = {}
+        
     def save(self, path):
         with open(path, "w") as f:
-            json.dump(self.to_dict(), f)
+            json.dump(vars(self), f)
 
 
 class Estimator(ABC):
@@ -55,6 +44,24 @@ class Estimator(ABC):
 
     @abstractmethod
     def save(self, path):
+        pass
+    
+    @classmethod
+    @abstractmethod
+    def load(cls, path: str, model=None, config=None):
+        """
+        Load the model along with saved Config parameters
+        """
+        pass
+    
+    @classmethod
+    @abstractmethod
+    def load_config(cls, path: str):
+        """
+        Parse yaml file with Config
+        @param path: path to yaml Config
+        @return: instance of Config
+        """
         pass
 
 

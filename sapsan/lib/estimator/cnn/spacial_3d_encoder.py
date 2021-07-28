@@ -60,20 +60,13 @@ class CNN3dConfig(EstimatorConfig):
         self.patience = patience
         self.min_delta = min_delta
         self.kwargs = kwargs
+        
+        #everything in self.parameters will get recorded by MLflow
         self.parameters = {
                         "model - n_epochs": self.n_epochs,
                         "model - min_delta": self.min_delta,
                         "model - patience": self.patience,
-                    }
-        
-    @classmethod
-    def load(cls, path: str):
-        with open(path, 'r') as f:
-            cfg = json.load(f)
-            return cls(**cfg)
-
-    def to_dict(self):
-        return self.parameters    
+                    }       
     
     
 class CNN3d(TorchEstimator):
