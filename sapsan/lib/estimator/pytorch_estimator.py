@@ -27,6 +27,7 @@ class TorchEstimator(Estimator):
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
         self.model = model
+        self.device = 'not set'
            
     def predict(self, inputs):
         self.model.eval()
@@ -43,6 +44,7 @@ class TorchEstimator(Estimator):
     def set_device(self, show_device=True):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         if show_device: print('Device used:', self.device)
+        return self.device
     
     def to_device(self, var):
         if str(self.device) == 'cpu': return var
