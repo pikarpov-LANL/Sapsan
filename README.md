@@ -36,7 +36,7 @@ sapsan test
 
 ### 4. Run Examples
 
-To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#convolution-neural-network) or [PICAE](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#physics-informed-convolutional-autoencoder) on 3D data, and [KRR](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#kernel-ridge-regression) on 2D data). To copy the examples, type:
+To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#convolution-neural-network-cnn) or [PICAE](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#physics-informed-convolutional-autoencoder-picae) on 3D data, and [KRR](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#kernel-ridge-regression-krr) on 2D data). To copy the examples, type:
 ```
 sapsan get_examples
 ```
