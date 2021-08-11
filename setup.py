@@ -27,6 +27,7 @@ setuptools.setup(
     ],
     install_requires=requirements,
     python_requires='>=3.7, <3.9',
+    include_package_data = True,
     entry_points='''
         [console_scripts]
         sapsan=sapsan.core.cli.cli:sapsan

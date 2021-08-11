@@ -2,8 +2,10 @@ import os
 import click
 import jupytext
 import nbformat
+import pytest
 
 from sapsan._version import __version__
+from sapsan import __path__
 
 from sapsan.core.cli.templates.notebook import get_template as get_notebook_template
 from sapsan.core.cli.templates.estimator import get_template as get_estimator_template
@@ -156,3 +158,7 @@ def create(name):
 @click.option('--name', '-n', default="new_package", show_default=True, help="name of the new package")
 def create_package(name):
     setup_package(name=name.lower())
+    
+@sapsan.command("test", help="Run tests to check if everything is working correctly")
+def test():
+    pytest.main(__path__)
