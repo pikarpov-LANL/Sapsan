@@ -3,6 +3,7 @@ import click
 import jupytext
 import nbformat
 import pytest
+import shutil
 
 from sapsan._version import __version__
 from sapsan import __path__
@@ -145,20 +146,39 @@ def setup_package(name: str):
                       message = "%(prog)s %(version)s")
 
 def sapsan():
-    click.echo("========================================================")
-    click.echo("Lead the train to the frontiers of knowledge, my friend!")
-    click.echo("========================================================")    
+    pass
     
 @sapsan.command("create", help="Sets up a new project with an custom estimator template.")
 @click.option('--name', '-n', default="new_project", show_default=True, help="name of the new project")
 def create(name):
+    click.echo("========================================================")  
+    click.echo("Lead the train to the frontiers of knowledge, my friend!")
+    click.echo("========================================================")  
     setup_project(name=name.lower())
 
-@sapsan.command("create_package", help="Sets up a new package ready for pypi distribution.")
-@click.option('--name', '-n', default="new_package", show_default=True, help="name of the new package")
-def create_package(name):
-    setup_package(name=name.lower())
+#@sapsan.command("create_package", help="Sets up a new package ready for pypi distribution.")
+#@click.option('--name', '-n', default="new_package", show_default=True, help="name of the new package")
+#def create_package(name):
+#    click.echo("========================================================")  
+#    click.echo("Lead the train to the frontiers of knowledge, my friend!")
+#    click.echo("========================================================")  
+#    setup_package(name=name.lower())
     
 @sapsan.command("test", help="Run tests to check if everything is working correctly")
 def test():
     pytest.main(__path__)
+    
+@sapsan.command("get_examples", help="Copy examples to your working directory")    
+def get_examples():
+    dir_name = "sapsan_examples"
+    if os.path.isdir("./{dir_name}".format(dir_name=dir_name)):
+        click.echo("./sapsan_examples folder exists - please delete or try a different path")
+    else:
+        notebooks = ['cnn_example.ipynb', 'picae_example.ipynb','krr_example.ipynb']
+        os.mkdir("./{dir_name}".format(dir_name=dir_name))
+        for nt in notebooks:
+            shutil.copy("{path}/{dir_name}/{nt}".format(path=__path__[0], dir_name="examples", nt=nt), 
+                        "./{dir_name}/{nt}".format(dir_name=dir_name, nt=nt))
+        shutil.copytree("{path}/{dir_name}/data".format(path=__path__[0],dir_name="examples"), 
+                        "./{dir_name}/data".format(dir_name=dir_name))
+        click.echo("Done, check out ./sapsan_examples")
