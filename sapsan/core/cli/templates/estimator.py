@@ -13,10 +13,10 @@ import torch
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.cnn.pytorch_estimator import TorchEstimator
 
-class """AlgorithmNameModel"""(torch.nn.Module):
+class {name_upper}Model(torch.nn.Module):
     # input channels, output channels
     def __init__(self):
-        super("""AlgorithmNameModel""", self).__init__()
+        super({name_upper}Model, self).__init__()
         
         # define your layers
         """
@@ -36,7 +36,7 @@ class """AlgorithmNameModel"""(torch.nn.Module):
         return output
     
     
-class """AlgorithmNameConfig"""(EstimatorConfig):
+class {name_upper}Config(EstimatorConfig):
     
     # set defaults per your liking, add more parameters
     def __init__(self,
@@ -61,9 +61,9 @@ class """AlgorithmNameConfig"""(EstimatorConfig):
                     }} 
     
     
-class """AlgorithmName"""(TorchEstimator):
-    def __init__(self, config = """AlgorithmNameConfig"""(), 
-                       model = """AlgorithmNameModel"""()):
+class {name_upper}(TorchEstimator):
+    def __init__(self, config = {name_upper}Config(), 
+                       model = {name_upper}Model()):
         super().__init__(config, model)
         self.config = config
         
@@ -72,7 +72,7 @@ class """AlgorithmName"""(TorchEstimator):
         #uncomment if you need dataloader shapes for model input
         #x_shape, y_shape = get_shape(loaders)
         
-        model = """AlgorithmNameModel"""()
+        model = {name_upper}Model()
         optimizer = """ optimizer """
         loss_func = """ loss finctions """
         scheduler = """ scheduler """
