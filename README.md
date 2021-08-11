@@ -10,37 +10,44 @@ Please refer to Sapsan's github wiki to learn more about framework's details and
 
 ## Quick Start
 
-#### 1. Install PyTorch (prerequisite)
+### 1. Install PyTorch (prerequisite)
 Sapsan can be run on both cpu and gpu. Please follow the instructions on [PyTorch](https://pytorch.org/get-started/locally/) to install the latest version (torch>=1.7.1 & CUDA>=11.0).
 
-#### 2. Clone from git (recommended)
-```shell script
+### 2. Install via pip (recommended)
+```
+pip install sapsan
+```
+
+#### OR Clone from git
+```
 git clone https://github.com/pikarpov-LANL/Sapsan.git
 cd Sapsan/
 python setup.py install
 ```
 
-#### OR Install via pip
-```shell script
-pip install sapsan
-```
-
 Note: see [Installation Page](https://github.com/pikarpov-LANL/Sapsan/wiki/Installation/) on the Wiki for complete instructions with Graphviz and Docker installation.
 
-#### Run Examples
+### 3. Test Installation
 
-To make sure everything is alright and to familiarize yourself with the interface, please run the following CNN example on 3D data:
-```shell script
-jupyter notebook sapsan/examples/cnn_example.ipynb
+To make sure everything is alright, run a test of your setup:
 ```
-alternatively, you can try out the physics-informed convolutional auto-encoder (PICAE) example on random 3D data:
-```shell script
-jupyter notebook sapsan/examples/picae_example.ipynb
+sapsan test
 ```
-or a KRR example on 2D data:
-```shell script
-jupyter notebook sapsan/examples/krr_example.ipynb
+
+### 4. Run Examples
+
+To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#convolution-neural-network) or [PICAE](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#physics-informed-convolutional-autoencoder) on 3D data, and [KRR](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#kernel-ridge-regression) on 2D data). To copy the examples, type:
 ```
+sapsan get_examples
+```
+This will create a folder `./sapsan_examples` with appropriate example jupyter notebooks.
+
+### 5. Create Custom Projects!
+To start a custom project, designing your own custom estimator, i.e. network, go ahead and run:
+```
+sapsan create {name}
+```
+where `{name}` should be replaced with your custom project name. As a result, a pre-filled template for the estimator, jupyter notebook to run everything from, and Docker will be initialized.
 
 
 
