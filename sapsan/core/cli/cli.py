@@ -169,7 +169,7 @@ def test():
     pytest.main(__path__)
     
 @sapsan.command("get_examples", help="Copy examples to your working directory")    
-def get_examples():
+def get_examples(path):
     dir_name = "sapsan_examples"
     if os.path.isdir("./{dir_name}".format(dir_name=dir_name)):
         click.echo("./sapsan_examples folder exists - please delete or try a different path")
