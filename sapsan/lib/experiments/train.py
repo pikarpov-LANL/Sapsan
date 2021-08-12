@@ -5,7 +5,6 @@ import numpy as np
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.lib.backends.fake import FakeBackend
 from sapsan.utils.plot import log_plot
-from sapsan.lib.backends.fake import FakeBackend
 
 import os
 import sys

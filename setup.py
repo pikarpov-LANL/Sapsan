@@ -1,17 +1,15 @@
 import setuptools
+from sapsan._version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-
-with open("version", "r") as f:
-    version = f.read()
 
 with open("requirements.txt", 'r') as f:
     requirements = [i.strip() for i in f.readlines()]
     
 setuptools.setup(
     name="sapsan",
-    version=version,
+    version=__version__,
     author="Platon Karpov, Iskandar Sitdikov",
     author_email="plkarpov@ucsc.edu",
     description="Sapsan project",
@@ -29,6 +27,7 @@ setuptools.setup(
     ],
     install_requires=requirements,
     python_requires='>=3.7, <3.9',
+    include_package_data = True,
     entry_points='''
         [console_scripts]
         sapsan=sapsan.core.cli.cli:sapsan

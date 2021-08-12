@@ -1,3 +1,4 @@
+from ._version import __version__
 from .lib.estimator.krr.krr import KRR, KRRConfig
 from .lib.estimator.cnn.spacial_3d_encoder import CNN3d, CNN3dConfig
 from .lib.estimator.picae.picae_encoder import PICAE, PICAEConfig

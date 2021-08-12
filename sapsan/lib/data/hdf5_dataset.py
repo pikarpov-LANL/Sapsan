@@ -156,6 +156,8 @@ class HDF5Dataset(Dataset):
         # downsample if needed
         if self.sampler:
             input_data = self.sampler.sample(input_data)
+            self.input_size = input_data.shape[1:]
+            if self.batch_num==1: self.batch_size = self.input_size
                 
         if self.flat: return flatten(input_data)
         elif self.batch_size == self.input_size: return np.array([input_data])

@@ -1,15 +1,16 @@
 TEMPLATE = """
 import setuptools
+from {name}._version import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("version", "r") as f:
-    version = f.read()
+with open("requirements.txt", 'r') as f:
+    requirements = [i.strip() for i in f.readlines()]
 
 setuptools.setup(
     name="{name}",
-    version=version,
+    version=__version__,
     author="",
     author_email="",
     description="",
@@ -21,16 +22,13 @@ setuptools.setup(
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
-    install_requires=[
-        'numpy==1.17.3'
-    ],
-    python_requires='>=3.6',
+    install_requires=requirements,
+    python_requires='>=3.7, <3.9',
 )
 """
-
 
 def get_setup_template(name: str) -> str:
     return TEMPLATE.format(name=name)

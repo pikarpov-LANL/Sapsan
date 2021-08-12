@@ -163,7 +163,11 @@ def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
         plotting_routine = px.scatter
     else:
         plotting_routine = px.line
-    fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
+        
+    if any(i<0 for i in plot_data['train_loss']): log_y=False
+    else: log_y = True
+        
+    fig = plotting_routine(df, x="epoch", y="train_loss", log_y=log_y,
                   title='Training Progress', width=700, height=400)
     fig.update_layout(yaxis=dict(exponentformat='e'))
     fig.layout.hovermode = 'x' 
