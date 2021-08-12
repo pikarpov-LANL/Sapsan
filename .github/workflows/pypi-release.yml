@@ -30,7 +30,7 @@ jobs:
     - name: Set version for release
       run: >-
         rm sapsan/_version.py &&
-        echo "__version__ = ${release_version}" >> sapsan/_version.py &&
+        echo "__version__ = '${release_version}'" >> sapsan/_version.py &&
         echo $release_version
     - name: Commit version
       run: |
