@@ -31,7 +31,7 @@ bibliography: paper.bib
 ---
 
 # Summary
-[Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible in the study of turbulence, with a focus on astrophysical applications. Sapsan includes modules to load, filter, sample down, batch, and split your data for training and validation. Furthermore, the evoluation modules, among other features, include construction of power spectra and comparison to established analytical turbulence closure models, such as a gradient model. Thus, Sapsan takes out all the hard work from data preparation and analysis, leaving one focused on ML model design, layer by layer.
+[Sapsan](https://github.com/pikarpov-LANL/Sapsan) is a framework to make Machine Learning (ML) more accessible in the study of turbulence, with a focus on astrophysical applications. Sapsan includes modules to load, filter, sample down, batch, and split the data from hydrodynamic (HD) simulations for training and validation. Next, the framework includes built-in conventional and physics-informed published estimators that were used for turbulence modeling. This ties into Sapsan's custom estimator module, i.e. ability to focus on a custom model design layer-by-layer, which is the core benefit of using the framework. To share your custom model, every new project created via Sapsan comes with pre-filled, ready for release Docker files. Furthermore, training and evaluation modules are included with Sapsan. The latter, among other features, includes construction of power spectra and comparison to established analytical turbulence closure models, such as a gradient model. Thus, Sapsan takes out all the hard work from data preparation and analysis, leaving one focused on the ML model design itself.
 
 # Statement of Need
 
@@ -61,9 +61,9 @@ been to make it accessible and catered to the community through Jupyter Notebook
 (GUI)\footnote{demo available at [sapsan.app](https://sapsan.app/])} 
 available for the end-user. ``Sapsan`` includes built-in optimized ML models for turbulence treatment, both conventional and 
 physics-based. More importantly, at its core, the framework is meant to be flexible and modular, hence there is an intuitive 
-interface for users to work on their own ML algorithms. In addition, ``Sapsan`` brings best practices from the industry when it 
+interface for users to work on their own ML algorithms. Most of the mundane turbulence ML researcher needs, such as data preprocessing and prediction analysis can be automated through Sapsan, with a streamlined process of custom estimator developement. In addition, ``Sapsan`` brings best practices from the industry when it 
 comes to ML development frameworks. For example, ``Sapsan`` includes docker containers for reproducible release, as well as 
-[MLflow](https://mlflow.org/) for experiment tracking.
+[MLflow](https://mlflow.org/) for experiment tracking. Thus, ``Sapsan`` is a single, complete interface for turbulence ML-based research.
 
 `Sapsan` is distributed through [Github](https://github.com/pikarpov-LANL/Sapsan) and [pip](https://pypi.org/project/sapsan/). For further reference, [wiki](https://github.com/pikarpov-LANL/Sapsan/wiki) is mainted on Github as well.
 
