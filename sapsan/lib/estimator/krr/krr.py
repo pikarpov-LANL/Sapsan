@@ -1,8 +1,6 @@
 import json
 import os
 
-import yaml
-
 import numpy as np
 from typing import Optional, Dict
 from sklearn.kernel_ridge import KernelRidge
