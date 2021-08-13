@@ -43,7 +43,7 @@ class PICAEModel(torch.nn.Module):
         self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
         
         self.te = TorchEstimator
-        self.device = self.te.set_device(self, show_device=False) 
+        self.device = self.te.set_device(self) 
 
 
         ############## Define Encoder layers
