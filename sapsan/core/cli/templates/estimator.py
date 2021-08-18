@@ -45,20 +45,23 @@ class {name_upper}Config(EstimatorConfig):
                  patience: int = 10,
                  min_delta: float = 1e-5, 
                  logdir: str = "./logs/",
+                 lr: float = 1e-3,
+                 min_lr = None,                 
                  *args, **kwargs):
         self.n_epochs = n_epochs
         self.batch_dim = batch_dim
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.lr = lr
+        if min_lr==None: self.min_lr = lr*1e-2
+        else: self.min_lr = min_lr
         self.kwargs = kwargs
         
         #everything in self.parameters will get recorded by MLflow
-        self.parameters = {{
-                        "model - n_epochs": self.n_epochs,
-                        "model - min_delta": self.min_delta,
-                        "model - patience": self.patience,
-                    }} 
+        #by default, all 'self' variables will get recorded
+        self.parameters = {{f'model - {{k}}': v for k, v in self.__dict__.items() if k != 'kwargs'}}
+        if bool(self.kwargs): self.parameters.update({{f'model - {{k}}': v for k, v in self.kwargs.items()}})
     
     
 class {name_upper}(TorchEstimator):
