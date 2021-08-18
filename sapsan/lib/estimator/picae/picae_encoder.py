@@ -43,7 +43,7 @@ class PICAEModel(torch.nn.Module):
         self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
         
         self.te = TorchEstimator
-        self.device = self.te.set_device(self, show_device=False) 
+        self.device = self.te.set_device(self) 
 
 
         ############## Define Encoder layers
@@ -203,7 +203,10 @@ class PICAEConfig(EstimatorConfig):
                        n_epochs = 1,
                        patience: int = 10,
                        min_delta: float = 1e-5, 
+                       weight_decay: float = 1e-5,
                        logdir: str = "./logs/",
+                       lr: float = 1e-4,
+                       min_lr = None,
                        *args, **kwargs):
         self.nfilters = nfilters
         self.kernel_size = kernel_size
@@ -213,15 +216,17 @@ class PICAEConfig(EstimatorConfig):
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.weight_decay = weight_decay
+        self.lr = lr
+        if min_lr==None: self.min_lr = lr*1e-2
+        else: self.min_lr = min_lr        
         self.kwargs = kwargs
         
         #everything in self.parameters will get recorded by MLflow
-        self.parameters = {
-                        "model - n_epochs": self.n_epochs,
-                        "model - min_delta": self.min_delta,
-                        "model - patience": self.patience,
-                    }
-        
+        #by default, all 'self' variables will get recorded
+        self.parameters = {f'model - {k}': v for k, v in self.__dict__.items() if k != 'kwargs'}
+        if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
+            
     
 class PICAE(TorchEstimator):
     def __init__(self, config = PICAEConfig(), 
@@ -241,11 +246,12 @@ class PICAE(TorchEstimator):
                            enc_nlayers = self.config.enc_nlayers, 
                            dec_nlayers = self.config.dec_nlayers)
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=1e-04, weight_decay=1e-5)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr, 
+                                     weight_decay=self.config.weight_decay)
         loss_func = torch.nn.MSELoss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                               patience=3,
-                                                               min_lr=1e-5) 
+                                                               patience=self.config.patience,
+                                                               min_lr=self.config.min_lr) 
 
         trained_model = self.torch_train(loaders, model, 
                                          optimizer, loss_func, scheduler, 

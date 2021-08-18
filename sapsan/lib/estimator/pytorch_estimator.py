@@ -13,7 +13,7 @@ import os
 import shutil
 
 import torch
-from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback
+from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback, DeviceEngine
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -41,9 +41,8 @@ class TorchEstimator(Estimator):
     def metrics(self) -> Dict[str, float]:
         return self.model_metrics
     
-    def set_device(self, show_device=True):
+    def set_device(self):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-        if show_device: print('Device used:', self.device)
         return self.device
     
     def to_device(self, var):
@@ -53,6 +52,12 @@ class TorchEstimator(Estimator):
     def tensor_to_device(self):
         if str(self.device) == 'cpu': return torch.FloatTensor
         else: return torch.cuda.FloatTensor 
+    
+    def import_from_config(self, parameters):
+        for key, value in parameters.items():
+            if key in self.config.kwargs.keys(): setattr(self, key, self.config.kwargs[key])
+            else: setattr(self, key, value)
+        return
         
     def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
@@ -63,11 +68,11 @@ class TorchEstimator(Estimator):
         self.loss_func = loss_func
         self.scheduler = scheduler
         self.loader_key = list(loaders)[0]
-        self.metric_key = 'loss'
-        try: self.ddp = self.config.kwargs['ddp']
-        except: self.ddp = False
+        self.metric_key = 'loss'        
+        self.import_from_config({"device": None, "ddp": False})
 
-        self.set_device()
+        if self.device == None: self.set_device()
+        print('Device used:', self.device)
         
         ##checks if logdir exists - deletes it if yes
         self.check_logdir()               
@@ -97,6 +102,7 @@ class TorchEstimator(Estimator):
                                     ],
                           verbose=False,
                           check=False,
+                          engine=DeviceEngine(self.device),
                           ddp=self.ddp
                           )
         

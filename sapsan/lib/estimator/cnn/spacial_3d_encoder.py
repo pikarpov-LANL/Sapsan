@@ -52,21 +52,24 @@ class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int = 1,
                  patience: int = 10,
-                 min_delta: float = 1e-5, 
+                 min_delta: float = 1e-5,
                  logdir: str = "./logs/",
+                 lr: float = 1e-3,
+                 min_lr = None,
                  *args, **kwargs):
         self.n_epochs = n_epochs
         self.logdir = logdir
         self.patience = patience
         self.min_delta = min_delta
+        self.lr = lr
+        if min_lr==None: self.min_lr = lr*1e-2
+        else: self.min_lr = min_lr
         self.kwargs = kwargs
         
         #everything in self.parameters will get recorded by MLflow
-        self.parameters = {
-                        "model - n_epochs": self.n_epochs,
-                        "model - min_delta": self.min_delta,
-                        "model - patience": self.patience,
-                    }       
+        #by default, all 'self' variables will get recorded
+        self.parameters = {f'model - {k}': v for k, v in self.__dict__.items() if k != 'kwargs'}
+        if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
     
     
 class CNN3d(TorchEstimator):
@@ -80,11 +83,11 @@ class CNN3d(TorchEstimator):
         x_shape, y_shape = get_loader_shape(loaders)
         model = CNN3dModel(x_shape[1], y_shape[1])
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr)
         loss_func = torch.nn.MSELoss()  # torch.nn.SmoothL1Loss()
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
                                                                patience=self.config.patience,
-                                                               min_lr=1e-5) 
+                                                               min_lr=self.config.min_lr) 
         
         trained_model = self.torch_train(loaders, model, 
                                          optimizer, loss_func, scheduler, 
