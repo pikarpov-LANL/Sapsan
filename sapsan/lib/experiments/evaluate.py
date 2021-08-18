@@ -90,7 +90,7 @@ class Evaluate(Experiment):
         
         end = time.time()
         runtime = end - start
-        self.backend.log_metric("runtime", runtime)
+        self.backend.log_metric("eval - runtime", runtime)
                 
         pdf = pdf_plot([pred, self.targets], names=['prediction', 'target'])
         pdf.savefig("pdf_plot.png")
