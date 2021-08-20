@@ -84,7 +84,7 @@ class Evaluate(Experiment):
     def run(self) -> dict:
         start = time.time()
         
-        self.backend.start('evaluate')
+        self.backend.start('evaluate', nested = True)
 
         pred = self.model.predict(self.inputs)
         

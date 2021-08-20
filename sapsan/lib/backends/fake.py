@@ -21,5 +21,8 @@ class FakeBackend(ExperimentBackend):
                      "{name}: {value}".format(experiment=self.name,
                                               name=name,
                                               value=value))
+    def close_active_run(self):
+        pass
+    
     def end(self):
         pass

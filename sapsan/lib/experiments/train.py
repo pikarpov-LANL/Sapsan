@@ -42,7 +42,8 @@ class Train(Experiment):
     
     def run(self):
         
-        start = time.time()        
+        start = time.time() 
+        self.backend.close_active_run()
         self.backend.start('train')
         
         self.model.train(loaders = self.loaders) 
@@ -75,7 +76,6 @@ class Train(Experiment):
 
         self.backend.log_metric("train - runtime", runtime)
         
-        self.backend.end()
         self._cleanup()
 
         print('runtime %.4f seconds'%runtime)
