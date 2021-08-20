@@ -4,7 +4,7 @@ from sapsan.core.models import ExperimentBackend
 
 
 class FakeBackend(ExperimentBackend):    
-    def start(self, run_name: str):
+    def start(self, run_name: str, nested: bool = False):
         pass
     
     def log_parameter(self, name: str, value: str):
