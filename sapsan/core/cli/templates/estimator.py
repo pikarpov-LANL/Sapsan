@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from sapsan.core.models import EstimatorConfig
-from sapsan.lib.estimator.cnn.pytorch_estimator import TorchEstimator
+from sapsan.lib.estimator.torch_backend import TorchBackend
 
 class {name_upper}Model(torch.nn.Module):
     # input channels, output channels
@@ -64,7 +64,7 @@ class {name_upper}Config(EstimatorConfig):
         if bool(self.kwargs): self.parameters.update({{f'model - {{k}}': v for k, v in self.kwargs.items()}})
     
     
-class {name_upper}(TorchEstimator):
+class {name_upper}(TorchBackend):
     def __init__(self, config = {name_upper}Config(), 
                        model = {name_upper}Model()):
         super().__init__(config, model)

@@ -19,23 +19,33 @@ from sapsan.core.models import Estimator, EstimatorConfig
 class SkipCheckpointCallback(CheckpointCallback):
     def on_epoch_end(self, state):
         pass
- 
-class TorchEstimator(Estimator):
+    
+class TorchBackend(Estimator):
     def __init__(self, config: EstimatorConfig, model):
         super().__init__(config)
 
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
         self.model = model
-        self.device = 'not set'
+        self.ddp = False
+        self.set_device()
            
-    def predict(self, inputs):
+    def predict(self, inputs, config):
         self.model.eval()
+        
+        #overwrite device and ddp setting if provided upon loading the model,
+        #otherwise device will be determined by availability and ddp=False
+        if 'device' in config.kwargs: self.device = config.kwargs['device']
+        if 'ddp' in config.kwargs: self.ddp = config.kwargs['ddp']
+        
+        self.print_info()
+        
         if str(self.device) == 'cpu' or self.ddp==True: 
             data = torch.as_tensor(inputs)            
         else: 
+            if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
             data = torch.as_tensor(inputs).cuda()
-            
+
         return self.model(data).cpu().data.numpy()               
 
     def metrics(self) -> Dict[str, float]:
@@ -45,6 +55,14 @@ class TorchEstimator(Estimator):
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         return self.device
     
+    def print_info(self):
+        return print('''
+ ===== run info =====
+ Device used: {device}
+ DDP: {ddp}
+ ====================
+ '''.format(device=self.device, ddp=self.ddp))
+    
     def to_device(self, var):
         if str(self.device) == 'cpu': return var
         else: return var.cuda()
@@ -53,10 +71,10 @@ class TorchEstimator(Estimator):
         if str(self.device) == 'cpu': return torch.FloatTensor
         else: return torch.cuda.FloatTensor 
     
-    def import_from_config(self, parameters):
-        for key, value in parameters.items():
-            if key in self.config.kwargs.keys(): setattr(self, key, self.config.kwargs[key])
-            else: setattr(self, key, value)
+    def import_from_config(self):
+        if self.config.kwargs:
+            for key, value in self.config.kwargs.items():
+                setattr(self, key, value)
         return
         
     def torch_train(self, loaders, model, 
@@ -69,10 +87,9 @@ class TorchEstimator(Estimator):
         self.scheduler = scheduler
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'        
-        self.import_from_config({"device": None, "ddp": False})
+        self.import_from_config()
 
-        if self.device == None: self.set_device()
-        print('Device used:', self.device)
+        self.print_info()
         
         ##checks if logdir exists - deletes it if yes
         self.check_logdir()               
@@ -106,7 +123,7 @@ class TorchEstimator(Estimator):
                           ddp=self.ddp
                           )
         
-        self.config.parameters['model - device'] = self.runner.device         
+        self.config.parameters['model - device'] = str(self.runner.device)
         self.model_metrics['final epoch'] = self.runner.stage_epoch_step
         for key,value in self.runner.epoch_metrics.items():
             self.model_metrics[key] = value
@@ -126,25 +143,39 @@ class TorchEstimator(Estimator):
         self.config.save(params_save_path)
 
     @classmethod
-    def load(cls, path: str, model=None, config=None):
+    def load(cls, path: str, estimator=None):
         model_save_path = "{path}/model".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
         
-        config = model.load_config(params_save_path, config)
-
-        estimator = model(config)
-        model = estimator.model.load_state_dict(torch.load(model_save_path))
-        estimator.model = model
+        cfg = cls.load_config(params_save_path)
+        
+        #only overwrite device and ddp setting if provided when loading the model
+        for key, value in cfg.items():
+            if key == 'kwargs':
+                for k, v in cfg['kwargs'].items():
+                    if k=='device' or k=='ddp': pass
+                    else: setattr(estimator.config.kwargs, k, v)
+            else: setattr(estimator.config, key, value)
+            
+        estimator.model.load_state_dict(torch.load(model_save_path))
         return estimator
     
     @classmethod
-    def load_config(self, path: str, config = None):
+    def load_config(cls, path: str):
         with open(path, 'r') as f:
             cfg = json.load(f)
             del cfg['parameters']
-            return config(**cfg)
+            return cfg
     
     def check_logdir(self):
         #checks if logdir exists - deletes if yes
         if os.path.exists(self.config.logdir):
             shutil.rmtree(self.config.logdir)
+  
+
+class load_estimator(TorchBackend):
+    def __init__(self, config, 
+                       model):
+        super().__init__(config, model)
+
+    def train(self): pass

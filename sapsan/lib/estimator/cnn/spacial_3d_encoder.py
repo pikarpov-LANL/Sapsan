@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from sapsan.core.models import EstimatorConfig
-from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
+from sapsan.lib.estimator.torch_backend import TorchBackend
 from sapsan.lib.data import get_loader_shape
 
 
@@ -72,7 +72,7 @@ class CNN3dConfig(EstimatorConfig):
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
     
     
-class CNN3d(TorchEstimator):
+class CNN3d(TorchBackend):
     def __init__(self, config = CNN3dConfig(), 
                        model = CNN3dModel()):
         super().__init__(config, model)
