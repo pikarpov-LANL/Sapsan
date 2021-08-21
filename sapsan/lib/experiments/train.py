@@ -8,6 +8,7 @@ from sapsan.utils.plot import log_plot
 
 import os
 import sys
+import inspect
 
 class Train(Experiment):
 
@@ -55,6 +56,10 @@ class Train(Experiment):
         if os.path.exists('model_details.txt'):
             self.artifacts.append('model_details.txt')
             
+            with open('model_forward.txt', 'w') as fw:
+                fw.write(inspect.getsource(self.model.model.forward))
+            self.artifacts.append('model_forward.txt')
+            
             #plot the training log if pytorch is used
             log = log_plot(self.show_log)
             log.write_html("runtime_log.html")
@@ -63,7 +68,7 @@ class Train(Experiment):
         
         #only if catalyst.runner is used
         if 'train' in self.get_metrics():
-            self.backend.log_metric('train - final epoch', self.get_metrics()['final epoch'])        
+            self.backend.log_metric( 'train - final epoch', self.get_metrics()['final epoch'])        
             for metric, value in self.get_metrics()['train'].items():
                 if "/" in metric: metric = metric.replace("/", " over ")
                 self.backend.log_metric('train - %s'%metric, value)            
