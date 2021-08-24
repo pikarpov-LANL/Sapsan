@@ -57,10 +57,10 @@ class TorchBackend(Estimator):
     
     def print_info(self):
         return print('''
- ===== run info =====
- Device used: {device}
- DDP: {ddp}
- ====================
+ ====== run info ======
+ Device used:  {device}
+ DDP:          {ddp}
+ ======================
  '''.format(device=self.device, ddp=self.ddp))
     
     def to_device(self, var):
@@ -89,6 +89,9 @@ class TorchBackend(Estimator):
         self.metric_key = 'loss'        
         self.import_from_config()
 
+        if 'cuda' in str(self.device):
+            self.optimizer_to(optimizer, self.device)
+            
         self.print_info()
         
         ##checks if logdir exists - deletes it if yes
@@ -100,7 +103,7 @@ class TorchBackend(Estimator):
         model = self.model        
         
         torch.cuda.empty_cache()
-            
+        
         self.runner.train(model=model,
                           criterion=self.loss_func,
                           optimizer=self.optimizer,
@@ -135,29 +138,59 @@ class TorchBackend(Estimator):
         
         return model
 
+    def optimizer_to(self, optim, device):
+        for param in optim.state.values():
+            # Not sure there are any global tensors in the state dict
+            if isinstance(param, torch.Tensor):
+                param.data = param.data.to(device)
+                if param._grad is not None:
+                    param._grad.data = param._grad.data.to(device)
+            elif isinstance(param, dict):
+                for subparam in param.values():
+                    if isinstance(subparam, torch.Tensor):
+                        subparam.data = subparam.data.to(device)
+                        if subparam._grad is not None:
+                            subparam._grad.data = subparam._grad.data.to(device)    
+    
     def save(self, path):
-        model_save_path = "{path}/model".format(path=path)
+        model_save_path = "{path}/model.pt".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
-
-        torch.save(self.model.state_dict(), model_save_path)
+        
+        torch.save({
+                    'epoch': self.runner.stage_epoch_step,
+                    'model_state_dict': self.runner.model.state_dict(),
+                    'optimizer_state_dict': self.runner.optimizer.state_dict(),
+                    'loss': self.runner.epoch_metrics['train']['loss'],
+                    }, model_save_path)
         self.config.save(params_save_path)
 
     @classmethod
-    def load(cls, path: str, estimator=None):
-        model_save_path = "{path}/model".format(path=path)
+    def load(cls, path: str, estimator=None, load_saved_config=False):
+        model_save_path = "{path}/model.pt".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
         
         cfg = cls.load_config(params_save_path)
+
+        if load_saved_config==True: 
+            print("""All config parameters will be loaded from saved params.json 
+(anything provided in model config upon loading will be ignored)""")
+            for key, value in cfg.items():
+                setattr(estimator.config, key, value)
+
+        checkpoint = torch.load(model_save_path, map_location='cpu')
+        estimator.model.load_state_dict(checkpoint['model_state_dict'])
+        estimator.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        epoch = checkpoint['epoch']
+        loss = checkpoint['loss']
         
-        #only overwrite device and ddp setting if provided when loading the model
-        for key, value in cfg.items():
-            if key == 'kwargs':
-                for k, v in cfg['kwargs'].items():
-                    if k=='device' or k=='ddp': pass
-                    else: setattr(estimator.config.kwargs, k, v)
-            else: setattr(estimator.config, key, value)
-            
-        estimator.model.load_state_dict(torch.load(model_save_path))
+        print("""
+ ==== Loaded Model ====
+ final Epoch: {epoch}
+ final Loss: {loss}
+ ======================
+
+""".format(epoch=epoch, loss='%.4e'%loss) )
+        
         return estimator
     
     @classmethod
@@ -171,11 +204,11 @@ class TorchBackend(Estimator):
         #checks if logdir exists - deletes if yes
         if os.path.exists(self.config.logdir):
             shutil.rmtree(self.config.logdir)
-  
 
+                            
 class load_estimator(TorchBackend):
     def __init__(self, config, 
                        model):
         super().__init__(config, model)
 
-    def train(self): pass
+    def train(self): pass   

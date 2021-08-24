@@ -14,20 +14,17 @@ class Train(Experiment):
 
     def __init__(self,
                  model: Estimator,
-                 loaders,
                  data_parameters,
                  backend = FakeBackend(),
                  show_log = True
                 ):
         self.backend = backend
         self.model = model
-        self.loaders = loaders
         self.data_parameters = data_parameters
         self.artifacts = []
         self.show_log = show_log
 
     def get_metrics(self) -> Dict[str, float]:
-        print(self.model.metrics())
         return self.model.metrics()
 
     def get_parameters(self) -> Dict[str, str]:
@@ -47,7 +44,7 @@ class Train(Experiment):
         self.backend.close_active_run()
         self.backend.start('train')
         
-        self.model.train(loaders = self.loaders) 
+        self.model.train() 
         
         end = time.time()
         runtime = end - start

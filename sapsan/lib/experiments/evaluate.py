@@ -2,7 +2,6 @@
 Example:
 evaluation_experiment = Evaluate(backend=tracking_backend,
                                  model=training_experiment.model,
-                                 loaders=[x,y],
                                  data_parameters = data_loader)
 
 target_cube, pred_cube = evaluation_experiment.run()
@@ -27,7 +26,6 @@ from sapsan.utils.shapes import combine_cubes, slice_of_cube
 class Evaluate(Experiment):
     def __init__(self,                 
                  model: Estimator,
-                 loaders: np.ndarray,
                  data_parameters,
                  backend = FakeBackend(),
                  cmap: str = 'plasma',
@@ -42,12 +40,12 @@ class Evaluate(Experiment):
         self.cmap = cmap
         self.axis = len(self.input_size)
         
-        self.loaders = loaders
-        try:
-            self.inputs = self.loaders[0]
-            self.targets = self.loaders[1]
-        except:
-            raise TypeError("Evaluate only accepts 'lists' and 'np.ndarrays' for loaders")
+        if type(self.model.loaders) in [list, np.array]:
+            self.inputs = self.model.loaders[0]
+            self.targets = self.model.loaders[1]
+        else:
+            self.inputs, self.targets = iter(self.model.loaders['train']).next()
+            self.targets = self.targets.numpy()
         
         self.flat = flat
         if self.flat: self.n_output_channels = self.targets.shape[0] #flat arrays don't have batches

@@ -12,9 +12,10 @@ import torch
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
+from sapsan.lib.data import get_loader_shape
 
 class {name_upper}Model(torch.nn.Module):
-    # input channels, output channels
+    # input channels, output channels can be the input to define the layers
     def __init__(self):
         super({name_upper}Model, self).__init__()
         
@@ -38,7 +39,7 @@ class {name_upper}Model(torch.nn.Module):
     
 class {name_upper}Config(EstimatorConfig):
     
-    # set defaults per your liking, add more parameters
+    # set defaults to your liking, add more parameters
     def __init__(self,
                  n_epochs: int = 1,
                  batch_dim: int = 64,
@@ -65,25 +66,30 @@ class {name_upper}Config(EstimatorConfig):
     
     
 class {name_upper}(TorchBackend):
-    def __init__(self, config = {name_upper}Config(), 
+    # Set your optimizer, loss function, and scheduler here
+    
+    def __init__(self, loaders,
+                       config = {name_upper}Config(), 
                        model = {name_upper}Model()):
         super().__init__(config, model)
         self.config = config
+        self.loaders = loaders
         
-    def train(self, loaders):
-
         #uncomment if you need dataloader shapes for model input
         #x_shape, y_shape = get_shape(loaders)
         
-        model = {name_upper}Model()
-        optimizer = """ optimizer """
-        loss_func = """ loss finctions """
-        scheduler = """ scheduler """
+        self.model = {name_upper}Model()
+        self.optimizer = """ optimizer """
+        self.loss_func = """ loss finctions """
+        self.scheduler = """ scheduler """        
         
-        model = self.torch_train(loaders, model, 
-                                 optimizer, loss_func, scheduler, self.config)
+    def train(self):
+        
+        trained_model = self.torch_train(self.loaders, self.model, 
+                                         self.optimizer, self.loss_func, self.scheduler, 
+                                         self.config)
                 
-        return model
+        return trained_model
 
 '''
 

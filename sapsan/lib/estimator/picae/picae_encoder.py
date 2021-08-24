@@ -229,32 +229,33 @@ class PICAEConfig(EstimatorConfig):
             
     
 class PICAE(TorchBackend):
-    def __init__(self, config = PICAEConfig(), 
+    def __init__(self, loaders,    
+                       config = PICAEConfig(), 
                        model = PICAEModel()):
         super().__init__(config, model)
-        self.config = config        
-    
-    def train(self, loaders):
-                            
+        self.config = config
+        self.loaders = loaders
+
         train_shape, valid_shape = np.array(get_loader_shape(loaders))     
 
-        model = PICAEModel(input_dim = train_shape[2:], 
-                           input_size = train_shape[1], 
-                           batch = train_shape[0], 
-                           nfilters = self.config.nfilters, 
-                           kernel_size = self.config.kernel_size, 
-                           enc_nlayers = self.config.enc_nlayers, 
-                           dec_nlayers = self.config.dec_nlayers)
+        self.model = PICAEModel(input_dim = train_shape[2:], 
+                                input_size = train_shape[1], 
+                                batch = train_shape[0], 
+                                nfilters = self.config.nfilters, 
+                                kernel_size = self.config.kernel_size, 
+                                enc_nlayers = self.config.enc_nlayers, 
+                                dec_nlayers = self.config.dec_nlayers)        
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr, 
-                                     weight_decay=self.config.weight_decay)
-        loss_func = torch.nn.MSELoss()
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                               patience=self.config.patience,
-                                                               min_lr=self.config.min_lr) 
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, 
+                                          weight_decay=self.config.weight_decay)
+        self.loss_func = torch.nn.MSELoss()
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+                                                                    patience=self.config.patience,
+                                                                    min_lr=self.config.min_lr)         
+    def train(self):
 
-        trained_model = self.torch_train(loaders, model, 
-                                         optimizer, loss_func, scheduler, 
-                                         self.config)        
+        trained_model = self.torch_train(self.loaders, self.model, 
+                                         self.optimizer, self.loss_func, self.scheduler, 
+                                         self.config)       
         
         return trained_model

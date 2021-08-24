@@ -35,11 +35,13 @@ class KRRConfig(EstimatorConfig):
         
 
 class KRR(SklearnBackend):
-    def __init__(self, config = KRRConfig(),
+    def __init__(self, loaders,
+                       config = KRRConfig(),
                        model = KRRModel()):
         super().__init__(config, model)
-
         self.config = config
+        self.loaders = loaders
+        
         self.estimator = KRRModel(kernel=config.kernel, alpha=config.alpha, gamma=config.gamma)
         self.model = self.estimator.model
         
@@ -47,11 +49,10 @@ class KRR(SklearnBackend):
             self.config.parameters["model - %s"%param] = value
         self.model_metrics = dict()
 
-    def train(self, loaders):
-        model = self.model.fit(self._move_axis_to_sklearn(loaders[0]),
-                               self._move_axis_to_sklearn(loaders[1]))
-        self.model = model
-        return model        
+    def train(self):
+        trained_model = self.model.fit(self._move_axis_to_sklearn(self.loaders[0]),
+                                       self._move_axis_to_sklearn(self.loaders[1]))
+        return trained_model        
         
     def _move_axis_to_sklearn(self, inputs: np.ndarray) -> np.ndarray:
         return np.moveaxis(inputs, 0, 1)    

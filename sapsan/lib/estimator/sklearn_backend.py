@@ -35,13 +35,16 @@ class SklearnBackend(Estimator):
         self.config.save(params_save_path)
         
     @classmethod
-    def load(cls, path: str, estimator = None):
+    def load(cls, path: str, estimator = None, load_saved_config = False):
         model_save_path = "{path}/model.json".format(path=path)
         params_save_path = "{path}/params.json".format(path=path)
                 
         cfg = cls.load_config(params_save_path)
-        for key, value in cfg.items():
-            setattr(estimator.config, key, value)
+        if load_saved_config==True: 
+            print("""All config parameters will be loaded from saved params.json 
+(anything provided in model config upon loading will be ignored)""")
+            for key, value in cfg.items():
+                setattr(estimator.config, key, value)
         
         estimator.model = load(model_save_path)
         return estimator
