@@ -4,6 +4,13 @@ Backend for pytorch-based models
     - configuring to run either on cpu or gpu
     - loading parameters into a catalyst runner
     - output the metrics and model details 
+    - saving and loading trained models
+    - predicting
+    - customize Catalyst Runner
+        - set self.runner in TorchBackend to the one you like or custom
+    - setup a custom Distributed Data Parallel (DDP) run
+        - adjust loaders in TorchBackend.torch_train()
+        - adjust self.runner.train() settings
 """
 import json
 from typing import Dict
@@ -29,54 +36,7 @@ class TorchBackend(Estimator):
         self.model = model
         self.ddp = False
         self.set_device()
-           
-    def predict(self, inputs, config):
-        self.model.eval()
-        
-        #overwrite device and ddp setting if provided upon loading the model,
-        #otherwise device will be determined by availability and ddp=False
-        if 'device' in config.kwargs: self.device = config.kwargs['device']
-        if 'ddp' in config.kwargs: self.ddp = config.kwargs['ddp']
-        
-        self.print_info()
-        
-        if str(self.device) == 'cpu' or self.ddp==True: 
-            data = torch.as_tensor(inputs)            
-        else: 
-            if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
-            data = torch.as_tensor(inputs).cuda()
 
-        return self.model(data).cpu().data.numpy()               
-
-    def metrics(self) -> Dict[str, float]:
-        return self.model_metrics
-    
-    def set_device(self):
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-        return self.device
-    
-    def print_info(self):
-        return print('''
- ====== run info ======
- Device used:  {device}
- DDP:          {ddp}
- ======================
- '''.format(device=self.device, ddp=self.ddp))
-    
-    def to_device(self, var):
-        if str(self.device) == 'cpu': return var
-        else: return var.cuda()
-        
-    def tensor_to_device(self):
-        if str(self.device) == 'cpu': return torch.FloatTensor
-        else: return torch.cuda.FloatTensor 
-    
-    def import_from_config(self):
-        if self.config.kwargs:
-            for key, value in self.config.kwargs.items():
-                setattr(self, key, value)
-        return
-        
     def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
                     config):
@@ -137,6 +97,55 @@ class TorchBackend(Estimator):
                                    str(self.runner.scheduler)))
         
         return model
+        
+        
+    def predict(self, inputs, config):
+        self.model.eval()
+        
+        #overwrite device and ddp setting if provided upon loading the model,
+        #otherwise device will be determined by availability and ddp=False
+        if 'device' in config.kwargs: self.device = config.kwargs['device']
+        if 'ddp' in config.kwargs: self.ddp = config.kwargs['ddp']
+        
+        self.print_info()
+        
+        if str(self.device) == 'cpu' or self.ddp==True: 
+            data = torch.as_tensor(inputs)            
+        else: 
+            if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
+            data = torch.as_tensor(inputs).cuda()
+
+        return self.model(data).cpu().data.numpy()               
+
+    def metrics(self) -> Dict[str, float]:
+        return self.model_metrics
+    
+    def set_device(self):
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        return self.device
+    
+    def print_info(self):
+        return print('''
+ ====== run info ======
+ Device used:  {device}
+ DDP:          {ddp}
+ ======================
+ '''.format(device=self.device, ddp=self.ddp))
+    
+    def to_device(self, var):
+        if str(self.device) == 'cpu': return var
+        else: return var.cuda()
+        
+    def tensor_to_device(self):
+        if str(self.device) == 'cpu': return torch.FloatTensor
+        else: return torch.cuda.FloatTensor 
+    
+    def import_from_config(self):
+        if self.config.kwargs:
+            for key, value in self.config.kwargs.items():
+                setattr(self, key, value)
+        return
+        
 
     def optimizer_to(self, optim, device):
         for param in optim.state.values():

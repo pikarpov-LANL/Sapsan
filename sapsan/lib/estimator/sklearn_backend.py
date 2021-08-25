@@ -1,9 +1,9 @@
 """
 Backend for sklearn-based models
 
-    - configuring to run either on cpu or gpu
-    - loading parameters into a catalyst runner
     - output the metrics and model details 
+    - saving and loading trained models    
+    - predicting
 """
 import json
 from typing import Dict
