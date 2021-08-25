@@ -80,7 +80,7 @@ class {name_upper}(TorchBackend):
         
         self.model = {name_upper}Model()
         self.optimizer = """ optimizer """
-        self.loss_func = """ loss finctions """
+        self.loss_func = """ loss function """
         self.scheduler = """ scheduler """        
         
     def train(self):
