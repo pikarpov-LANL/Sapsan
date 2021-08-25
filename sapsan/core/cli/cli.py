@@ -142,7 +142,7 @@ def setup_package(name: str):
     Base Sapsan cli function. Further descriptions and tutorials for Sapsan 
     and the CLI can be found on https://github.com/pikarpov-LANL/Sapsan/wiki
 """)
-@click.version_option(version = __version__, package_name="sapsan", prog_name="Sapsan", 
+@click.version_option(version = __version__, prog_name="Sapsan", 
                       message = "%(prog)s %(version)s")
 
 def sapsan():
