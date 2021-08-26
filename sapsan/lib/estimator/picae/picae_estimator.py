@@ -45,7 +45,6 @@ class PICAEModel(torch.nn.Module):
         self.tb = TorchBackend
         self.device = self.tb.set_device(self) 
 
-
         ############## Define Encoder layers
         encoder_cell_list=[]
         for layer in range(self.encoder_nlayers):

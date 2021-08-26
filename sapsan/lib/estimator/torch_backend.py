@@ -73,9 +73,9 @@ class TorchBackend(Estimator):
                           num_epochs=self.config.n_epochs,
                           callbacks=[EarlyStoppingCallback(patience=self.config.patience,
                                                            min_delta=self.config.min_delta,
-														   loader_key=self.loader_key,
-														   metric_key=self.metric_key,
-														   minimize=True),
+                                                           loader_key=self.loader_key,
+                                                           metric_key=self.metric_key,
+                                                           minimize=True),
                                     SchedulerCallback(loader_key=self.loader_key,
                                                       metric_key=self.metric_key,),
                                     SkipCheckpointCallback(logdir=self.config.logdir)
