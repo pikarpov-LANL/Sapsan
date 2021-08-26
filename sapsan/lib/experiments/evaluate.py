@@ -81,6 +81,7 @@ class Evaluate(Experiment):
         start = time.time()
         
         self.backend.start('evaluate', nested = True)
+
         pred = self.model.predict(self.inputs, self.model.config)
         
         end = time.time()
@@ -94,6 +95,7 @@ class Evaluate(Experiment):
 
         pdf = pdf_plot([pred, self.targets], names=['predict', 'target'], ax=ax1)
         plt.savefig("pdf_plot.png")
+
         self.artifacts.append("pdf_plot.png")
 
         cdf = cdf_plot([pred, self.targets], names=['predict', 'target'], ax=ax2)
