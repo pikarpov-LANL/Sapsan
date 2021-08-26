@@ -26,7 +26,7 @@ def create_init(path: str):
     with open("{path}/__init__.py".format(path=path), "w") as file:
         file.write("")
 
-def setup_project(name: str):
+def setup_project(name: str, ddp: bool):
     click.echo("Created...")
     os.mkdir(name)
     click.echo("Project Folder:             {name}/".format(name=name))
@@ -53,6 +53,11 @@ def setup_project(name: str):
     with open("./{name}/Makefile".format(name=name), "w") as file:
         file.write(get_makefile_template(name))
         click.echo("Docker Makefile:            {name}/Makefile".format(name=name))
+        
+    if ddp:
+        click.echo("-----")
+        click.echo("DDP = True:                 {name}/torch_backend.py".format(name=name))
+        shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./{name}/".format(name=name))
     
 
 def setup_package(name: str):
@@ -142,7 +147,7 @@ def setup_package(name: str):
     Base Sapsan cli function. Further descriptions and tutorials for Sapsan 
     and the CLI can be found on https://github.com/pikarpov-LANL/Sapsan/wiki
 """)
-@click.version_option(version = __version__, package_name="sapsan", prog_name="Sapsan", 
+@click.version_option(version = __version__, prog_name="Sapsan", 
                       message = "%(prog)s %(version)s")
 
 def sapsan():
@@ -150,11 +155,13 @@ def sapsan():
     
 @sapsan.command("create", help="Sets up a new project with an custom estimator template.")
 @click.option('--name', '-n', default="new_project", show_default=True, help="name of the new project")
-def create(name):
+@click.option('--ddp/--no-ddp', default=False, show_default=True, 
+              help="Copies torch_backend.py into working directory to customize the Catalyst Runner - adjust its Distributed Data Parallel (DDP) settings")
+def create(name, ddp):
     click.echo("========================================================")  
     click.echo("Lead the train to the frontiers of knowledge, my friend!")
     click.echo("========================================================")  
-    setup_project(name=name.lower())
+    setup_project(name=name.lower(), ddp=ddp)    
 
 #@sapsan.command("create_package", help="Sets up a new package ready for pypi distribution.")
 #@click.option('--name', '-n', default="new_package", show_default=True, help="name of the new package")
@@ -181,4 +188,4 @@ def get_examples(path):
                         "./{dir_name}/{nt}".format(dir_name=dir_name, nt=nt))
         shutil.copytree("{path}/{dir_name}/data".format(path=__path__[0],dir_name="examples"), 
                         "./{dir_name}/data".format(dir_name=dir_name))
-        click.echo("Done, check out ./sapsan_examples")
+        click.echo("Done, check out ./sapsan_examples")       

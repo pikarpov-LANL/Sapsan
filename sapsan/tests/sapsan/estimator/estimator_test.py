@@ -1,8 +1,11 @@
 import os
 import shutil
 import unittest
+import numpy as np
 
-from sapsan.lib.estimator import CNN3d, CNN3dConfig, PICAE, PICAEConfig, KRR, KRRConfig
+from sapsan.lib.data.data_functions import torch_splitter
+from sapsan.lib.estimator import CNN3d, CNN3dConfig, PICAE, PICAEConfig, KRR, KRRConfig, load_estimator, load_sklearn_estimator
+
 
 class TestCnnEstimator(unittest.TestCase):
 
@@ -10,30 +13,60 @@ class TestCnnEstimator(unittest.TestCase):
         self.resources_path = "./test_resources"
         os.mkdir(self.resources_path)
 
-    def test_cnn3d_save_and_load(self):
-        estimator = CNN3d(CNN3dConfig(n_epochs = 1))
-        estimator.save(self.resources_path)
-
-        loaded_estimator = CNN3d.load(self.resources_path, model=CNN3d, config=CNN3dConfig)
-        self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
-
         
-    def test_picae_save_and_load(self):
-        estimator = PICAE(PICAEConfig())
-        estimator.save(self.resources_path)
+    def default_loaders(self, model_type):
+        if model_type=='torch':
+            x = np.ones((1,16,16,16,16))
+            y = np.ones((1,16,16,16,16))
+            return torch_splitter(x,y)
+        if model_type=='sklearn':
+            x = np.ones((1,16))
+            y = np.ones((1,16))
+            return [x,y]
+   
 
-        loaded_estimator = PICAE.load(self.resources_path, model=PICAE, config=PICAEConfig)
+    def test_cnn3d_save_and_load(self):
+        estimator = CNN3d(config = CNN3dConfig(n_epochs = 1),
+                          loaders = self.default_loaders('torch'))
+        estimator.model = estimator.train()
+        estimator.save(self.resources_path)
+        
+        loaded_estimator = load_estimator.load(self.resources_path, 
+                               estimator=CNN3d(config=CNN3dConfig(),
+                                               loaders=self.default_loaders('torch')),
+                               load_saved_config=True)
+        
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
     
+    
+    def test_picae_save_and_load(self):
+        estimator = PICAE(config = PICAEConfig(n_epochs = 1),
+                          loaders = self.default_loaders('torch'))
+        estimator.model = estimator.train()
+        estimator.save(self.resources_path)
         
+        loaded_estimator = load_estimator.load(self.resources_path, 
+                               estimator=PICAE(config=PICAEConfig(),
+                                               loaders=self.default_loaders('torch')),
+                               load_saved_config=True)
+
+        self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
+    
+    
     def test_krr_save_and_load(self):
-        estimator = KRR(KRRConfig(gamma=0.1, alpha=0.2))
+        estimator = KRR(config = KRRConfig(gamma=0.1, alpha=0.2),
+                        loaders = self.default_loaders('sklearn'))
+        estimator.model = estimator.train()
         estimator.save(self.resources_path)
 
-        loaded_estimator = KRR.load(self.resources_path, model=KRR, config=KRRConfig)
+        loaded_estimator = load_sklearn_estimator.load(self.resources_path, 
+                               estimator=KRR(config=KRRConfig(),
+                                           loaders=self.default_loaders('sklearn')),
+                               load_saved_config=True)
+        
         self.assertEqual(estimator.config.gamma, loaded_estimator.config.gamma)
-        self.assertEqual(estimator.config.alpha, loaded_estimator.config.alpha)        
-
+        self.assertEqual(estimator.config.alpha, loaded_estimator.config.alpha)         
+                
         
     def tearDown(self) -> None:
         shutil.rmtree(self.resources_path)

@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from sapsan.core.models import EstimatorConfig
-from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
+from sapsan.lib.estimator.torch_backend import TorchBackend
 from sapsan.lib.data import get_loader_shape
 
 
@@ -72,25 +72,27 @@ class CNN3dConfig(EstimatorConfig):
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
     
     
-class CNN3d(TorchEstimator):
-    def __init__(self, config = CNN3dConfig(), 
+class CNN3d(TorchBackend):
+    def __init__(self, loaders,
+                       config = CNN3dConfig(), 
                        model = CNN3dModel()):
         super().__init__(config, model)
         self.config = config
-
-    def train(self, loaders):
-
-        x_shape, y_shape = get_loader_shape(loaders)
-        model = CNN3dModel(x_shape[1], y_shape[1])
+        self.loaders = loaders
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr)
-        loss_func = torch.nn.MSELoss()  # torch.nn.SmoothL1Loss()
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+        x_shape, y_shape = get_loader_shape(self.loaders)
+        self.model = CNN3dModel(x_shape[1], y_shape[1])
+        
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
+        self.loss_func = torch.nn.SmoothL1Loss()        
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
                                                                patience=self.config.patience,
                                                                min_lr=self.config.min_lr) 
         
-        trained_model = self.torch_train(loaders, model, 
-                                         optimizer, loss_func, scheduler, 
+    def train(self):
+        
+        trained_model = self.torch_train(self.loaders, self.model, 
+                                         self.optimizer, self.loss_func, self.scheduler, 
                                          self.config)
                 
         return trained_model

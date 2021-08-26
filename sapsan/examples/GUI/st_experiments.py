@@ -245,10 +245,14 @@ def cnn3d():
         
         st.write("Dataset loaded...")
         
+        estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
+                                             patience=int(widget_values['patience']), 
+                                             min_delta=float(widget_values['min_delta'])),
+                          loaders=loaders)
+        
         #Set the experiment
         training_experiment = Train(backend=tracking_backend,
                                     model=estimator,
-                                    loaders = loaders,
                                     data_parameters = data_loader,
                                     show_log = False)
         
@@ -262,7 +266,7 @@ def cnn3d():
         
         start = time.time()
         #Train the model
-        training_experiment.run()
+        trained_model = training_experiment.run()
         st.write('Trained in %.2f sec'%((time.time()-start)))
         st.success('Done! Plotting...')
 
@@ -270,12 +274,12 @@ def cnn3d():
         #--- Test the model ---
         #Load the test data
         x, y, data_loader = load_data(widget_values['checkpoint_test'])
-        loaders = [x, y]
+        loaders = data_loader.convert_to_torch([x, y])
 
         #Set the test experiment
+        trained_model.loaders = loaders
         evaluation_experiment = Evaluate(backend=tracking_backend,
-                                         model=training_experiment.model,
-                                         loaders = loaders,
+                                         model=trained_model,
                                          data_parameters = data_loader)
         
         #Test the model
@@ -362,11 +366,7 @@ def cnn3d():
     #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
     if widget_values['sampler_selection'] == "Equidistant3D":
         sampler = EquidistantSampling(text_to_list(widget_values['input_size']), 
-                                      text_to_list(widget_values['sample_to']))
-    
-    estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         patience=int(widget_values['patience']), 
-                                         min_delta=float(widget_values['min_delta'])))
+                                      text_to_list(widget_values['sample_to']))    
         
     show_config = [
         ['experiment name',  widget_values["experiment name"]],

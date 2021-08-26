@@ -8,25 +8,23 @@ from sapsan.utils.plot import log_plot
 
 import os
 import sys
+import inspect
 
 class Train(Experiment):
 
     def __init__(self,
                  model: Estimator,
-                 loaders,
                  data_parameters,
                  backend = FakeBackend(),
                  show_log = True
                 ):
         self.backend = backend
         self.model = model
-        self.loaders = loaders
         self.data_parameters = data_parameters
         self.artifacts = []
         self.show_log = show_log
 
     def get_metrics(self) -> Dict[str, float]:
-        print(self.model.metrics())
         return self.model.metrics()
 
     def get_parameters(self) -> Dict[str, str]:
@@ -42,10 +40,11 @@ class Train(Experiment):
     
     def run(self):
         
-        start = time.time()        
+        start = time.time() 
+        self.backend.close_active_run()
         self.backend.start('train')
         
-        self.model.train(loaders = self.loaders) 
+        self.model.train() 
         
         end = time.time()
         runtime = end - start
@@ -53,6 +52,10 @@ class Train(Experiment):
         #only if catalyst.runner is used
         if os.path.exists('model_details.txt'):
             self.artifacts.append('model_details.txt')
+            
+            with open('model_forward.txt', 'w') as fw:
+                fw.write(inspect.getsource(self.model.model.forward))
+            self.artifacts.append('model_forward.txt')
             
             #plot the training log if pytorch is used
             log = log_plot(self.show_log)
@@ -62,7 +65,7 @@ class Train(Experiment):
         
         #only if catalyst.runner is used
         if 'train' in self.get_metrics():
-            self.backend.log_metric('train - final epoch', self.get_metrics()['final epoch'])        
+            self.backend.log_metric( 'train - final epoch', self.get_metrics()['final epoch'])        
             for metric, value in self.get_metrics()['train'].items():
                 if "/" in metric: metric = metric.replace("/", " over ")
                 self.backend.log_metric('train - %s'%metric, value)            
@@ -75,7 +78,6 @@ class Train(Experiment):
 
         self.backend.log_metric("train - runtime", runtime)
         
-        self.backend.end()
         self._cleanup()
 
         print('runtime %.4f seconds'%runtime)

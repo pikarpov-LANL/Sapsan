@@ -13,7 +13,7 @@ from torch.utils import data
 from torch.utils.data import DataLoader
 
 from sapsan.core.models import EstimatorConfig
-from sapsan.lib.estimator.pytorch_estimator import TorchEstimator
+from sapsan.lib.estimator.torch_backend import TorchBackend
 from sapsan.lib.data import get_loader_shape
 
 
@@ -42,9 +42,8 @@ class PICAEModel(torch.nn.Module):
         self.total_layers = self.encoder_nlayers + self.decoder_nlayers
         self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
         
-        self.te = TorchEstimator
-        self.device = self.te.set_device(self) 
-
+        self.tb = TorchBackend
+        self.device = self.tb.set_device(self) 
 
         ############## Define Encoder layers
         encoder_cell_list=[]
@@ -58,7 +57,7 @@ class PICAEModel(torch.nn.Module):
                 cell_outputsize = self.nfilters
                 stridelen = 2
        
-            encoder_cell_list.append(self.te.to_device(self, torch.nn.Conv3d(
+            encoder_cell_list.append(self.tb.to_device(self, torch.nn.Conv3d(
                                                              out_channels = cell_outputsize, 
                                                              in_channels = cell_inpsize, 
                                                              kernel_size = self.kernel_size, 
@@ -81,7 +80,7 @@ class PICAEModel(torch.nn.Module):
                 cell_padding = 0
                 stridelen = 2        
             
-            decoder_cell_list.append(self.te.to_device(self, torch.nn.ConvTranspose3d(
+            decoder_cell_list.append(self.tb.to_device(self, torch.nn.ConvTranspose3d(
                                                               out_channels = cell_outputsize, 
                                                               in_channels = cell_inpsize,
                                                               kernel_size = self.kernel_size, 
@@ -106,7 +105,7 @@ class PICAEModel(torch.nn.Module):
         self.ddzKernel[1,1,2] = 0.5
         #### declare weights
         self.weights = torch.zeros((self.output_size, self.input_size, 3, 3, 3))
-        self.weights = self.weights.type(self.te.tensor_to_device(self))
+        self.weights = self.weights.type(self.tb.tensor_to_device(self))
         #dfy/dx
         self.weights[0,0,::] = torch.zeros(3, 3, 3)
         self.weights[0,1,::] = self.ddxKernel.clone()
@@ -137,16 +136,16 @@ class PICAEModel(torch.nn.Module):
         with torch.no_grad():
             self.curlConv.weight = torch.nn.Parameter(self.weights)
         self.curlField = torch.zeros([self.batch,self.input_size,self.il,self.jl,self.kl])
-        self.curlField = self.curlField.type(self.te.tensor_to_device(self))
+        self.curlField = self.curlField.type(self.tb.tensor_to_device(self))
         self.register_buffer('r_curlField', self.curlField)
         self.curlGrad = torch.zeros([self.batch,self.output_size,self.il,self.jl,self.kl])
-        self.curlGrad = self.curlGrad.type(self.te.tensor_to_device(self))    
+        self.curlGrad = self.curlGrad.type(self.tb.tensor_to_device(self))    
         self.register_buffer('r_curlGrad', self.curlGrad)        
         
     def padHITperiodic(self,field):
         oldSize = field.size(-1)
         newSize = oldSize + 3 #2nd order accurate periodic padding at boundary
-        newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).type(self.te.tensor_to_device(self))
+        newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).type(self.tb.tensor_to_device(self))
         
         # fill interior cells
         newField[:,:,:-3,:-3,:-3] = field
@@ -182,7 +181,7 @@ class PICAEModel(torch.nn.Module):
         x = self.padHITperiodic(x) # PADDING with periodic BC
         curlGrad = self.curlConv(x) # compute conv
         curlField = torch.zeros([self.batch,self.input_size,self.il,self.jl,self.kl])
-        curlField = curlField.type(self.te.tensor_to_device(self))
+        curlField = curlField.type(self.tb.tensor_to_device(self))
         
         #construct curl vector
         curlField[:,0,::] = curlGrad[:,3,::] - curlGrad[:,5,::]
@@ -228,33 +227,34 @@ class PICAEConfig(EstimatorConfig):
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
             
     
-class PICAE(TorchEstimator):
-    def __init__(self, config = PICAEConfig(), 
+class PICAE(TorchBackend):
+    def __init__(self, loaders,    
+                       config = PICAEConfig(), 
                        model = PICAEModel()):
         super().__init__(config, model)
-        self.config = config        
-    
-    def train(self, loaders):
-                            
+        self.config = config
+        self.loaders = loaders
+
         train_shape, valid_shape = np.array(get_loader_shape(loaders))     
 
-        model = PICAEModel(input_dim = train_shape[2:], 
-                           input_size = train_shape[1], 
-                           batch = train_shape[0], 
-                           nfilters = self.config.nfilters, 
-                           kernel_size = self.config.kernel_size, 
-                           enc_nlayers = self.config.enc_nlayers, 
-                           dec_nlayers = self.config.dec_nlayers)
+        self.model = PICAEModel(input_dim = train_shape[2:], 
+                                input_size = train_shape[1], 
+                                batch = train_shape[0], 
+                                nfilters = self.config.nfilters, 
+                                kernel_size = self.config.kernel_size, 
+                                enc_nlayers = self.config.enc_nlayers, 
+                                dec_nlayers = self.config.dec_nlayers)        
         
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.lr, 
-                                     weight_decay=self.config.weight_decay)
-        loss_func = torch.nn.MSELoss()
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                               patience=self.config.patience,
-                                                               min_lr=self.config.min_lr) 
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, 
+                                          weight_decay=self.config.weight_decay)
+        self.loss_func = torch.nn.MSELoss()
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+                                                                    patience=self.config.patience,
+                                                                    min_lr=self.config.min_lr)         
+    def train(self):
 
-        trained_model = self.torch_train(loaders, model, 
-                                         optimizer, loss_func, scheduler, 
-                                         self.config)        
+        trained_model = self.torch_train(self.loaders, self.model, 
+                                         self.optimizer, self.loss_func, self.scheduler, 
+                                         self.config)       
         
         return trained_model

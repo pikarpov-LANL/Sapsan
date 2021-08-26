@@ -141,7 +141,7 @@ class HDF5Dataset(Dataset):
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
             
             data = file.get(key)
-            print(data.shape)
+
             if (self.axis==3 and len(np.shape(data))==5) or (self.axis==2 and len(np.shape(data))==4):
                 print("Warning: combining axis for %s"%key)
                 data = np.reshape(data, np.append(data.shape[0]*data.shape[1],data.shape[2:]))
@@ -149,6 +149,7 @@ class HDF5Dataset(Dataset):
             if (self.axis==3 and len(np.shape(data))==3) or (self.axis==2 and len(np.shape(data))==2): 
                 data = [data]     
             all_data.append(data)
+            print('----------')
             
         # input_data shape ex: (features, 128, 128, 128) 
         input_data = np.vstack(all_data)
@@ -178,15 +179,12 @@ class HDF5Dataset(Dataset):
             
             if checkpoint == self.checkpoints[0]: x = features_checkpoint_batch
             else: x = np.vstack((x, features_checkpoint_batch))
-                
-            print('Loaded INPUT data shape', x.shape)
-                        
+                                        
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
                 if checkpoint == self.checkpoints[0]: y = target_checkpoint_batch
                 else: y = np.vstack((y,target_checkpoint_batch))                       
-                print('Loaded TARGET data shape', y.shape)
                 
         if self.target!=None: return x, y
         else: return x

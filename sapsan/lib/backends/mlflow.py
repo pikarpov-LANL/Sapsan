@@ -7,7 +7,9 @@ from sapsan.core.models import ExperimentBackend
 
 
 class MLflowBackend(ExperimentBackend):
-    def __init__(self, name: str = 'experiment', host: str = 'localhost', port: int = 9000):
+    def __init__(self, name: str = 'experiment',
+                       host: str = 'localhost', 
+                       port: int = 9000):
         super().__init__(name)
         self.host = host
         self.port = port
@@ -30,8 +32,8 @@ class MLflowBackend(ExperimentBackend):
         mlflow_thread.start()
         time.sleep(5)
         
-    def start(self, run_name: str):
-        mlflow.start_run(run_name = run_name)
+    def start(self, run_name: str, nested = False):
+        mlflow.start_run(run_name = run_name, nested = nested)        
         
     def log_metric(self, name: str, value: float):
         mlflow.log_metric(name, value)
@@ -42,5 +44,8 @@ class MLflowBackend(ExperimentBackend):
     def log_artifact(self, path: str):
         mlflow.log_artifact(path)
 
+    def close_active_run(self):
+        if mlflow.active_run()!=None: mlflow.end_run()
+        
     def end(self):
         mlflow.end_run()
