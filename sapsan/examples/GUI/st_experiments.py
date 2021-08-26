@@ -1,38 +1,36 @@
-import streamlit as st
 import os
 import sys
 import inspect
+import time
+import json
+import signal
+import numpy as np
 from pathlib import Path
+from collections import OrderedDict
+
+import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import plotly.express as px
+import configparser
+import webbrowser
+from io import BytesIO
+from threading import Thread
+#from st_state_patch import SessionState
+#from multiprocessing import Process
+
+import torch
+import streamlit as st
+from streamlit.report_thread import add_report_ctx
 
 #uncomment if cloned from github!
 sys.path.append(str(Path.home())+"/Sapsan/")
 
-from sapsan.lib.backends.fake import FakeBackend
-from sapsan.lib.backends.mlflow import MLflowBackend
+from sapsan.lib.backends import FakeBackend, MLflowBackend
 from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
-from sapsan.lib.estimator import CNN3d, CNN3dConfig
-from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
-from sapsan.lib.experiments.evaluate import Evaluate
-from sapsan.lib.experiments.train import Train
-from sapsan.utils.plot import model_graph
-
-import pandas as pd
-import torch
-import matplotlib.pyplot as plt
-import configparser
-import webbrowser
-import time
-import numpy as np
-from threading import Thread
-from streamlit.ReportThread import add_report_ctx
-import json
-from collections import OrderedDict
-import plotly.express as px
-import os
-import signal
-import sys
-from st_state_patch import SessionState
-from multiprocessing import Process
+from sapsan import Train, Evaluate, CNN3d, CNN3dConfig, model_graph
+from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel
+from sapsan.utils.plot import model_graph, pdf_plot, cdf_plot, slice_plot, plot_params
 
 #initialization of defaults
 cf = configparser.RawConfigParser()
@@ -77,10 +75,10 @@ Sapsan has a BSD-style license, as found in the [LICENSE] (https://github.com/pi
         """
         )
         
-            
+    
 def cnn3d():
     st.title('Sapsan Configuration')
-    st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')
+    st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
     
     st.sidebar.markdown("General Configuration")
     
@@ -205,7 +203,12 @@ def cnn3d():
                         
             
             time.sleep(0.1) 
-            
+
+    def plot_static():
+        buf = BytesIO()
+        plt.savefig(buf, format="png",  dpi=50)
+        st.image(buf)
+    
     def load_data(checkpoints):
         #Load the data      
         features = widget_values['features'].split(',')
@@ -216,15 +219,15 @@ def cnn3d():
         
         checkpoints = np.array([int(i) for i in checkpoints.split(',')])
         
+        #print('--ST Shapes--', batch_size, input_size)
         data_loader = HDF5Dataset(path=widget_values['path'],
-                           features=features,
-                           target=target,
-                           checkpoints=checkpoints,
-                           batch_size=text_to_list(widget_values['batch_size']),
-                           input_size=text_to_list(widget_values['input_size']),
-                           sampler=sampler,
-                           shuffle = False,
-                           train_fraction = 1)
+                                  features=features,
+                                  target=target,
+                                  checkpoints=checkpoints,
+                                  batch_size=text_to_list(widget_values['batch_size']),
+                                  input_size=text_to_list(widget_values['input_size']),
+                                  sampler=sampler,
+                                  shuffle = False)
         x, y = data_loader.load_numpy()
         return x, y, data_loader
     
@@ -266,7 +269,7 @@ def cnn3d():
         
         start = time.time()
         #Train the model
-        trained_model = training_experiment.run()
+        trained_estimator = training_experiment.run()
         st.write('Trained in %.2f sec'%((time.time()-start)))
         st.success('Done! Plotting...')
 
@@ -277,22 +280,31 @@ def cnn3d():
         loaders = data_loader.convert_to_torch([x, y])
 
         #Set the test experiment
-        trained_model.loaders = loaders
-        evaluation_experiment = Evaluate(backend=tracking_backend,
-                                         model=trained_model,
+        trained_estimator.loaders = loaders
+        evaluation_experiment = Evaluate(backend = tracking_backend,
+                                         model = trained_estimator,
                                          data_parameters = data_loader)
         
         #Test the model
-        evaluation_experiment.run()
-
-
-        data = y
-        #'data', data
-        st.pyplot()
+        target_cube, pred_cube = evaluation_experiment.run()
+        
+        #Plots metrics
+        mpl.rcParams.update(plot_params())
+        
+        fig = plt.figure(figsize=(12,6), dpi=60)
+        (ax1, ax2) = fig.subplots(1,2)
+        
+        pdf_plot([pred_cube, target_cube], names=['prediction', 'target'], ax=ax1)
+        cdf_plot([pred_cube, target_cube], names=['prediction', 'target'], ax=ax2)
+        plot_static()
+        
+        pred_slice, target_slice, pred_cube, target_cube = evaluation_experiment.split_batch(pred_cube)
+        slice_plot([pred_slice, target_slice], names=['prediction', 'target'], cmap=evaluation_experiment.cmap)
+        st.pyplot(plt)
     
     #--- Load Default ---
     
-    state = SessionState()
+    #state = SessionState()
     
     #button = make_recording_widget(st.sidebar.button)
     number = make_recording_widget(st.sidebar.number_input)
@@ -365,8 +377,7 @@ def cnn3d():
 
     #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
     if widget_values['sampler_selection'] == "Equidistant3D":
-        sampler = EquidistantSampling(text_to_list(widget_values['input_size']), 
-                                      text_to_list(widget_values['sample_to']))    
+        sampler = EquidistantSampling(text_to_list(widget_values['sample_to']))    
         
     show_config = [
         ['experiment name',  widget_values["experiment name"]],

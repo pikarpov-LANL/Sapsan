@@ -5,17 +5,21 @@ from sklearn.model_selection import train_test_split
 from torch import from_numpy
 from torch.utils.data import DataLoader, TensorDataset
 from sapsan.core.models import Dataset, DatasetPlugin
-     
+import warnings
 
 def torch_splitter(x, y, 
                    batch_num: int = 1,
                    train_fraction = None,
                    shuffle: bool = False):
-    
-    if train_fraction != None:
-            x_train, x_valid, y_train, y_valid = train_test_split(x, y,
-                                                                  train_size=train_fraction,
-                                                                  shuffle=shuffle)
+
+    if np.shape(x)[0]==1 and train_fraction!=None:
+        print('\nWARNING: your batch_num=1, hence the data cannot be split into train and valid (perhaps you only loaded 1 checkpoint). Setting valid = test data...\n')
+        train_fraction = None
+        
+    if train_fraction != None:            
+        x_train, x_valid, y_train, y_valid = train_test_split(x, y,
+                                                              train_size=train_fraction,
+                                                              shuffle=shuffle)
     else:
         x_train = x_valid = x
         y_train = y_valid = y
