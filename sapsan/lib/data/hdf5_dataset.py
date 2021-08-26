@@ -173,17 +173,17 @@ class HDF5Dataset(Dataset):
 
 
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
-        for checkpoint in self.checkpoints:
+        for i, checkpoint in enumerate(self.checkpoints):
             features_checkpoint_batch = self._get_input_data(checkpoint, 
                                                              self.features, self.features_label)
             
-            if checkpoint == self.checkpoints[0]: x = features_checkpoint_batch
+            if i == 0: x = features_checkpoint_batch
             else: x = np.vstack((x, features_checkpoint_batch))
                                         
             if self.target!=None:
                 target_checkpoint_batch = self._get_input_data(checkpoint, 
                                                                self.target, self.target_label)
-                if checkpoint == self.checkpoints[0]: y = target_checkpoint_batch
+                if i == 0: y = target_checkpoint_batch
                 else: y = np.vstack((y,target_checkpoint_batch))                       
                 
         if self.target!=None: return x, y
@@ -207,7 +207,7 @@ class HDF5Dataset(Dataset):
         nsnaps_to_use = nsnaps - nsnaps%self.batch_num
         
         if nsnaps_to_use != nsnaps: 
-            warnings.warn("WARNING: Only %d snapshots will be used, instead of %d. Adjust 'batch_num'."%(nsnaps_to_use, nsnaps))
+            warnings.warn("Only %d snapshots will be used, instead of %d. Adjust 'batch_num'."%(nsnaps_to_use, nsnaps), stacklevel=2)
             
         return nsnaps_to_use
             

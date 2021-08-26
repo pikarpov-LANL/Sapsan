@@ -79,9 +79,9 @@ import os
 import threading
 import collections
 
-from streamlit.server.Server import Server
+from streamlit.server.server import Server
 import streamlit as st
-import streamlit.ReportThread as ReportThread
+import streamlit.report_thread as ReportThread
 
 # Normally we'd use a Streamtit module, but I want a module that doesn't live in
 # your current working directory (since local modules get removed in between

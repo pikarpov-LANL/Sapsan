@@ -41,11 +41,11 @@ def combine_cubes(cubes: np.ndarray,
 
     Reverse of split_cube_by_batch function.
     @param cubes: (batch, channels, batch_size, batch_size, batch_size)
-    """
+    """    
     n_per_dim = np.empty(3, dtype=int)
     for i in range(3):
         n_per_dim[i] = int(input_size[i] / batch_size[i])
-    x = []
+    x = []    
     for i in range(n_per_dim[0]):
         y = []
         for j in range(n_per_dim[1]):

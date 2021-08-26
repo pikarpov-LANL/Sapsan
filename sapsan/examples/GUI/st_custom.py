@@ -7,13 +7,10 @@ from pathlib import Path
 #uncomment if cloned from github!
 sys.path.append(str(Path.home())+"/Sapsan/")
 
-from sapsan.lib.backends.fake import FakeBackend
-from sapsan.lib.backends.mlflow import MLflowBackend
+from sapsan.lib.backends import FakeBackend, MLflowBackend
 from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
-from sapsan.lib.estimator import CNN3d, CNN3dConfig
-from sapsan.lib.estimator.cnn.spacial_3d_encoder import CNN3dModel
-from sapsan.lib.experiments.evaluate import Evaluate
-from sapsan.lib.experiments.train import Train
+from sapsan import Train, Evaluate, CNN3d, CNN3dConfig, model_graph
+from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel
 from sapsan.utils.plot import model_graph
 
 import pandas as pd
@@ -24,7 +21,7 @@ import webbrowser
 import time
 import numpy as np
 from threading import Thread
-from streamlit.ReportThread import add_report_ctx
+from streamlit.report_thread import add_report_ctx
 import json
 from collections import OrderedDict
 import plotly.express as px

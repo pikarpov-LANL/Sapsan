@@ -10,7 +10,6 @@ target_cube, pred_cube = evaluation_experiment.run()
 import os
 import time
 from typing import List, Dict
-import logging
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -19,9 +18,8 @@ import torch
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.lib.backends.fake import FakeBackend
-from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot
+from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot, plot_params
 from sapsan.utils.shapes import combine_cubes, slice_of_cube
-
 
 class Evaluate(Experiment):
     def __init__(self,                 
@@ -89,23 +87,26 @@ class Evaluate(Experiment):
         end = time.time()
         runtime = end - start
         self.backend.log_metric("eval - runtime", runtime)
-                
-        pdf = pdf_plot([pred, self.targets], names=['prediction', 'target'])
-        pdf.savefig("pdf_plot.png")
+        
+        mpl.rcParams.update(plot_params())
+        
+        fig = plt.figure(figsize=(12,6), dpi=60)
+        (ax1, ax2) = fig.subplots(1,2)
+
+        pdf = pdf_plot([pred, self.targets], names=['predict', 'target'], ax=ax1)
+        plt.savefig("pdf_plot.png")
+
         self.artifacts.append("pdf_plot.png")
 
-        try:
-            cdf = cdf_plot([pred, self.targets], names=['prediction', 'target'])
-            cdf.savefig("cdf_plot.png")
-            self.artifacts.append("cdf_plot.png")
-        except Exception as e:
-            logging.warning(e)
+        cdf = cdf_plot([pred, self.targets], names=['predict', 'target'], ax=ax2)
+        plt.savefig("cdf_plot.png")
+        self.artifacts.append("cdf_plot.png")                        
 
         if self.flat: pred_slice, target_slice, pred_cube, target_cube = self.flatten(pred)
         else: pred_slice, target_slice, pred_cube, target_cube = self.split_batch(pred)
                 
-        slices = slice_plot([pred_slice, target_slice], names=['prediction', 'target'], cmap=self.cmap)
-        slices.savefig("slices_plot.png")
+        slices = slice_plot([pred_slice, target_slice], names=['predict', 'target'], cmap=self.cmap)
+        plt.savefig("slices_plot.png")
         self.artifacts.append("slices_plot.png")        
         
         self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(target_cube, pred_cube)).mean()         
@@ -147,6 +148,7 @@ class Evaluate(Experiment):
         n_entries = self.inputs.shape[0]
         cube_shape = (n_entries, self.n_output_channels,
                       self.batch_size[0], self.batch_size[1], self.batch_size[2])
+        print(cube_shape)
         pred_cube = pred.reshape(cube_shape)
         target_cube = self.targets.reshape(cube_shape)
 
