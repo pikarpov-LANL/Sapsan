@@ -184,12 +184,9 @@ class Evaluate(Experiment):
         (ax1, ax2) = fig.subplots(1,2)
 
         pdf = pdf_plot(series, names=names, ax=ax1)
-        plt.savefig("pdf_plot.png")
-        self.artifacts.append("pdf_plot.png")
-
         cdf = cdf_plot(series, names=names, ax=ax2)
-        plt.savefig("cdf_plot.png")
-        self.artifacts.append("cdf_plot.png")                        
+        plt.savefig("pdf_cdf.png")
+        self.artifacts.append("pdf_cdf.png")                        
 
         pred = series[0]
         if self.flat: slices_cubes = self.flatten(pred)
