@@ -88,8 +88,9 @@ class Evaluate(Experiment):
         start = time.time()
         
         self.backend.start('evaluate', nested = True)
+        
         pred = self.model.predict(self.inputs, self.model.config)              
-                      
+
         end = time.time()
         runtime = end - start
         self.backend.log_metric("eval - runtime", runtime)

@@ -270,6 +270,7 @@ def cnn3d():
         start = time.time()
         #Train the model
         trained_estimator = training_experiment.run()
+
         st.write('Trained in %.2f sec'%((time.time()-start)))
         st.success('Done! Plotting...')
 
