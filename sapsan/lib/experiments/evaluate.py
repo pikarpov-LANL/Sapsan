@@ -4,8 +4,7 @@ evaluation_experiment = Evaluate(backend=tracking_backend,
                                  model=training_experiment.model,
                                  data_parameters = data_loader)
 
-#if target is given
-target_cube, pred_cube = evaluation_experiment.run()
+cubes = evaluation_experiment.run()
 """
 
 import os
