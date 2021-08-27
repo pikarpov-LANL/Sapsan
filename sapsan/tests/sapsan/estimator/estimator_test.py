@@ -16,12 +16,12 @@ class TestCnnEstimator(unittest.TestCase):
         
     def default_loaders(self, model_type):
         if model_type=='torch':
-            x = np.ones((1,16,16,16,16))
-            y = np.ones((1,16,16,16,16))
-            return torch_splitter(x,y)
+            x = np.ones((3,16,16,16,16))
+            y = np.ones((3,16,16,16,16))
+            return torch_splitter(loaders = [x,y])
         if model_type=='sklearn':
-            x = np.ones((1,16))
-            y = np.ones((1,16))
+            x = np.ones((3,16))
+            y = np.ones((3,16))
             return [x,y]
    
 

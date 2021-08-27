@@ -95,9 +95,15 @@ class Evaluate(Experiment):
         self.backend.log_metric("eval - runtime", runtime)
 
         #determine n_output_channels form prediction
-        if self.flat: self.n_output_channels = pred.shape[0] #flat arrays don't have batches
-        elif len(pred.shape)<(self.axis+2): self.n_output_channels = 1
-        else: self.n_output_channels = pred.shape[1]
+        if self.flat:
+            self.n_output_channels = int(np.around(
+                                     np.prod(pred.shape)/np.prod(self.inputs.shape[1:])
+                                     )) #flat arrays don't have batches
+        elif len(pred.shape)<(self.axis+2): 
+            self.n_output_channels = int(np.around(
+                                         np.prod(pred.shape[1:])/np.prod(self.inputs.shape[2:])
+                                         ))
+        else: self.n_output_channels = pred.shape[1]            
         
         if self.targets_given: 
             series = [pred, self.targets]
@@ -134,6 +140,7 @@ class Evaluate(Experiment):
     
     
     def flatten(self, pred):
+        slices_cubes = dict()        
         if self.axis == 3:
             cube_shape = (self.n_output_channels, self.input_size[0],
                           self.input_size[1], self.input_size[2])
