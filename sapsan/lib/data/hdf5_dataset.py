@@ -99,7 +99,7 @@ class HDF5Dataset(Dataset):
     
     def convert_to_torch(self, loaders: np.ndarray):
         #split into batches and convert numpy to torch dataloader
-        loaders = torch_splitter(loaders[0], loaders[1], 
+        loaders = torch_splitter(loaders, 
                                  batch_num = self.batch_num, 
                                  train_fraction = self.train_fraction,
                                  shuffle = self.shuffle)
