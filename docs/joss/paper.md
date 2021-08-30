@@ -65,7 +65,7 @@ available for the end-user. ``Sapsan`` includes built-in optimized ML models for
   * __Model Setup:__ different ML models would be appropriate for different physical regimes. ``Sapsan`` provides templates for a selection of both conventional and physics-based models with more to come. Only important options are left up to the user to edit, with most overhead kept in the backend.
      * __Layers:__  define and order the ML layers
      * __Tracking:__ add extra parameters to be tracked by MLflow
-     * __Loos Function:__ decide on a conventional or physics-based/custom loss function to model the data
+     * __Loss Function:__ decide on a conventional or physics-based/custom loss function to model the data
      * __Optimizer:__ choose how to optimize the training
      * __Scheduler:__ select how to adjust the learning rate
 
@@ -102,13 +102,13 @@ While ``Sapsan`` is built to be highly customizable for a wide variety of projec
 ## Hydro simulations
 
 Here are a few examples of a turbulence closure model trained on the high-resolution Johns Hopkins Turbulence Database (JHTDB) [@jhtdb2008]. The dataset used in this comparison is a direct numerical simulation (DNS) of a statistically-stationary isotropic 3D MHD
-turbulence dataset, 1024<sup>3</sup> in spatial resolution and covering roughly one large eddy turnover time over 1024 checkpoints, e.i. dynamical time of the system
+turbulence dataset, 1024^3 in spatial resolution and covering roughly one large eddy turnover time over 1024 checkpoints, e.i. dynamical time of the system
 [@Eyink2013]. We compare it with a commonly used Dynamic Smagorinsky (DS) turbulence closure model [@lilly1966]. On ``Sapsan``  side, a Kernel
 Ridge Regression model [@murphy2004] is used to demonstrate the effectiveness of conventional ML approaches in tackling turbulence
 problems. In this test, we used the following setup:
 
 
-* __Train features:__ velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at timestep = 1. All quantities have been filtered to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
+* __Train features:__ velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at timestep = 1. All quantities have been filtered down to 15 fourier modes to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
 * __Model Input:__ low fidelity velocity (*u*), vector potential (*A*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
 * __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
 
@@ -121,7 +121,7 @@ Even though the conventional regression-based ML approach worked well in the pre
 different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
 changing statistics and evolution of the turbulence that is not necessarily isotropic. Turbulence can behave drastically differently depending on the evolutionary stage; hence, a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN (Convolutional Neural Network) model in an attempt to predict a turbulent velocity stress tensor in a realistic Core-Collapse Supernova (CCSN) case. Figure 3 presents results of the following:
 
-* __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at timestep = 500 (halfway of the total simulation). All quantities have been filtered to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
+* __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at timestep = 500 (halfway of the total simulation). All quantities have been filtered down to 15 fourier modes to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
 * __Model Input:__ low fidelity velocity (*u*), magnetic field (*B*), and their respective derivatives at a set timestep in the future.
 * __Model Output:__ velocity stress tensor ($\tau$) at the matching timestep in the future, which effectively represents the difference between large and small scale structures of the system.
 
