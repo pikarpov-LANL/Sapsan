@@ -27,7 +27,8 @@ class Evaluate(Experiment):
                  data_parameters,
                  backend = FakeBackend(),
                  cmap: str = 'plasma',
-                 flat: bool = False):
+                 flat: bool = False,
+                 run_name: str = 'evaluate'):
         self.model = model
         self.backend = backend
         self.experiment_metrics = dict()
@@ -39,6 +40,7 @@ class Evaluate(Experiment):
         self.axis = len(self.input_size)
         self.targets_given = True
         self.flat = flat
+        self.run_name = run_name
         self.artifacts = []        
         
         if type(self.model.loaders) in [list, np.array]:
@@ -86,7 +88,7 @@ class Evaluate(Experiment):
     def run(self) -> dict:
         start = time.time()
         
-        self.backend.start('evaluate', nested = True)
+        self.backend.start(self.run_name, nested = True)
         
         pred = self.model.predict(self.inputs, self.model.config)              
 
