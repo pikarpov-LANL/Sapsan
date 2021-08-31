@@ -58,7 +58,7 @@ def pdf_plot(series: List[np.ndarray],
         ax.hist(data.flatten(), bins=bins, density=True, histtype='step', label=names[idx])
 
     #ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
-    ax.legend(loc=1)
+    ax.legend(loc=0)
     ax.set_yscale("log")
     ax.set_xlabel("Values")
     ax.set_ylabel("PDF")
@@ -115,7 +115,7 @@ def cdf_plot(series: List[np.ndarray],
             ax.text(0.05, 0.55, txt, transform=ax.transAxes, fontsize=14)        
 
     #ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
-    ax.legend()
+    ax.legend(loc=0)
     ax.set_xlabel('Values')
     ax.set_ylabel('CDF')
     plt.tight_layout()
