@@ -102,7 +102,7 @@ While ``Sapsan`` is built to be highly customizable for a wide variety of projec
 ## Hydro simulations
 
 Here are a few examples of a turbulence closure model trained on the high-resolution Johns Hopkins Turbulence Database (JHTDB) [@jhtdb2008]. The dataset used in this comparison is a direct numerical simulation (DNS) of a statistically-stationary isotropic 3D MHD
-turbulence dataset, 1024<sup>3</sup> in spatial resolution and covering roughly one large eddy turnover time over 1024 checkpoints, e.i. dynamical time of the system
+turbulence dataset, $1024^3$ in spatial resolution and covering roughly one large eddy turnover time over 1024 checkpoints, e.i. dynamical time of the system
 [@Eyink2013]. We compare it with a commonly used Dynamic Smagorinsky (DS) turbulence closure model [@lilly1966]. On ``Sapsan``  side, a Kernel
 Ridge Regression model [@murphy2004] is used to demonstrate the effectiveness of conventional ML approaches in tackling turbulence
 problems. In this test, we used the following setup:
