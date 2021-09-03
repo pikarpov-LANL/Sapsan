@@ -44,7 +44,7 @@ class Train(Experiment):
         
         start = time.time() 
         self.backend.close_active_run()
-        self.backend.start(self.run_name)
+        self.run_id = self.backend.start(self.run_name)
         
         self.model.train() 
         

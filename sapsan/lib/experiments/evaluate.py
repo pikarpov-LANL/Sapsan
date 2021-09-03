@@ -92,9 +92,11 @@ class Evaluate(Experiment):
 
     def run(self) -> dict:
         start = time.time()
-        
-        self.backend.start(self.run_name, nested = True)
-        
+        #self.backend.close_active_run()
+
+        self.run_id = self.backend.start(self.run_name, nested = True)
+        #with self.backend.start(self.run_name, nested = True) as run:
+
         pred = self.model.predict(self.inputs, self.model.config)              
 
         end = time.time()
@@ -111,16 +113,16 @@ class Evaluate(Experiment):
                                          np.prod(pred.shape[1:])/np.prod(self.inputs.shape[2:])
                                          ))
         else: self.n_output_channels = pred.shape[1]            
-        
+
         if self.targets_given: 
             series = [pred, self.targets]
             names = ['predict', 'target']
         else: 
             series = [pred]
             names = ['predict']
-        
+
         slices_cubes = self.analytic_plots(series, names)
-        
+
         if self.targets_given:
             self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(slices_cubes['target_cube'], 
                       slices_cubes['pred_cube'])).mean()         
@@ -133,16 +135,16 @@ class Evaluate(Experiment):
 
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
-            
-        self.backend.end()
+
+        #self.backend.end()
         self._cleanup()
-        
+
         print("eval - runtime: ", runtime)
 
         cube_series = dict()
         for key, value in slices_cubes.items():
             if 'cube' in key: cube_series[key] = value
-        
+
         return cube_series
     
     
@@ -199,12 +201,14 @@ class Evaluate(Experiment):
         pdf = pdf_plot(series, names=names, ax=ax1)
         self.set_axes_pars(pdf)
         
-        cdf = cdf_plot(series, names=names, ax=ax2)
+        cdf, ks_stat = cdf_plot(series, names=names, ax=ax2, ks=True)
         cdf = self.set_axes_pars(cdf)
         
         plt.tight_layout()
         plt.savefig("pdf_cdf.png")
         self.artifacts.append("pdf_cdf.png")                        
+        
+        self.experiment_metrics["eval - KS Stat"] = ks_stat
 
         pred = series[0]
         if self.flat: slices_cubes = self.flatten(pred)
