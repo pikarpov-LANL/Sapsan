@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'sapsan/**'
+      - '.github/workflows/**'
+      - 'setup.py'
+      - 'Makefile'
+      - 'requirements.txt'
+  pull_request:
+    branches:
+      - '*'
+    paths:
+      - 'sapsan/**'
+      - '.github/workflows/**'
+      - 'setup.py'
+      - 'Makefile'
+      - 'requirements.txt'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8']
+        os: [ubuntu-latest]
+    
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - name: "Set up Python"
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: "Install Sapsan"
+        run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            python setup.py install
+      - name: "Tests"
+        run: |
+          python -m unittest discover
