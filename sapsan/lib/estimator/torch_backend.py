@@ -113,7 +113,8 @@ class TorchBackend(Estimator):
             data = torch.as_tensor(inputs)            
         else: 
             if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
-            data = torch.as_tensor(inputs).cuda()
+            cuda_id = next(self.model.parameters()).get_device()
+            data = torch.as_tensor(inputs).cuda(cuda_id)
 
         return self.model(data).cpu().data.numpy()               
 

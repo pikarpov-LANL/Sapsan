@@ -27,7 +27,9 @@ class Evaluate(Experiment):
                  data_parameters,
                  backend = FakeBackend(),
                  cmap: str = 'plasma',
-                 flat: bool = False):
+                 flat: bool = False,
+                 run_name: str = 'evaluate',
+                 **kwargs):
         self.model = model
         self.backend = backend
         self.experiment_metrics = dict()
@@ -39,7 +41,12 @@ class Evaluate(Experiment):
         self.axis = len(self.input_size)
         self.targets_given = True
         self.flat = flat
-        self.artifacts = []        
+        self.run_name = run_name
+        self.artifacts = []    
+        self.axes_pars = ['pdf_xlim','pdf_ylim',
+                          'cdf_xlim','cdf_ylim']
+        self.kwargs = kwargs
+        
         
         if type(self.model.loaders) in [list, np.array]:
             self.inputs = self.model.loaders[0]
@@ -85,9 +92,11 @@ class Evaluate(Experiment):
 
     def run(self) -> dict:
         start = time.time()
-        
-        self.backend.start('evaluate', nested = True)
-        
+        #self.backend.close_active_run()
+
+        self.run_id = self.backend.start(self.run_name, nested = True)
+        #with self.backend.start(self.run_name, nested = True) as run:
+
         pred = self.model.predict(self.inputs, self.model.config)              
 
         end = time.time()
@@ -104,16 +113,16 @@ class Evaluate(Experiment):
                                          np.prod(pred.shape[1:])/np.prod(self.inputs.shape[2:])
                                          ))
         else: self.n_output_channels = pred.shape[1]            
-        
+
         if self.targets_given: 
             series = [pred, self.targets]
             names = ['predict', 'target']
         else: 
             series = [pred]
             names = ['predict']
-        
+
         slices_cubes = self.analytic_plots(series, names)
-        
+
         if self.targets_given:
             self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(slices_cubes['target_cube'], 
                       slices_cubes['pred_cube'])).mean()         
@@ -126,16 +135,16 @@ class Evaluate(Experiment):
 
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
-            
-        self.backend.end()
+
+        #self.backend.end()
         self._cleanup()
-        
+
         print("eval - runtime: ", runtime)
 
         cube_series = dict()
         for key, value in slices_cubes.items():
             if 'cube' in key: cube_series[key] = value
-        
+
         return cube_series
     
     
@@ -190,9 +199,16 @@ class Evaluate(Experiment):
         (ax1, ax2) = fig.subplots(1,2)
 
         pdf = pdf_plot(series, names=names, ax=ax1)
-        cdf = cdf_plot(series, names=names, ax=ax2)
+        self.set_axes_pars(pdf)
+        
+        cdf, ks_stat = cdf_plot(series, names=names, ax=ax2, ks=True)
+        cdf = self.set_axes_pars(cdf)
+        
+        plt.tight_layout()
         plt.savefig("pdf_cdf.png")
         self.artifacts.append("pdf_cdf.png")                        
+        
+        self.experiment_metrics["eval - KS Stat"] = ks_stat
 
         pred = series[0]
         if self.flat: slices_cubes = self.flatten(pred)
@@ -206,8 +222,14 @@ class Evaluate(Experiment):
                 slice_names.append(key)
                       
         slices = slice_plot(slice_series, names=slice_names, cmap=self.cmap)
+        plt.tight_layout()
         plt.savefig("slices_plot.png")
         self.artifacts.append("slices_plot.png")
                       
         return slices_cubes
-        
+    
+    def set_axes_pars(self, ax):
+        for key in self.axes_pars:
+            if key in self.kwargs.keys(): 
+                axes_attr = getattr(ax, 'set_'+key.split('_')[-1])
+                axes_attr(self.kwargs[key])                        

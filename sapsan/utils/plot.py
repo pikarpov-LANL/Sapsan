@@ -57,8 +57,8 @@ def pdf_plot(series: List[np.ndarray],
     for idx, data in enumerate(series):
         ax.hist(data.flatten(), bins=bins, density=True, histtype='step', label=names[idx])
 
-    #ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
-    ax.legend(loc=1)
+    ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
+    ax.legend(loc=0)
     ax.set_yscale("log")
     ax.set_xlabel("Values")
     ax.set_ylabel("PDF")
@@ -70,7 +70,8 @@ def pdf_plot(series: List[np.ndarray],
 def cdf_plot(series: List[np.ndarray], 
              names: Optional[List[str]] = None, 
              figsize = (6,6),
-             ax = None):
+             ax = None,
+             ks = False):
     """ CDF plot
 
     @param series: series of numpy arrays to build a cdf plot
@@ -95,8 +96,8 @@ def cdf_plot(series: List[np.ndarray],
         yvals = np.linspace(0,length-1, length)/length
         ax.plot(val[idx], yvals, label=names[idx])
         func.append(interp1d(val[idx], yvals))  
-
-        if idx==1:
+        
+        if idx==1 and ks==True:
             ks_stat, pvalue = ks_2samp(val[0], val[1])
             minima = max([min(val[0]), min(val[1])])
             maxima = min([max(val[0]), max(val[1])])
@@ -114,13 +115,14 @@ def cdf_plot(series: List[np.ndarray],
 
             ax.text(0.05, 0.55, txt, transform=ax.transAxes, fontsize=14)        
 
-    #ax.ticklabel_format(axis='both', style='sci', scilimits=(-2,2)) 
-    ax.legend()
+    ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
+    ax.legend(loc=0)
     ax.set_xlabel('Values')
     ax.set_ylabel('CDF')
     plt.tight_layout()
     
-    return ax
+    if ks: return ax, ks_stat
+    else: return ax
 
 
 def slice_plot(series: List[np.ndarray], 

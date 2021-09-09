@@ -32,8 +32,14 @@ class MLflowBackend(ExperimentBackend):
         mlflow_thread.start()
         time.sleep(5)
         
-    def start(self, run_name: str, nested = False):
-        mlflow.start_run(run_name = run_name, nested = nested)        
+    def start(self, run_name: str, nested = False, run_id = None):
+        mlflow.start_run(run_name = run_name, nested = nested, run_id = run_id) 
+        return mlflow.active_run().info.run_id
+    
+    def resume(self, run_id, nested = True):
+        resumed_run = mlflow.start_run(run_id, nested = nested)
+        print(f"Status of MLflow run {run_id} (nested={nested}): {resumed_run.info.status}")
+        print("Please don't forget to call 'backend.end()' at the end...")
         
     def log_metric(self, name: str, value: float):
         mlflow.log_metric(name, value)
@@ -45,7 +51,7 @@ class MLflowBackend(ExperimentBackend):
         mlflow.log_artifact(path)
 
     def close_active_run(self):
-        if mlflow.active_run()!=None: mlflow.end_run()
+        while mlflow.active_run()!=None: mlflow.end_run()
         
     def end(self):
         mlflow.end_run()

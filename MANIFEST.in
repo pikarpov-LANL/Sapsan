@@ -1,2 +1,3 @@
 include sapsan/examples/*
 include sapsan/examples/data/t0/*
+include sapsan/examples/GUI/*
