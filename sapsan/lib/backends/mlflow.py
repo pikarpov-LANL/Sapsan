@@ -51,7 +51,7 @@ class MLflowBackend(ExperimentBackend):
         mlflow.log_artifact(path)
 
     def close_active_run(self):
-        if mlflow.active_run()!=None: mlflow.end_run()
+        while mlflow.active_run()!=None: mlflow.end_run()
         
     def end(self):
         mlflow.end_run()
