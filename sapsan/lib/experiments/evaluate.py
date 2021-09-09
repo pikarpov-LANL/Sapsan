@@ -92,10 +92,8 @@ class Evaluate(Experiment):
 
     def run(self) -> dict:
         start = time.time()
-        #self.backend.close_active_run()
 
         self.run_id = self.backend.start(self.run_name, nested = True)
-        #with self.backend.start(self.run_name, nested = True) as run:
 
         pred = self.model.predict(self.inputs, self.model.config)              
 
@@ -136,7 +134,6 @@ class Evaluate(Experiment):
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
 
-        #self.backend.end()
         self._cleanup()
 
         print("eval - runtime: ", runtime)
@@ -149,7 +146,7 @@ class Evaluate(Experiment):
     
     
     def flatten(self, pred):
-        slices_cubes = dict()        
+        slices_cubes = dict()         
         if self.axis == 3:
             cube_shape = (self.n_output_channels, self.input_size[0],
                           self.input_size[1], self.input_size[2])
