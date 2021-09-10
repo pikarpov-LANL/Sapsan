@@ -3,16 +3,13 @@ import textwrap
 from collections import OrderedDict
 
 import streamlit as st
-import st_experiments as experiments
-import st_custom as custom
+from pages.st_welcome import welcome
+from pages.st_cnn3d import cnn3d
 
 EXPERIMENTS = OrderedDict(
     [
-        ("Welcome", (experiments.intro, None)),
-        ("Examples", (experiments.cnn3d, None)),
-        ("Custom", (custom.custom, None)),        
-        #("test", (experiments.test, None)),
-        #("1D CCSN", (experiments.ccsn, None)),      
+        ("Welcome", (welcome, None)),
+        ("Examples", (cnn3d, None)),
     ]
 )
 

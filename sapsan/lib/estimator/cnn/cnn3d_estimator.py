@@ -47,7 +47,7 @@ class CNN3dModel(torch.nn.ModuleDict):
 
         return l2
 
-    
+
 class CNN3dConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs: int = 1,
@@ -70,8 +70,8 @@ class CNN3dConfig(EstimatorConfig):
         #by default, all 'self' variables will get recorded
         self.parameters = {f'model - {k}': v for k, v in self.__dict__.items() if k != 'kwargs'}
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})
-    
-    
+
+
 class CNN3d(TorchBackend):
     def __init__(self, loaders,
                        config = CNN3dConfig(), 
