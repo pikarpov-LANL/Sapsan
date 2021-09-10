@@ -225,10 +225,6 @@ def model_graph(model, shape: np.array, transforms = None):
                      ]
 
     shape = np.array(shape)
-    if shape[1] != 1:
-        shape[1] = 1
-        warnings.warn("shape was changed to %s to draw a model graph."%str(shape))
-    
     if len(shape) == 5: unit_input = torch.zeros(tuple(shape))
     elif len(shape) == 4: unit_input = torch.zeros(tuple(shape))
     else: raise ValueError('Input shape can be either of 2D or 3D data')

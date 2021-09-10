@@ -23,3 +23,7 @@ build/*
 dist/*
 
 *.egg-info
+
+sapsan/examples/GUI/st_custom.py
+sapsan/examples/GUI/st_config_custom.txt
+sapsan/examples/GUI/st_state_patch.py

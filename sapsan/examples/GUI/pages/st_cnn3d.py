@@ -1,42 +1,48 @@
-import streamlit as st
 import os
 import sys
 import inspect
+import time
+import json
+import signal
+import numpy as np
 from pathlib import Path
+from collections import OrderedDict
+
+import pandas as pd
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import plotly.express as px
+import configparser
+import webbrowser
+from io import BytesIO
+from threading import Thread
+#from st_state_patch import SessionState
+
+import torch
+import streamlit as st
+from streamlit.report_thread import add_report_ctx
 
 #uncomment if cloned from github!
 sys.path.append(str(Path.home())+"/Sapsan/")
 
+from sapsan import Train, Evaluate 
 from sapsan.lib.backends import FakeBackend, MLflowBackend
-from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
-from sapsan import Train, Evaluate, CNN3d, CNN3dConfig, model_graph
-from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel
-from sapsan.utils.plot import model_graph
+from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten, torch_splitter
+from sapsan.utils.plot import model_graph, pdf_plot, cdf_plot, slice_plot, plot_params
 
-import pandas as pd
-import torch
-import matplotlib.pyplot as plt
-import configparser
-import webbrowser
-import time
-import numpy as np
-from threading import Thread
-from streamlit.report_thread import add_report_ctx
-import json
-from collections import OrderedDict
-import plotly.express as px
-import os
-import signal
-import sys
-from st_state_patch import SessionState
-from multiprocessing import Process
+# Load your Estimator, EstimatorConfig, and EstimatorModel
+from sapsan import CNN3d as Estimator
+from sapsan import CNN3dConfig as EstimatorConfig
+from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel as EstimatorModel
 
+#initialization of defaults
 cf = configparser.RawConfigParser()
 widget_values = {}
 
-def custom():
+           
+def cnn3d():
     st.title('Sapsan Configuration')
-    st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')
+    st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
     
     st.sidebar.markdown("General Configuration")
     
@@ -44,9 +50,177 @@ def custom():
         cf.read('temp.txt')
         temp = dict(cf.items('config'))
     except: pass
+
+    def run_experiment():
+        '''
+        The interface to setup the estimator, configuration, data loading, etc. is
+        nearly identical to a Jupyter Notebook interface for Sapsan. In an ideal case,
+        this is the only function you need to edit to set up your own GUI demo.
+        '''
+        
+        if widget_values['backend_selection'] == 'Fake':
+            tracking_backend = FakeBackend(widget_values['experiment name'])
+            
+        elif widget_values['backend_selection'] == 'MLflow':
+            tracking_backend = MLflowBackend(widget_values['experiment name'], 
+            widget_values['mlflow_host'],widget_values['mlflow_port'])
+        
+        #Load the data 
+        data_loader = load_data(widget_values['checkpoints'])
+        x, y = data_loader.load_numpy()
+        y = flatten(y)
+        loaders = data_loader.convert_to_torch([x, y])
+        
+        st.write("Dataset loaded...")
+        
+        estim = Estimator(config=EstimatorConfig(n_epochs=int(widget_values['n_epochs']), 
+                                                 patience=int(widget_values['patience']), 
+                                                 min_delta=float(widget_values['min_delta'])),
+                          loaders=loaders)
+        
+        #Set the experiment
+        training_experiment = Train(backend=tracking_backend,
+                                    model=estim,
+                                    data_parameters = data_loader,
+                                    show_log = False)
+        
+        #Plot progress        
+        progress_slot = st.empty()
+        epoch_slot = st.empty()
+        
+        thread = Thread(target=show_log, args=(progress_slot, epoch_slot))
+        add_report_ctx(thread)
+        thread.start()
+        
+        start = time.time()
+        #Train the model
+        trained_estimator = training_experiment.run()
+
+        st.write('Trained in %.2f sec'%((time.time()-start)))
+        st.success('Done! Plotting...')
+
+        #--- Test the model ---
+        #Load the test data
+        data_loader = load_data(widget_values['checkpoint_test'])
+        x, y = data_loader.load_numpy()
+        loaders = data_loader.convert_to_torch([x, y])
+
+        #Set the test experiment
+        trained_estimator.loaders = loaders
+        evaluation_experiment = Evaluate(backend = tracking_backend,
+                                         model = trained_estimator,
+                                         data_parameters = data_loader)
+        
+        #Test the model
+        cubes = evaluation_experiment.run()
+        
+        #Plot PDF, CDF, and slices
+        #Similar setup to replot from sapsan.Evaluate()
+        mpl.rcParams.update(plot_params())
+        
+        fig = plt.figure(figsize=(12,6), dpi=60)
+        (ax1, ax2) = fig.subplots(1,2)
+        
+        pdf_plot([cubes['pred_cube'], cubes['target_cube']], 
+                 names=['prediction', 'target'], ax=ax1)
+        cdf_plot([cubes['pred_cube'], cubes['target_cube']], 
+                 names=['prediction', 'target'], ax=ax2)
+        plot_static()
+        
+        slices_cubes = evaluation_experiment.split_batch(cubes['pred_cube'])
+        slice_plot([slices_cubes['pred_slice'], slices_cubes['target_slice']], 
+                   names=['prediction', 'target'], cmap=evaluation_experiment.cmap)
+        st.pyplot(plt)    
     
+    
+    def load_data(checkpoints):
+        #Load the data      
+        features = widget_values['features'].split(',')
+        features = [i.strip() for i in features]
+        
+        target = widget_values['target'].split(',')
+        target = [i.strip() for i in target]     
+        
+        checkpoints = np.array([int(i) for i in checkpoints.split(',')])
+        
+        #print('--ST Shapes--', batch_size, input_size)
+        data_loader = HDF5Dataset(path=widget_values['path'],
+                                  features=features,
+                                  target=target,
+                                  checkpoints=checkpoints,
+                                  batch_size=text_to_list(widget_values['batch_size']),
+                                  input_size=text_to_list(widget_values['input_size']),
+                                  sampler=sampler,
+                                  shuffle = False)
+        return data_loader  
+    
+    
+    def show_log(progress_slot, epoch_slot):        
+        '''
+        Show loss vs epoch progress with plotly, dynamically.
+        The plot will be updated every 0.1 second
+        '''
+        log_path = 'logs/logs/train.csv'
+        
+        if os.path.exists(log_path):
+            os.remove(log_path)
+            
+        log_exists = False            
+        while log_exists == False:            
+            if os.path.exists(log_path):
+                log_exists = True            
+            time.sleep(0.1)
+            
+        plot_data = {'epoch':[], 'train_loss':[]}
+        last_epoch = 0
+        running = True
+        
+        while running:
+            data = np.genfromtxt(log_path, delimiter=',', 
+                                 skip_header=1, dtype=np.float32)
+
+            if len(data.shape)==1: data = np.array([data])
+
+            current_epoch = data[-1, 0]
+            train_loss = data[-1, 1]
+            
+            if current_epoch == last_epoch:
+                pass
+            else:     
+                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, train_loss))
+                plot_data['epoch'] = data[:, 0]
+                plot_data['train_loss'] = data[:, 1]
+                df = pd.DataFrame(plot_data)
+                
+                if len(plot_data['epoch']) == 1:
+                    plotting_routine = px.scatter
+                else:
+                    plotting_routine = px.line
+                
+                fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
+                              title='Training Progress', width=700, height=400)
+                fig.update_layout(yaxis=dict(exponentformat='e'))
+                fig.layout.hovermode = 'x'
+                progress_slot.plotly_chart(fig)
+                
+                last_epoch = current_epoch
+
+            if current_epoch == widget_values['n_epochs']: 
+                return
+                        
+            
+            time.sleep(0.1) 
+
+            
+    def plot_static():
+        buf = BytesIO()
+        plt.savefig(buf, format="png",  dpi=50)
+        st.image(buf) 
+   
+    # ----- Backend Widget Functions -----
     def make_recording_widget(f):
-        """Return a function that wraps a streamlit widget and records the
+        """
+        Return a function that wraps a streamlit widget and records the
         widget's values to a global dictionary.
         """
         def wrapper(label, *args, **kwargs):
@@ -93,7 +267,9 @@ def custom():
             
             widget_values[label+'_flag'] = True        
             widget_values[label+'_default'] = widget_type[widget](default)
-
+    
+    # ------- Widget Backend End ---------
+    
     def load_config(config_file):
         cf.read(config_file)
         config = dict(cf.items('sapsan_config'))
@@ -108,152 +284,10 @@ def custom():
         for i in to_clean: value = value.translate({ord(i) : None})
         value = list([int(i) for i in value.split(',')])
         return value
-        
-    #show loss vs epoch progress with plotly
-    def show_log(progress_slot, epoch_slot):
-        from datetime import datetime
-        
-        #log_path = 'logs/checkpoints/_metrics.json'
-        log_path = 'logs/log.txt'
-        log_exists = False
-        while log_exists == False:
-            if os.path.exists(log_path):
-                log_exists = True
-            
-            time.sleep(0.1)
-        
-        first_entry = False
-        while first_entry == False:
-            with open(log_path) as file:
-                if len(list(file))>=4: 
-                    first_entry = True
-            time.sleep(0.05)
-            
-        plot_data = {'epoch':[], 'train_loss':[]}
-        last_epoch = 0
-        running = True
-        
-        start_time= datetime.now()
-        while running:
-            with open(log_path) as file:
-                #get the date of the latest event
-                lines = list(file)
-                
-                current_epoch = int(lines[-2].split('/')[0])
-                train_loss = float(lines[-2].split('loss=')[-1])
-                valid_loss = float(lines[-1].split('loss=')[-1])
-                                
-            if current_epoch == last_epoch:
-                pass
-            else:     
-                metrics = {'train_loss':train_loss, 'valid_loss':valid_loss}
-                epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, metrics['train_loss']))
-                plot_data['epoch'] = np.append(plot_data['epoch'], current_epoch)
-                plot_data['train_loss'] = np.append(plot_data['train_loss'], metrics['train_loss'])                
-                df = pd.DataFrame(plot_data)
-                
-                if len(plot_data['epoch']) == 1:
-                    plotting_routine = px.scatter
-                else:
-                    plotting_routine = px.line
-                
-                fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
-                              title='Training Progress', width=700, height=400)
-                fig.update_layout(yaxis=dict(exponentformat='e'))
-                fig.layout.hovermode = 'x'
-                progress_slot.plotly_chart(fig)
-                
-                last_epoch = current_epoch
-
-            if current_epoch == widget_values['n_epochs']: 
-                return
-                        
-            time.sleep(0.1) 
-            
-    def load_data(checkpoints):
-        #Load the data      
-        features = widget_values['features'].split(',')
-        features = [i.strip() for i in features]
-        
-        target = widget_values['target'].split(',')
-        target = [i.strip() for i in target]     
-        
-        checkpoints = np.array([int(i) for i in checkpoints.split(',')])
-        
-        data_loader = HDF5Dataset(path=widget_values['path'],
-                           features=features,
-                           target=target,
-                           checkpoints=checkpoints,
-                           batch_size=text_to_list(widget_values['batch_size']),
-                           input_size=text_to_list(widget_values['input_size']),
-                           sampler=sampler,
-                           shuffle = False,
-                           train_fraction = 1)
-        x, y = data_loader.load_numpy()
-        return x, y, data_loader
+                       
     
-            
-    def run_experiment():
-        
-        if widget_values['backend_selection'] == 'Fake':
-            tracking_backend = FakeBackend(widget_values['experiment name'])
-            
-        elif widget_values['backend_selection'] == 'MLflow':
-            tracking_backend = MLflowBackend(widget_values['experiment name'], 
-            widget_values['mlflow_host'],widget_values['mlflow_port'])
-        
-        #Load the data 
-        x, y, data_loader = load_data(widget_values['checkpoints'])
-        y = flatten(y)
-        loaders = data_loader.convert_to_torch([x, y])
-        
-        st.write("Dataset loaded...")
-        
-        #Set the experiment
-        training_experiment = Train(backend=tracking_backend,
-                                    model=estimator,
-                                    loaders = loaders,
-                                    data_parameters = data_loader,
-                                    show_log = False)
-        
-        #Plot progress        
-        progress_slot = st.empty()
-        epoch_slot = st.empty()
-        
-        thread = Thread(target=show_log, args=(progress_slot, epoch_slot))
-        add_report_ctx(thread)
-        thread.start()
-        
-        start = time.time()
-        #Train the model
-        training_experiment.run()
-        st.write('Trained in %.2f sec'%((time.time()-start)))
-        st.success('Done! Plotting...')
-
-        #def evaluate_experiment():
-        #--- Test the model ---
-        #Load the test data
-        x, y, data_loader = load_data(widget_values['checkpoint_test'])
-        loaders = [x, y]
-
-        #Set the test experiment
-        evaluation_experiment = Evaluate(backend=tracking_backend,
-                                         model=training_experiment.model,
-                                         loaders = loaders,
-                                         data_parameters = data_loader)
-        
-        #Test the model
-        evaluation_experiment.run()
-
-
-        data = y
-        #'data', data
-        st.pyplot()
-    
-    #--- Load Default ---
-    
-    state = SessionState()
-    
+    #--- Load Default ---    
+    #state = SessionState()   
     #button = make_recording_widget(st.sidebar.button)
     number = make_recording_widget(st.sidebar.number_input)
     number_main = make_recording_widget(st.number_input)
@@ -262,7 +296,7 @@ def custom():
     checkbox = make_recording_widget(st.sidebar.checkbox)
     selectbox = make_recording_widget(st.sidebar.selectbox)
     
-    config_file = st.sidebar.text_input('Configuration file', "st_config_custom.txt", type='default')
+    config_file = st.sidebar.text_input('Configuration file', "st_config.txt", type='default')
         
     if st.sidebar.button('reload config'):
         #st.caching.clear_cache()
@@ -325,12 +359,7 @@ def custom():
 
     #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
     if widget_values['sampler_selection'] == "Equidistant3D":
-        sampler = EquidistantSampling(text_to_list(widget_values['input_size']), 
-                                      text_to_list(widget_values['sample_to']))
-    
-    estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         patience=int(widget_values['patience']), 
-                                         min_delta=float(widget_values['min_delta'])))
+        sampler = EquidistantSampling(text_to_list(widget_values['sample_to']))    
         
     show_config = [
         ['experiment name',  widget_values["experiment name"]],
@@ -359,29 +388,36 @@ def custom():
         #st.write('Note: the number of features will be changed to 1 in the graph')
         
         widget_history_checked([{'label':'Data Shape', 
-                                 'default':'16,1,8,8,8', 'widget':text_main}])
+                                 'default':'1,1,8,8,8', 'widget':text_main}])
 
         shape = widget_values['Data Shape']
-        shape = np.array([int(i) for i in shape.split(',')])
-        shape[1] = 1
+        shape = np.array([int(i) for i in shape.split(',')])        
         
         #Load the data  
         if st.button('Load Data'):
-            x, y, data_loader = load_data(widget_values['checkpoints'])
-            shape = x.shape
-        
-        try:
-            graph = model_graph(estimator.model, shape)
-            st.graphviz_chart(graph.build_dot())
-        except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
+            data_loader = load_data(widget_values['checkpoints'])
+            x, y = data_loader.load_numpy()
+            shape = np.array(x.shape)
+            st.write('Loaded data shape: ', str(shape))
+
+        estimator = Estimator(loaders=torch_splitter(loaders = [np.ones((1,1,1,1,1)),
+                                                                np.ones((1,1,1,1,1))]))        
+        if shape[1] != 1: 
+            shape[1] = 1
+            st.write('Setting number of channels to 1: ', str(shape))
+
+        #try:
+        graph = model_graph(model = estimator.model, shape = shape)
+        st.graphviz_chart(graph.build_dot())
+        #except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
 
     if st.checkbox("Show code of model"):           
-        st.code(inspect.getsource(CNN3dModel), language='python')        
+        st.code(inspect.getsource(EstimatorModel), language='python')        
         widget_history_checked([{'label':'edit_port', 'default':8601, 'widget':number_main,
                                                       'min_value':1024, 'max_value':65535}])
         
         if st.button('Edit'):
-            os.system('jupyter notebook ../../../sapsan/lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
+            os.system('jupyter notebook ../../../sapsan/lib/estimator/cnn/cnn3d_estimator.py --no-browser --port=%d &'%widget_values['edit_port'])
             webbrowser.open('http://localhost:%d'%widget_values['edit_port'], new=2)
             
     else:
@@ -396,30 +432,18 @@ def custom():
         log_path = './logs/log.txt'
         if os.path.exists(log_path): 
             os.remove(log_path)
-        else: pass
-        
-        #p = Process(target=run_experiment)
-        #p.start()
-        #state.pid = p.pid
+        else: pass        
 
         run_experiment()
         
         st.write('Finished in %.2f sec'%((time.time()-start))) 
-    
-    #if st.button("Stop experiment"):
-            #sys.exit('Experiment stopped')
-    #        st.stop
         
         
     if st.button("MLflow tracking"):
-        #os.system('cmd.exe /C start http://%s:%s'%(widget_values['mlflow_host'], widget_values['mlflow_port']))
         webbrowser.open('http://%s:%s'%(widget_values['mlflow_host'], widget_values['mlflow_port']), new=2)
         
-    #if st.button("Evaluate experiment"):
-    #    #st.write("Experiment is running. Please hold on...")
-    #    evaluate_experiment()
     
     with open('temp.txt', 'w') as file:
         file.write('[config]\n')
         for key, value in widget_values.items():
-            file.write('%s = %s\n'%(key, value))
+            file.write('%s = %s\n'%(key, value))                            

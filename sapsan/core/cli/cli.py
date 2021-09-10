@@ -188,4 +188,6 @@ def get_examples():
                         "./{dir_name}/{nt}".format(dir_name=dir_name, nt=nt))
         shutil.copytree("{path}/{dir_name}/data".format(path=__path__[0],dir_name="examples"), 
                         "./{dir_name}/data".format(dir_name=dir_name))
+        shutil.copytree("{path}/{dir_name}/GUI".format(path=__path__[0],dir_name="examples"), 
+                        "./{dir_name}/GUI".format(dir_name=dir_name))
         click.echo("Done, check out ./sapsan_examples")       
