@@ -136,11 +136,11 @@ class GradientModel():
     def model(self):
         gradient_u = self.gradient()
 
-        tn = np.empty(gradient_u.shape)
+        tn = np.zeros(gradient_u.shape)
         for i in range(3):
             for j in range(3):
                 for k in range(3):
-                    tn[i,j] += gradient_u[i,k]*gradient_u[j,k]
+                    tn[i,j] += np.matmul(gradient_u[i,k], gradient_u[j,k])
 
         tn = 1/12*self.filter_width**2*tn
 
