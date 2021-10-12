@@ -12,6 +12,7 @@ from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from cycler import cycler
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -21,16 +22,25 @@ from scipy.stats import ks_2samp
 from scipy.interpolate import interp1d
 import sapsan.utils.hiddenlayer as hl
 
+style = 'tableau-colorblind10'
+
 def plot_params():
     params = {'font.size': 14, 'legend.fontsize': 14, 
               'axes.labelsize': 20, 'axes.titlesize':24,
               'xtick.labelsize': 17,'ytick.labelsize': 17,
               'axes.linewidth': 1, 'patch.linewidth': 3, 'lines.linewidth': 3,
-              'xtick.major.width': 1,'ytick.major.width': 1,
-              'xtick.minor.width': 1,'ytick.minor.width': 1,
-              'xtick.major.size': 4,'ytick.major.size': 4,
-              'xtick.minor.size': 3,'ytick.minor.size': 3,
-              'axes.formatter.limits' : [-7, 7], 'text.usetex': False}
+              'xtick.major.width': 1.5,'ytick.major.width': 1.5,
+              'xtick.minor.width': 1.25,'ytick.minor.width': 1.25,
+              'xtick.major.size': 7,'ytick.major.size': 7,
+              'xtick.minor.size': 4,'ytick.minor.size': 4,
+              'xtick.direction': 'in','ytick.direction': 'in',              
+              'axes.formatter.limits' : [-7, 7], 
+              'axes.grid':True, 'grid.linestyle': ':', 'grid.color':'#999999',
+              'text.usetex': False,}
+              #'axes.prop_cycle': cycler('color', ['#FF800E', '#006BA4', '#ABABAB', '#595959', 
+               #                                   '#5F9ED1', '#C85200', '#898989', '#A2C8EC', 
+               #                                   '#FFBC79', '#CFCFCF']),
+              #'patch.facecolor': '#006BA4'}
     return params
 
 
@@ -38,7 +48,8 @@ def pdf_plot(series: List[np.ndarray],
              bins: int = 100, 
              names: Optional[List[str]] = None, 
              figsize = (6,6),
-             ax = None):
+             ax = None,
+             style = style):
     """ PDF plot
 
     @param series: series of numpy arrays to build a pdf plot from
@@ -46,7 +57,8 @@ def pdf_plot(series: List[np.ndarray],
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
-    mpl.rcParams.update(plot_params())
+    mpl.style.use(style)
+    mpl.rcParams.update(plot_params())    
     if ax==None: 
         fig = plt.figure(figsize = figsize)
         ax = fig.add_subplot(111)                
@@ -56,6 +68,9 @@ def pdf_plot(series: List[np.ndarray],
 
     for idx, data in enumerate(series):
         ax.hist(data.flatten(), bins=bins, density=True, histtype='step', label=names[idx])
+        
+    if len(series)==1 and 'predict' in names: 
+        ax.properties()['children'][0].set_color('#FF800E')
 
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
     ax.legend(loc=0)
@@ -71,13 +86,15 @@ def cdf_plot(series: List[np.ndarray],
              names: Optional[List[str]] = None, 
              figsize = (6,6),
              ax = None,
-             ks = False):
+             ks = False,
+             style = style):
     """ CDF plot
 
     @param series: series of numpy arrays to build a cdf plot
     @param names: name of series in case of multiseries plot
     @return: pyplot object
     """
+    mpl.style.use(style)
     mpl.rcParams.update(plot_params())
     if ax==None: 
         fig = plt.figure(figsize = figsize)
@@ -127,7 +144,7 @@ def cdf_plot(series: List[np.ndarray],
 
 def slice_plot(series: List[np.ndarray], 
                names: Optional[List[str]] = None, 
-               cmap = 'plasma',
+               cmap = 'viridis',
                figsize = (16,6)):
     mpl.rcParams.update(plot_params())
     if not names:
@@ -152,7 +169,9 @@ def line_plot(series: List[np.ndarray],
               names: Optional[List[str]] = None, 
               plot_type = 'plot',
               figsize = (6,6),
-              ax = None):
+              ax = None,
+              style = style):
+    mpl.style.use(style)
     mpl.rcParams.update(plot_params())
     if not names:
         names = ["Data {}".format(i) for i in range(len(series))]
