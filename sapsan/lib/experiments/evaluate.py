@@ -26,7 +26,7 @@ class Evaluate(Experiment):
                  model: Estimator,
                  data_parameters,
                  backend = FakeBackend(),
-                 cmap: str = 'plasma',
+                 cmap: str = 'viridis',
                  flat: bool = False,
                  run_name: str = 'evaluate',
                  **kwargs):
@@ -113,8 +113,8 @@ class Evaluate(Experiment):
         else: self.n_output_channels = pred.shape[1]            
 
         if self.targets_given: 
-            series = [pred, self.targets]
-            names = ['predict', 'target']
+            series = [self.targets, pred]
+            names = ['target', 'predict']
         else: 
             series = [pred]
             names = ['predict']
@@ -134,6 +134,8 @@ class Evaluate(Experiment):
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
 
+
+        self.backend.end()
         self._cleanup()
 
         print("eval - runtime: ", runtime)
@@ -206,8 +208,9 @@ class Evaluate(Experiment):
         self.artifacts.append("pdf_cdf.png")                        
         
         self.experiment_metrics["eval - KS Stat"] = ks_stat
+                
+        pred = series[names.index('predict')]
 
-        pred = series[0]
         if self.flat: slices_cubes = self.flatten(pred)
         else: slices_cubes = self.split_batch(pred)
         

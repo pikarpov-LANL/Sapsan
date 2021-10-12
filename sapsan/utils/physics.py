@@ -18,7 +18,7 @@ import torch
 from sapsan.utils.plot import line_plot
 from sapsan.utils.filters import gaussian, spectral
 
-def tensor(u, filt=gaussian, filt_size=2, only_x_components = False):
+def ReynoldsStress(u, filt=gaussian, filt_size=2, only_x_components = False):
     #calculates stress tensor components
 
     assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
@@ -26,13 +26,13 @@ def tensor(u, filt=gaussian, filt_size=2, only_x_components = False):
     if only_x_components: i_dim = 1
     else: i_dim = 3
     
-    tn = np.empty((i_dim,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
+    rs = np.empty((i_dim,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
 
     for i in range(i_dim):
         for j in range(3):
-            tn[i,j] = filt(u[i]*u[j], filt_size)-filt(u[i], filt_size)*filt(u[j], filt_size)
-    if only_x_components: return tn[0]
-    else: return tn
+            rs[i,j] = filt(u[i]*u[j], filt_size)-filt(u[i], filt_size)*filt(u[j], filt_size)
+    if only_x_components: return rs[0]
+    else: return rs
 
 
 class PowerSpectrum():
@@ -66,20 +66,20 @@ class PowerSpectrum():
         k = np.sqrt(k2)
         return k
     
-    def plot_spectrum(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
+    def spectrum_plot(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
         assert len(k_bins.shape) == 1, "k_bins has to be flattened to 1D"
         assert len(Ek_bins.shape) == 1, "Ek_bins has to be flattened to 1D"
         
         if kl_A == None: kl_A = np.amax(Ek_bins)*1e1
             
-        plt = line_plot([[k_bins, Ek_bins], [k_bins, self.kolmogorov(kl_A, k_bins)]], 
+        ax = line_plot([[k_bins, Ek_bins], [k_bins, self.kolmogorov(kl_A, k_bins)]], 
                         names = ['data', 'kolmogorov'], plot_type = 'loglog')
-        plt.xlim((1e0))
-        plt.xlabel('$\mathrm{log(k)}$')
-        plt.ylabel('$\mathrm{log(E(k))}$')    
-        plt.title('Power Spectrum')
+        ax.set_xlim((1e0))
+        ax.set_xlabel('$\mathrm{log(k)}$')
+        ax.set_ylabel('$\mathrm{log(E(k))}$')    
+        ax.set_title('Power Spectrum')
         
-        return plt
+        return ax
         
     def calculate(self):
         vk = np.empty((self.u.shape))
@@ -136,11 +136,11 @@ class GradientModel():
     def model(self):
         gradient_u = self.gradient()
 
-        tn = np.empty(gradient_u.shape)
+        tn = np.zeros(gradient_u.shape)
         for i in range(3):
             for j in range(3):
                 for k in range(3):
-                    tn[i,j] += gradient_u[i,k]*gradient_u[j,k]
+                    tn[i,j] += np.multiply(gradient_u[i,k], gradient_u[j,k])
 
         tn = 1/12*self.filter_width**2*tn
 
