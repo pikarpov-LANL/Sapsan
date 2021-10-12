@@ -134,6 +134,7 @@ class Evaluate(Experiment):
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
 
+
         self.backend.end()
         self._cleanup()
 
