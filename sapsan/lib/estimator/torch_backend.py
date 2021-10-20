@@ -20,7 +20,8 @@ import os
 import shutil
 
 import torch
-from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback, DeviceEngine
+from catalyst.dl import SupervisedRunner, EarlyStoppingCallback, CheckpointCallback, SchedulerCallback, DeviceEngine, DistributedDataParallelEngine
+from catalyst import dl
 from sapsan.core.models import Estimator, EstimatorConfig
 
 class SkipCheckpointCallback(CheckpointCallback):
@@ -51,10 +52,8 @@ class TorchBackend(Estimator):
 
         if 'cuda' in str(self.device):
             self.optimizer_to(optimizer, self.device)
-            
-        self.print_info()
         
-        ##checks if logdir exists - deletes it if yes
+        #checks if logdir exists - deletes it if yes
         self.check_logdir()               
         
         if self.loader_key != 'train': 
@@ -62,7 +61,12 @@ class TorchBackend(Estimator):
 
         model = self.model        
         
-        torch.cuda.empty_cache()
+        torch.cuda.empty_cache()        
+
+        if self.ddp: self.engine = None
+        else: self.engine = DeviceEngine(self.device)
+                                
+        self.print_info()
         
         self.runner.train(model=model,
                           criterion=self.loss_func,
@@ -78,12 +82,12 @@ class TorchBackend(Estimator):
                                                            minimize=True),
                                     SchedulerCallback(loader_key=self.loader_key,
                                                       metric_key=self.metric_key,),
-                                    SkipCheckpointCallback(logdir=self.config.logdir)
+                                    SkipCheckpointCallback(logdir=self.config.logdir),
                                     ],
                           verbose=False,
                           check=False,
-                          engine=DeviceEngine(self.device),
-                          ddp=self.ddp
+                          engine=self.engine,
+                          ddp=self.ddp,
                           )
         
         self.config.parameters['model - device'] = str(self.runner.device)
@@ -109,7 +113,7 @@ class TorchBackend(Estimator):
         
         self.print_info()
         
-        if str(self.device) == 'cpu' or self.ddp==True: 
+        if str(self.device) == 'cpu':
             data = torch.as_tensor(inputs)            
         else: 
             if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
@@ -126,12 +130,15 @@ class TorchBackend(Estimator):
         return self.device
     
     def print_info(self):
+        if self.ddp and torch.cuda.is_available(): device_to_print = 'parallel cuda'
+        else: device_to_print = self.device
+        
         return print('''
  ====== run info ======
  Device used:  {device}
  DDP:          {ddp}
  ======================
- '''.format(device=self.device, ddp=self.ddp))
+ '''.format(device=device_to_print, ddp=self.ddp))
     
     def to_device(self, var):
         if str(self.device) == 'cpu': return var
