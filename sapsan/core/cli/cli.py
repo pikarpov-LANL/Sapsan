@@ -56,7 +56,7 @@ def setup_project(name: str, ddp: bool):
         
     if ddp:
         click.echo("-----")
-        click.echo("DDP = True:                 {name}/torch_backend.py".format(name=name))
+        click.echo("Get Pytorch Backend = True: {name}/torch_backend.py".format(name=name))
         shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./{name}/".format(name=name))
     
 
@@ -155,13 +155,13 @@ def sapsan():
     
 @sapsan.command("create", help="Sets up a new project with an custom estimator template.")
 @click.option('--name', '-n', default="new_project", show_default=True, help="name of the new project")
-@click.option('--ddp/--no-ddp', default=False, show_default=True, 
+@click.option('--gtb/--no-gtb','--get_torch_backend', default=False, show_default=True, 
               help="Copies torch_backend.py into working directory to customize the Catalyst Runner - adjust its Distributed Data Parallel (DDP) settings")
-def create(name, ddp):
+def create(name, gtb):
     click.echo("========================================================")  
     click.echo("Lead the train to the frontiers of knowledge, my friend!")
     click.echo("========================================================")  
-    setup_project(name=name.lower(), ddp=ddp)    
+    setup_project(name=name.lower(), ddp=gtb)    
 
 #@sapsan.command("create_package", help="Sets up a new package ready for pypi distribution.")
 #@click.option('--name', '-n', default="new_package", show_default=True, help="name of the new package")
@@ -190,4 +190,12 @@ def get_examples():
                         "./{dir_name}/data".format(dir_name=dir_name))
         shutil.copytree("{path}/{dir_name}/GUI".format(path=__path__[0],dir_name="examples"), 
                         "./{dir_name}/GUI".format(dir_name=dir_name))
-        click.echo("Done, check out ./sapsan_examples")       
+        click.echo("Done, check out ./sapsan_examples")   
+        
+@sapsan.command("get_torch_backend", help="Copy torch_backend.py to your working directory")
+def get_torch_backend():    
+    shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./")
+
+@sapsan.command("gtb", help="Copy torch_backend.py to your working directory")
+def gtb():    
+    shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./")    
