@@ -61,7 +61,11 @@ In pursuit of our supernova (SNe) study, the issues outlined above became painfu
 
 * __Analysis__
   *  __Trained Model:__ A turbulence subgrid model defines how small-scale structure affects the large scale quantities. In other words, it completes or ''closes'' the governing large-scale equations of motion with small-scale terms. The prediction from a trained ML model is used to provide the needed quantities.
-  *  __Analytical Tools:__ There are also methods included for comparing the trained model with conventional analytic turbulence models [such as the Dynamic Smagorisnky, @lilly1966; or Gradient, @ADD_THE_CORRECT_CITATION; models], or to conduct other tests of, for example, the power spectrum of the model prediction.
+  *  __Analytical Tools:__ There are also methods included for comparing the trained model with conventional analytic turbulence models [such as the Dynamic Smagorisnky, @lilly1966; or Gradient, @liu_meneveau_katz_1994; models], or to conduct other tests of, for example, the power spectrum of the model prediction.
+
+Change citation format
+
+@article{liu_meneveau_katz_1994, title={On the properties of similarity subgrid-scale models as deduced from measurements in a turbulent jet}, volume={275}, DOI={10.1017/S0022112094002296}, journal={Journal of Fluid Mechanics}, publisher={Cambridge University Press}, author={Liu, Shewen and Meneveau, Charles and Katz, Joseph}, year={1994}, pages={83–119}}
 
 For further information on each stage, please refer to [``Sapsan``'s Wiki on Gihub](https://github.com/pikarpov-LANL/Sapsan/wiki).
 
@@ -106,15 +110,15 @@ In Figure 2, it can be seen that the ML-based approach significantly outperforms
 ## Supernovae
 Even though the conventional regression-based ML approach worked well in the previous section, the complexity of our physical problem forced us to seek a more rigorous ML method. Supernovae host a
 different physical regime that is far from the idealistic MHD turbulence case from before. Here we are dealing with dynamically
-changing statistics and evolution of the turbulence that is not necessarily isotropic. Turbulence can behave drastically differently depending on the evolutionary stage; hence, a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN (Convolutional Neural Network) model to predict a turbulent velocity stress tensor in a realistic Core-Collapse Supernova (CCSN) case. Figure 3 presents results of the following:
+evolving turbulence that is not necessarily isotropic. Turbulence can behave drastically differently depending on the evolutionary stage; hence, a more sophisticated model is required. With ``Sapsan``, we have tested a 3D CNN (Convolutional Neural Network) model to predict a turbulent velocity stress tensor in a realistic Core-Collapse Supernova (CCSN) case. Figure 3 presents results of the following:
 
-* __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at time step 500 (halfway of the total simulation). All quantities have been filtered down to 15 Fourier modes to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
+* __Train features:__ velocity (*u*), magnetic field (*B*), and their respective derivatives at time steps before 5 ms (halfway of the total simulation). All quantities have been filtered down with a $\sigma=9$ Gaussian filter to remove small-scale perturbations, mimicking the lower fidelity of a non-DNS simulation.
 * __Model Input:__ low fidelity velocity (*u*), magnetic field (*B*), and their respective derivatives at a set time step in the future.
-* __Model Output:__ velocity stress tensor ($\tau$) at the matching time step in the future, which effectively represents the difference between large and small scale structures of the system.
+* __Model Output:__ velocity stress tensor components ($\tau_{i,j}$) at the matching time step in the future, which effectively represents the difference between large and small scale structures of the system.
 
-In this case, the probability density functions are overall consistent, with some disagreement at large negative values, even though the prediction is performed far into the future (time step=1000, end of the simulation time). For further discussion on the comparison of the models and the results, please refer to **[the ApJ paper]**.
+In this case, the probability density functions are overall consistent, with minor disagreement at the positive outliers, even though the prediction is performed far into the future (time = 9.48 ms, end of the simulation time). Predictive advantage is highlighted when compared with the analytical Gradient model that misses a large portion of positive data.
 
-![Predicting Turbulent Stress-Tensor in a Core-Collapse Supernovae (CCSN). The model has been trained on a 3D MHD direct numerical simulation (DNS) of the first 10ms after the shockwave bounced off the core in a CCSN scenario. On the left, the two figures are the 2D slices of a 3D data-cube prediction, with the right plot presenting a comparison of PDFs of the original 3D data, 3D ML prediction, and a conventional Gradient subgrid model.](ccsn_mri_plots.png)
+![Predicting Turbulent Stress-Tensor in a Core-Collapse Supernovae (CCSN). The model has been trained on a selection of dynamically evolving turbulence timesteps during the first 5 ms (out of the total $\sim$10 ms) of a 3D MHD direct numerical simulation (DNS) after the shockwave bounced off the core in a CCSN scenario. On the left, the two figures are the 2D slices of a 3D $\tau_{xy}$ prediction, with the right plot presenting a comparison of PDFs of the original 3D data, 3D ML prediction, and a conventional Gradient subgrid model.](ccsn_t160_tn1_slices_pdf.png)
 
 # Acknowledgements
 The development of ``Sapsan`` was supported by the Laboratory Directed Research and Development program and the Center for Space and Earth Science at Los Alamos National Laboratory through the student fellow grant. We would like to thank DOE SciDAC for additional funding support.
