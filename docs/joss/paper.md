@@ -63,10 +63,6 @@ In pursuit of our supernova (SNe) study, the issues outlined above became painfu
   *  __Trained Model:__ A turbulence subgrid model defines how small-scale structure affects the large scale quantities. In other words, it completes or ''closes'' the governing large-scale equations of motion with small-scale terms. The prediction from a trained ML model is used to provide the needed quantities.
   *  __Analytical Tools:__ There are also methods included for comparing the trained model with conventional analytic turbulence models [such as the Dynamic Smagorisnky, @lilly1966; or Gradient, @liu_meneveau_katz_1994; models], or to conduct other tests of, for example, the power spectrum of the model prediction.
 
-Change citation format
-
-@article{liu_meneveau_katz_1994, title={On the properties of similarity subgrid-scale models as deduced from measurements in a turbulent jet}, volume={275}, DOI={10.1017/S0022112094002296}, journal={Journal of Fluid Mechanics}, publisher={Cambridge University Press}, author={Liu, Shewen and Meneveau, Charles and Katz, Joseph}, year={1994}, pages={83–119}}
-
 For further information on each stage, please refer to [``Sapsan``'s Wiki on Gihub](https://github.com/pikarpov-LANL/Sapsan/wiki).
 
 ![High-level overview of ``Sapsan's`` workflow.](Sapsan_highlevel_overview.png)
