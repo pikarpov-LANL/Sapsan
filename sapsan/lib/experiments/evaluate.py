@@ -27,7 +27,6 @@ class Evaluate(Experiment):
                  data_parameters,
                  backend = FakeBackend(),
                  cmap: str = 'viridis',
-                 flat: bool = False,
                  run_name: str = 'evaluate',
                  **kwargs):
         self.model = model
@@ -37,16 +36,15 @@ class Evaluate(Experiment):
         self.input_size = self.data_parameters.input_size
         self.batch_size = self.data_parameters.batch_size
         self.batch_num = self.data_parameters.batch_num
+        self.flat = self.data_parameters.flat
         self.cmap = cmap
         self.axis = len(self.input_size)
-        self.targets_given = True
-        self.flat = flat
+        self.targets_given = True        
         self.run_name = run_name
         self.artifacts = []    
         self.axes_pars = ['pdf_xlim','pdf_ylim',
                           'cdf_xlim','cdf_ylim']
-        self.kwargs = kwargs
-        
+        self.kwargs = kwargs        
         
         if type(self.model.loaders) in [list, np.array]:
             self.inputs = self.model.loaders[0]

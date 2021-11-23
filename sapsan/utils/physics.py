@@ -26,7 +26,7 @@ def ReynoldsStress(u, filt=gaussian, filt_size=2, only_x_components = False):
     if only_x_components: i_dim = 1
     else: i_dim = 3
     
-    rs = np.empty((i_dim,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
+    rs = np.zeros((i_dim,3,np.shape(u[0])[-3], np.shape(u[0])[-2], np.shape(u[0])[-1]))
 
     for i in range(i_dim):
         for j in range(3):
@@ -82,7 +82,7 @@ class PowerSpectrum():
         return ax
         
     def calculate(self):
-        vk = np.empty((self.u.shape))
+        vk = np.zeros((self.u.shape))
 
         for i in range(self.axis):
             vk[i] = fftpack.fftn(self.u[i]).real
@@ -151,9 +151,11 @@ class GradientModel():
 
     
 class DynamicSmagorinskyModel():    
-    def __init__(self, u, filt=spectral, original_filt_size = 15, filt_ratio = 0.5, **kwargs):
-        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
+    def __init__(self, u, filt=spectral, original_filt_size = 15, filt_ratio = 0.5, **kwargs):     
 
+        self.axis = u.shape[0]
+        assert self.axis in [2,3], "Input variable has to be in the following format: for 3D [axis, D, H, W], and for 2D [axis, D, H]"
+        
         self.u = u
         self.filt = filt
         self.filt_ratio = filt_ratio
@@ -171,58 +173,70 @@ class DynamicSmagorinskyModel():
             else:
                 print("delta_u (spacing between values) was not provided: setting delta_u = 1")
                 delta_u = 1
-            du = np.stack((np.gradient(self.u[0,:,:,:], delta_u),
-                           np.gradient(self.u[1,:,:,:], delta_u),
-                           np.gradient(self.u[2,:,:,:], delta_u)),axis=0) 
+            
+            if self.axis==2:
+                du = np.stack((np.gradient(self.u[0,:,:], delta_u),
+                               np.gradient(self.u[1,:,:], delta_u)),axis=0) 
+            else:
+                du = np.stack((np.gradient(self.u[0,:,:,:], delta_u),
+                               np.gradient(self.u[1,:,:,:], delta_u),
+                               np.gradient(self.u[2,:,:,:], delta_u)),axis=0) 
         self.shape = du.shape
 
         L = self.Lvar(self.u)
         S = self.Stn(du)
         M, Sd = self.Mvar(S)
 
-        Cd = np.empty(self.shape[-3:])
+        Cd = np.zeros(self.shape[-self.axis:])
 
-        for i in range(self.shape[-3]):
-            for j in range(self.shape[-2]):
+        for i in range(self.shape[-self.axis]):
+            for j in range(self.shape[-(self.axis-1)]):                
+                if self.axis == 2:
+                    Cd[i,j] = 1/2*((sum((np.matmul(L[:,:,i,j],M[:,:,i,j])).flatten())/4)/
+                                   (sum(np.matmul(M[:,:,i,j],M[:,:,i,j]).flatten())/4))
+                    continue
                 for k in range(self.shape[-1]):
                     Cd[i,j,k] = 1/2*((sum((np.matmul(L[:,:,i,j,k],M[:,:,i,j,k])).flatten())/9)/
                                      (sum(np.matmul(M[:,:,i,j,k],M[:,:,i,j,k]).flatten())/9))
 
         tn = np.zeros(self.shape)
-        for i in range(3):
-            for j in range(3):
+        for i in range(self.axis):
+            for j in range(self.axis):
                 tn[i,j]=-2*Cd*Sd*S[i,j]
         return tn
 
     def Lvar(self, u):
         #calculates stress tensor components
-        tn = np.empty(self.shape)
-        for i in range(3):
-            for j in range(3):
+        tn = np.zeros(self.shape)
+        for i in range(self.axis):
+            for j in range(self.axis):
                 tn[i,j] = (self.filt(u[i]*u[j], self.filt_size)-
                            self.filt(u[i], self.filt_size)*self.filt(u[j], self.filt_size))
         return tn
 
     def Stn(self, du):
-        S = np.empty(self.shape)
+        S = np.zeros(self.shape)
 
-        for i in range(3):
-            for j in range(3):
+        for i in range(self.axis):
+            for j in range(self.axis):
                 S[i,j] = 1/2*(du[i,j]+du[j,i])
         return S
 
     def Mvar(self, S):
         length = len(S)
-        M = np.empty(self.shape)
+        M = np.zeros(self.shape)
 
-        Sd = np.empty(self.shape[-3:])
-        for i in range(self.shape[-3]):
-            for j in range(self.shape[-2]):
+        Sd = np.zeros(self.shape[-self.axis:])
+        for i in range(self.shape[-self.axis]):
+            for j in range(self.shape[-(self.axis-1)]):
+                if self.axis==2:
+                    Sd[i,j] = np.sqrt(2)*np.linalg.norm(S[:,:,i,j])
+                    continue
                 for k in range(self.shape[-1]):
                     Sd[i,j,k] = np.sqrt(2)*np.linalg.norm(S[:,:,i,j,k])
 
-        for i in range(3):
-            for j in range(3):
+        for i in range(self.axis):
+            for j in range(self.axis):
                 M[i,j] = (self.filt(Sd*S[i,j], self.filt_size) -
                          (self.filt_ratio)**2*self.filt(Sd, self.filt_size)*self.filt(S[i,j], self.filt_size))
         return M, Sd 

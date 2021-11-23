@@ -47,8 +47,8 @@ def box(im: np.ndarray, ksize):
 
     dim = np.shape(im)[0]
     axis = len(np.shape(im))
-
-    if axis==2: im_new = cv2.boxFilter(im, ddepth=-1,ksize=ksize)
+        
+    if axis==2: im_new = cv2.boxFilter(im, ddepth=-1, ksize=(int(ksize), int(ksize)))
     else: raise ValueError('Box filter only supports 2D image input')
 
     return im_new
