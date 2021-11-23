@@ -113,7 +113,7 @@ evolving turbulence that is not necessarily isotropic. Turbulence can behave dra
 
 In this case, the probability density functions are overall consistent, with minor disagreement at the positive outliers, even though the prediction is performed far into the future (time = 9.48 ms, end of the simulation time). Predictive advantage is highlighted when compared with the analytical Gradient model that misses a large portion of positive data.
 
-Predicting turbulent stress-tensor component in a core-collapse supernovae (CCSN). The model has been trained on a selection of dynamically evolving turbulence timesteps during the first 5 ms (out of the total $\sim$10 ms) of a 3D MHD direct numerical simulation (DNS) after the shockwave bounced off the core in a CCSN scenario. 
+Predicting turbulent stress-tensor component in a core-collapse supernovae (CCSN). The model has been trained on a selection of dynamically evolving turbulence timesteps during the first 5 ms (out of the total 10 ms) of a 3D MHD direct numerical simulation (DNS) after the shockwave bounced off the core in a CCSN scenario. 
 
 On the left, the two figures are the 2D slices of a 3D $\tau_{xy}$ prediction, with the right plot presenting a comparison of PDFs of the original 3D data, 3D ML prediction, and a conventional Gradient subgrid model.
 
