@@ -4,6 +4,8 @@ Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While 
 
 Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is identical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.03199/status.svg)](https://doi.org/10.21105/joss.03199)
+
 ## [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
 
 Please refer to Sapsan's Github Wiki to learn more about the framework's details and capabilities.
