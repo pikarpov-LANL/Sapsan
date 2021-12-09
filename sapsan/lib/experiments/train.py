@@ -60,9 +60,11 @@ class Train(Experiment):
             self.artifacts.append('model_forward.txt')
             
             #plot the training log if pytorch is used
-            log = log_plot(self.show_log)
-            log.write_html("runtime_log.html")
-            self.artifacts.append("runtime_log.html")
+            try: 
+                log = log_plot(self.show_log)
+                log.write_html("runtime_log.html")
+                self.artifacts.append("runtime_log.html")
+            except: print("Couldn't plot the training log: train.csv not found")
         else: pass        
         
         #only if catalyst.runner is used
