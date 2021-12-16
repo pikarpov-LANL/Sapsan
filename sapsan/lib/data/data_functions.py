@@ -14,7 +14,6 @@ def torch_splitter(loaders,
 
     if len(loaders)==1: 
         x = loaders[0]
-        dataset=TensorDataset(from_numpy(x).float())
         train_loader = DataLoader(dataset=TensorDataset(from_numpy(x).float()),
                                   batch_size=batch_num,
                                   shuffle=shuffle,
@@ -36,8 +35,6 @@ def torch_splitter(loaders,
             x_train = x_valid = x
             y_train = y_valid = y
 
-        dataset=TensorDataset(from_numpy(x_train).float(),
-                              from_numpy(y_train).float())
         train_loader = DataLoader(dataset=TensorDataset(from_numpy(x_train).float(),
                                                         from_numpy(y_train).float()),
                                   batch_size=batch_num,
@@ -45,10 +42,11 @@ def torch_splitter(loaders,
                                   num_workers=4)
 
         valid_loader = DataLoader(dataset=TensorDataset(from_numpy(x_valid).float(),
-                                                      from_numpy(y_valid).float()),
+                                                        from_numpy(y_valid).float()),
                                   batch_size=batch_num,
                                   shuffle=shuffle,
                                   num_workers=4)
+        
         print('Train data shapes: ', x_train.shape, y_train.shape)
         print('Valid data shapes: ', x_valid.shape, y_valid.shape)
 

@@ -67,7 +67,7 @@ class HDF5Dataset(Dataset):
             self.input_size = self.sampler.sample_dim
             
         if self.batch_size==None and self.batch_num==None: 
-            self.batch_num = 1
+            self.batch_num = len(self.checkpoints)
             self.batch_size = self.input_size
         elif self.batch_num==None: 
             self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
@@ -158,8 +158,8 @@ class HDF5Dataset(Dataset):
         if self.sampler:
             input_data = self.sampler.sample(input_data)
             self.input_size = input_data.shape[1:]
-            if self.batch_num==1: self.batch_size = self.input_size
-                
+            if self.batch_num==len(self.checkpoints): self.batch_size = self.input_size
+                        
         if self.flat: return flatten(input_data)
         elif self.batch_size == self.input_size: return np.array([input_data])
         elif len(input_data.shape)==(self.axis+2):             
