@@ -42,7 +42,7 @@ def torch_splitter(loaders,
                                   num_workers=4)
 
         valid_loader = DataLoader(dataset=TensorDataset(from_numpy(x_valid).float(),
-                                                      from_numpy(y_valid).float()),
+                                                        from_numpy(y_valid).float()),
                                   batch_size=batch_num,
                                   shuffle=shuffle,
                                   num_workers=4)
