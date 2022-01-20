@@ -192,11 +192,11 @@ def line_plot(series: List[np.ndarray],
     return ax
 
         
-def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
+def log_plot(show_log = True, log_path = 'logs/logs/train.csv', delimiter=','):#log.txt'):
     
     plot_data = {'epoch':[], 'train_loss':[]}
 
-    data = np.genfromtxt(log_path, delimiter=',', 
+    data = np.genfromtxt(log_path, delimiter=delimiter, 
                       skip_header=1, dtype=np.float32)
     
     if len(data.shape)==1: data = np.array([data])

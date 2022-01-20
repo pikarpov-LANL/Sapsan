@@ -185,8 +185,8 @@ class TorchBackend(Estimator):
         cfg = cls.load_config(params_save_path)
 
         if load_saved_config==True: 
-            print("""All config parameters will be loaded from saved params.json 
-(anything provided in model config upon loading will be ignored)""")
+            print('''All config parameters will be loaded from saved params.json 
+(anything provided in model config upon loading will be ignored)''')
             for key, value in cfg.items():
                 setattr(estimator.config, key, value)
 
@@ -196,13 +196,13 @@ class TorchBackend(Estimator):
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         
-        print("""
+        print('''
  ==== Loaded Model ====
  final Epoch: {epoch}
  final Loss: {loss}
  ======================
 
-""".format(epoch=epoch, loss='%.4e'%loss) )
+'''.format(epoch=epoch, loss='%.4e'%loss) )
         
         return estimator
     
@@ -224,4 +224,4 @@ class load_estimator(TorchBackend):
                        model):
         super().__init__(config, model)
 
-    def train(self): pass   
+    def train(self): pass     

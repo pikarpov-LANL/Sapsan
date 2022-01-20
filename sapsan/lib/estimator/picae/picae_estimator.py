@@ -16,7 +16,6 @@ from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
 from sapsan.lib.data import get_loader_shape
 
-
 class PICAEModel(torch.nn.Module): 
     """
     Init and define stacked Conv Autoencoder layers and Physics layers 
