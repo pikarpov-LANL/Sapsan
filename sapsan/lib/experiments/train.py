@@ -82,7 +82,9 @@ class Train(Experiment):
 
         self.backend.log_metric("train - runtime", runtime)
         
-        self._cleanup()
+        #attempts to remove all artifacts
+        try: self._cleanup()
+        except: pass
 
         print('runtime %.4f seconds'%runtime)
         
