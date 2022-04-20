@@ -2,6 +2,8 @@ import mlflow
 from threading import Thread
 import os
 import time
+import socket
+from contextlib import closing
 
 from sapsan.core.models import ExperimentBackend
 
@@ -17,10 +19,11 @@ class MLflowBackend(ExperimentBackend):
         self.mlflow_url = "http://{host}:{port}".format(host=host,
                                                         port=port)
         mlflow.set_tracking_uri(self.mlflow_url)
-        try:
+        if self.check_open_port():
+            print("%s:%s is busy"%(self.host, self.port))
             self.experiment_id = mlflow.set_experiment(name)
             print("mlflow ui is already running at %s:%s"%(self.host, self.port))
-        except: 
+        else:
             print("starting mlflow ui, please wait ...")
             self.start_ui()
             self.experiment_id = mlflow.set_experiment(name)
@@ -30,7 +33,7 @@ class MLflowBackend(ExperimentBackend):
         mlflow_thread = Thread(target=
                        os.system("mlflow ui --host %s --port %s &"%(self.host, self.port)))
         mlflow_thread.start()
-        time.sleep(5)
+        time.sleep(3)
         
     def start(self, run_name: str, nested = False, run_id = None):
         mlflow.start_run(run_name = run_name, nested = nested, run_id = run_id) 
@@ -55,3 +58,9 @@ class MLflowBackend(ExperimentBackend):
         
     def end(self):
         mlflow.end_run()
+        
+    def check_open_port(self):
+        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+            if sock.connect_ex((self.host, self.port)) == 0:
+                return True
+            else: return False
