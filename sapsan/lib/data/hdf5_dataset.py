@@ -159,6 +159,7 @@ class HDF5Dataset(Dataset):
         if self.sampler:
             input_data = self.sampler.sample(input_data)
             self.input_size = input_data.shape[1:]
+
             if np.array(self.batch_size).any != np.array(self.input_size).any:   
                 warnings.warn("batch_size != sampled_size. Setting the two equal.", stacklevel=2)
                 self.batch_size = self.input_size
