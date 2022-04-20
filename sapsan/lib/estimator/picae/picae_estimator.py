@@ -16,7 +16,6 @@ from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
 from sapsan.lib.data import get_loader_shape
 
-
 class PICAEModel(torch.nn.Module): 
     """
     Init and define stacked Conv Autoencoder layers and Physics layers 
@@ -27,7 +26,8 @@ class PICAEModel(torch.nn.Module):
                        nfilters = 6, 
                        kernel_size = (3,3,3), 
                        enc_nlayers = 3, 
-                       dec_nlayers = 3):        
+                       dec_nlayers = 3,
+                       config = {}):        
         super(PICAEModel, self).__init__()
         self.il = input_dim[0]
         self.jl = input_dim[1]
@@ -41,8 +41,11 @@ class PICAEModel(torch.nn.Module):
         self.decoder_nlayers= dec_nlayers
         self.total_layers = self.encoder_nlayers + self.decoder_nlayers
         self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
+        self.config = config
         
         self.tb = TorchBackend
+        
+        #self.device = self.tb.device
         self.device = self.tb.set_device(self) 
 
         ############## Define Encoder layers
@@ -57,11 +60,10 @@ class PICAEModel(torch.nn.Module):
                 cell_outputsize = self.nfilters
                 stridelen = 2
        
-            encoder_cell_list.append(self.tb.to_device(self, torch.nn.Conv3d(
-                                                             out_channels = cell_outputsize, 
-                                                             in_channels = cell_inpsize, 
-                                                             kernel_size = self.kernel_size, 
-                                                             stride = stridelen)))
+            encoder_cell_list.append(torch.nn.Conv3d(out_channels = cell_outputsize, 
+                                                     in_channels = cell_inpsize, 
+                                                     kernel_size = self.kernel_size, 
+                                                     stride = stridelen).to(self.device))
 
         # accumulate layers
         self.encoder_cell_list = torch.nn.ModuleList(encoder_cell_list)
@@ -80,12 +82,12 @@ class PICAEModel(torch.nn.Module):
                 cell_padding = 0
                 stridelen = 2        
             
-            decoder_cell_list.append(self.tb.to_device(self, torch.nn.ConvTranspose3d(
-                                                              out_channels = cell_outputsize, 
-                                                              in_channels = cell_inpsize,
-                                                              kernel_size = self.kernel_size, 
-                                                              stride = stridelen, 
-                                                              output_padding = cell_padding)))
+            decoder_cell_list.append(torch.nn.ConvTranspose3d(
+                                                  out_channels = cell_outputsize, 
+                                                  in_channels = cell_inpsize,
+                                                  kernel_size = self.kernel_size, 
+                                                  stride = stridelen, 
+                                                  output_padding = cell_padding).to(self.device))
 
         # accumulate layers
         self.decoder_cell_list = torch.nn.ModuleList(decoder_cell_list)
@@ -105,7 +107,7 @@ class PICAEModel(torch.nn.Module):
         self.ddzKernel[1,1,2] = 0.5
         #### declare weights
         self.weights = torch.zeros((self.output_size, self.input_size, 3, 3, 3))
-        self.weights = self.weights.type(self.tb.tensor_to_device(self))
+        self.weights = self.weights.to(self.device)
         #dfy/dx
         self.weights[0,0,::] = torch.zeros(3, 3, 3)
         self.weights[0,1,::] = self.ddxKernel.clone()
@@ -136,16 +138,16 @@ class PICAEModel(torch.nn.Module):
         with torch.no_grad():
             self.curlConv.weight = torch.nn.Parameter(self.weights)
         self.curlField = torch.zeros([self.batch,self.input_size,self.il,self.jl,self.kl])
-        self.curlField = self.curlField.type(self.tb.tensor_to_device(self))
+        self.curlField = self.curlField.to(self.device)
         self.register_buffer('r_curlField', self.curlField)
         self.curlGrad = torch.zeros([self.batch,self.output_size,self.il,self.jl,self.kl])
-        self.curlGrad = self.curlGrad.type(self.tb.tensor_to_device(self))    
+        self.curlGrad = self.curlGrad.to(self.device)   
         self.register_buffer('r_curlGrad', self.curlGrad)        
         
     def padHITperiodic(self,field):
         oldSize = field.size(-1)
         newSize = oldSize + 3 #2nd order accurate periodic padding at boundary
-        newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).type(self.tb.tensor_to_device(self))
+        newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).to(self.device)
         
         # fill interior cells
         newField[:,:,:-3,:-3,:-3] = field
@@ -181,7 +183,7 @@ class PICAEModel(torch.nn.Module):
         x = self.padHITperiodic(x) # PADDING with periodic BC
         curlGrad = self.curlConv(x) # compute conv
         curlField = torch.zeros([self.batch,self.input_size,self.il,self.jl,self.kl])
-        curlField = curlField.type(self.tb.tensor_to_device(self))
+        curlField = curlField.to(self.device)
         
         #construct curl vector
         curlField[:,0,::] = curlGrad[:,3,::] - curlGrad[:,5,::]
@@ -243,7 +245,8 @@ class PICAE(TorchBackend):
                                 nfilters = self.config.nfilters, 
                                 kernel_size = self.config.kernel_size, 
                                 enc_nlayers = self.config.enc_nlayers, 
-                                dec_nlayers = self.config.dec_nlayers)        
+                                dec_nlayers = self.config.dec_nlayers,
+                                config = self.config)        
         
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr, 
                                           weight_decay=self.config.weight_decay)

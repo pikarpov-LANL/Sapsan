@@ -192,17 +192,22 @@ def line_plot(series: List[np.ndarray],
     return ax
 
         
-def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
+def log_plot(show_log = True, log_path = 'logs/logs/train.csv', 
+             delimiter=',', valid_log_path = 'logs/logs/valid.csv'):
     
-    plot_data = {'epoch':[], 'train_loss':[]}
+    plot_data = {'epoch':[], 'train_loss':[], 'valid_loss':[]}
 
-    data = np.genfromtxt(log_path, delimiter=',', 
+    data = np.genfromtxt(log_path, delimiter=delimiter, 
                       skip_header=1, dtype=np.float32)
     
-    if len(data.shape)==1: data = np.array([data])
+    data_valid = np.genfromtxt(valid_log_path, delimiter=delimiter, 
+                      skip_header=1, dtype=np.float32)
+    
+    if len(data.shape)==1: data = np.array([data]); data_valid = np.array([data_valid])
 
     plot_data['epoch'] = data[:, 0]
     plot_data['train_loss'] = data[:, 1]
+    plot_data['valid_loss'] = data_valid[:, 1]
 
     df = pd.DataFrame(plot_data)
 
@@ -214,7 +219,7 @@ def log_plot(show_log = True, log_path = 'logs/logs/train.csv'):#log.txt'):
     if any(i<0 for i in plot_data['train_loss']): log_y=False
     else: log_y = True
         
-    fig = plotting_routine(df, x="epoch", y="train_loss", log_y=log_y,
+    fig = plotting_routine(df, x="epoch", y=["train_loss", "valid_loss"], log_y=log_y,
                   title='Training Progress', width=700, height=400)
     fig.update_layout(yaxis=dict(exponentformat='e'))
     fig.layout.hovermode = 'x' 

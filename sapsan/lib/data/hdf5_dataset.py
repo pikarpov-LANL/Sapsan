@@ -32,6 +32,7 @@ class HDF5Dataset(Dataset):
                  target = None,
                  batch_size: int = None,
                  batch_num: int = None,
+                 batch_num_to_load: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
                  features_label: Optional[List[str]] = None,
@@ -64,14 +65,14 @@ class HDF5Dataset(Dataset):
         self.train_fraction = train_fraction
 
         if sampler:
-            self.input_size = self.sampler.sample_dim
-            
-        if self.batch_size==None and self.batch_num==None: 
-            self.batch_num = len(self.checkpoints)
-            self.batch_size = self.input_size
-        elif self.batch_num==None: 
+            self.input_size = self.sampler.sample_dim                    
+                    
+        if self.batch_size!=None and self.batch_num==None:             
             self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
-                
+        if self.batch_size==None: self.batch_size = self.input_size
+        if self.batch_num==None: self.batch_num = len(self.checkpoints)
+
+                        
         self.time_granularity = time_granularity
     
     def get_parameters(self):
@@ -143,7 +144,7 @@ class HDF5Dataset(Dataset):
             data = file.get(key)
 
             if (self.axis==3 and len(np.shape(data))==5) or (self.axis==2 and len(np.shape(data))==4):
-                print("Warning: combining axis for %s"%key)
+                warnings.warn("Warning: combining axis for %s"%key, stacklevel=2)
                 data = np.reshape(data, np.append(data.shape[0]*data.shape[1],data.shape[2:]))
             
             if (self.axis==3 and len(np.shape(data))==3) or (self.axis==2 and len(np.shape(data))==2): 
@@ -158,8 +159,11 @@ class HDF5Dataset(Dataset):
         if self.sampler:
             input_data = self.sampler.sample(input_data)
             self.input_size = input_data.shape[1:]
-            if self.batch_num==len(self.checkpoints): self.batch_size = self.input_size
-                        
+
+            if np.array(self.batch_size).any != np.array(self.input_size).any:   
+                warnings.warn("batch_size != sampled_size. Setting the two equal.", stacklevel=2)
+                self.batch_size = self.input_size
+
         if self.flat: return flatten(input_data)
         elif self.batch_size == self.input_size: return np.array([input_data])
         elif len(input_data.shape)==(self.axis+2):             

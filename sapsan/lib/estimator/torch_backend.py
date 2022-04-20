@@ -35,8 +35,7 @@ class TorchBackend(Estimator):
         self.runner = SupervisedRunner()
         self.model_metrics = dict()
         self.model = model
-        self.ddp = False
-        self.set_device()
+        self.ddp = False        
 
     def torch_train(self, loaders, model, 
                     optimizer, loss_func, scheduler, 
@@ -49,6 +48,8 @@ class TorchBackend(Estimator):
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'        
         self.import_from_config()
+        
+        self.set_device()
 
         if 'cuda' in str(self.device):
             self.optimizer_to(optimizer, self.device)
@@ -126,7 +127,10 @@ class TorchBackend(Estimator):
         return self.model_metrics
     
     def set_device(self):
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+        if hasattr(self.config, 'kwargs') and 'device' in self.config.kwargs: 
+            self.device = torch.device(self.config.kwargs['device'])
+        else: 
+            self.device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
         return self.device
     
     def print_info(self):
@@ -138,15 +142,7 @@ class TorchBackend(Estimator):
  Device used:  {device}
  DDP:          {ddp}
  ======================
- '''.format(device=device_to_print, ddp=self.ddp))
-    
-    def to_device(self, var):
-        if str(self.device) == 'cpu': return var
-        else: return var.cuda()
-        
-    def tensor_to_device(self):
-        if str(self.device) == 'cpu': return torch.FloatTensor
-        else: return torch.cuda.FloatTensor 
+ '''.format(device=device_to_print, ddp=self.ddp))         
     
     def import_from_config(self):
         if self.config.kwargs:
@@ -189,8 +185,8 @@ class TorchBackend(Estimator):
         cfg = cls.load_config(params_save_path)
 
         if load_saved_config==True: 
-            print("""All config parameters will be loaded from saved params.json 
-(anything provided in model config upon loading will be ignored)""")
+            print('''All config parameters will be loaded from saved params.json 
+(anything provided in model config upon loading will be ignored)''')
             for key, value in cfg.items():
                 setattr(estimator.config, key, value)
 
@@ -200,13 +196,13 @@ class TorchBackend(Estimator):
         epoch = checkpoint['epoch']
         loss = checkpoint['loss']
         
-        print("""
+        print('''
  ==== Loaded Model ====
  final Epoch: {epoch}
  final Loss: {loss}
  ======================
 
-""".format(epoch=epoch, loss='%.4e'%loss) )
+'''.format(epoch=epoch, loss='%.4e'%loss) )
         
         return estimator
     
@@ -228,4 +224,4 @@ class load_estimator(TorchBackend):
                        model):
         super().__init__(config, model)
 
-    def train(self): pass   
+    def train(self): pass     

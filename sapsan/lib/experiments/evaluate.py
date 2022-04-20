@@ -47,7 +47,7 @@ class Evaluate(Experiment):
         self.kwargs = kwargs        
         
         if type(self.model.loaders) in [list, np.array]:
-            self.inputs = self.model.loaders[0]
+            self.inputs = self.model.loaders[0]            
             try: 
                 self.targets = self.model.loaders[1]
             except: 
@@ -172,8 +172,7 @@ class Evaluate(Experiment):
         n_entries = self.inputs.shape[0]
         cube_shape = (n_entries, self.n_output_channels,
                       self.batch_size[0], self.batch_size[1], self.batch_size[2])
-        
-        pred_cube = pred.reshape(cube_shape)        
+        pred_cube = pred.reshape(cube_shape)     
         pred_slice = slice_of_cube(combine_cubes(pred_cube,
                                                  self.input_size, self.batch_size))
         slices_cubes['pred_slice'] = pred_slice

@@ -4,8 +4,10 @@ import unittest
 import numpy as np
 
 from sapsan.lib.data.data_functions import torch_splitter
-from sapsan.lib.estimator import CNN3d, CNN3dConfig, PICAE, PICAEConfig, KRR, KRRConfig, load_estimator, load_sklearn_estimator
-
+from sapsan.lib.estimator import load_estimator, load_sklearn_estimator
+from sapsan.lib.estimator.krr.krr_estimator import KRR, KRRConfig
+from sapsan.lib.estimator.picae.picae_estimator import PICAE, PICAEConfig
+from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3d, CNN3dConfig
 
 class TestCnnEstimator(unittest.TestCase):
 
