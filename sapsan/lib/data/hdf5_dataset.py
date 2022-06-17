@@ -145,7 +145,7 @@ class HDF5Dataset(Dataset):
             
             file = h5.File(self._get_path(checkpoint, features[features_ind]), 'r')
             
-            if labels==None: key = list(file.keys())[-1]
+            if labels==["None"]: key = list(file.keys())[-1]
             else: key = labels[col]
 
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, features[features_ind])))
