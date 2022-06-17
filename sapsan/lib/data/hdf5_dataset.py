@@ -59,7 +59,8 @@ class HDF5Dataset(Dataset):
         self.sampler = sampler
         self.input_size = input_size
         self.initial_size = input_size
-        self.axis = len(self.input_size)
+        try: self.axis = len(self.input_size)
+        except: self.axis = 1
         self.flat = flat
         self.shuffle = shuffle
         self.train_fraction = train_fraction
@@ -72,6 +73,9 @@ class HDF5Dataset(Dataset):
         if self.batch_size==None: self.batch_size = self.input_size
         if self.batch_num==None: self.batch_num = len(self.checkpoints)
 
+        #if 'target' is not a part of the file name and target_label is given = still load target
+        if self.target_label!=None and self.target==None:
+            self.target = ["None"]
                         
         self.time_granularity = time_granularity
     
@@ -137,7 +141,7 @@ class HDF5Dataset(Dataset):
             file = h5.File(self._get_path(checkpoint, columns[col]), 'r')
             
             if labels==None: key = list(file.keys())[-1]
-            else: key = label[col]
+            else: key = labels[col]
 
             print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
             
