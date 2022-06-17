@@ -28,15 +28,15 @@ class HDF5Dataset(Dataset):
                  path: str,
                  input_size,
                  checkpoints: List[int] = [0],
-                 features: List[str]=['not_specified_data'],
-                 target = None,
+                 features: List[str]=["None"],
+                 target: List[str]=["None"],
                  batch_size: int = None,
                  batch_num: int = None,
                  batch_num_to_load: int = None,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
-                 features_label: Optional[List[str]] = None,
-                 target_label: Optional[List[str]] = None,
+                 features_label: Optional[List[str]] = ["None"],
+                 target_label: Optional[List[str]] = ["None"],
                  flat: bool = False,
                  shuffle: bool = False,
                  train_fraction = None):
@@ -74,7 +74,7 @@ class HDF5Dataset(Dataset):
         if self.batch_num==None: self.batch_num = len(self.checkpoints)
 
         #if 'target' is not a part of the file name and target_label is given = still load target
-        if self.target_label!=None and self.target==None:
+        if self.target_label!=["None"] and self.target==["None"]:
             self.target = ["None"]
                         
         self.time_granularity = time_granularity
@@ -133,17 +133,22 @@ class HDF5Dataset(Dataset):
         return relative_path
 
     
-    def _get_input_data(self, checkpoint, columns, labels):
+    def _get_input_data(self, checkpoint, features, labels):
         all_data = []
         # combine all features into cube with channels
-                
-        for col in range(len(columns)):
-            file = h5.File(self._get_path(checkpoint, columns[col]), 'r')
+
+        columns = max(len(features),len(labels))
+        ind = np.argmax([len(features),len(labels)])
+        for col in range(columns):            
+            if ind==0:   features_ind = col
+            elif ind==1: features_ind = 0
+            
+            file = h5.File(self._get_path(checkpoint, features[features_ind]), 'r')
             
             if labels==None: key = list(file.keys())[-1]
             else: key = labels[col]
 
-            print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, columns[col])))
+            print("Loading '%s' from file '%s'"%(key, self._get_path(checkpoint, features[features_ind])))
             
             data = file.get(key)
 
@@ -181,20 +186,23 @@ class HDF5Dataset(Dataset):
 
 
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
+        print('Features: ',self.features,self.features_label)
         for i, checkpoint in enumerate(self.checkpoints):
-            features_checkpoint_batch = self._get_input_data(checkpoint, 
-                                                             self.features, self.features_label)
+            features_checkpoint_batch = self._get_input_data(checkpoint,
+                                                             self.features,
+                                                             self.features_label)
             
             if i == 0: x = features_checkpoint_batch
             else: x = np.vstack((x, features_checkpoint_batch))
                                         
-            if self.target!=None:
-                target_checkpoint_batch = self._get_input_data(checkpoint, 
-                                                               self.target, self.target_label)
+            if self.target!=["None"]:
+                target_checkpoint_batch = self._get_input_data(checkpoint,
+                                                               self.target,
+                                                               self.target_label)
                 if i == 0: y = target_checkpoint_batch
                 else: y = np.vstack((y,target_checkpoint_batch))                       
                 
-        if self.target!=None: return x, y
+        if self.target!=["None"]: return x, y
         else: return x
     
     
