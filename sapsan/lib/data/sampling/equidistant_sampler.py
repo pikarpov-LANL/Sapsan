@@ -15,7 +15,7 @@ class EquidistantSampling(Sampling):
         return self.target_dim
 
     def dim_warning(self, new_dim):
-        if self.target_dim not in [new_dim, new_dim[1:]]: 
+        if list(self.target_dim) not in [new_dim, new_dim[1:]]: 
             print("Warning: couldn't cover the whole domain and sample to ", self.target_dim,
                   ", new sampled shape is ", new_dim)
     
@@ -38,6 +38,6 @@ class EquidistantSampling(Sampling):
         if len(self.original_dim) == 2:
             data = data[..., ::self.scale, ::self.scale]
         
-        self.dim_warning(data.shape)
+        self.dim_warning(list(data.shape))
         
         return data

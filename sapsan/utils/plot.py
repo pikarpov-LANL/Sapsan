@@ -46,7 +46,7 @@ def plot_params():
 
 def pdf_plot(series: List[np.ndarray], 
              bins: int = 100, 
-             names: Optional[List[str]] = None, 
+             label: Optional[List[str]] = None, 
              figsize = (6,6),
              ax = None,
              style = style):
@@ -54,7 +54,7 @@ def pdf_plot(series: List[np.ndarray],
 
     @param series: series of numpy arrays to build a pdf plot from
     @param bins: number of bins
-    @param names: name of series in case of multiseries plot
+    @param label: name of series in case of multiseries plot
     @return: pyplot object
     """
     mpl.style.use(style)
@@ -63,13 +63,13 @@ def pdf_plot(series: List[np.ndarray],
         fig = plt.figure(figsize = figsize)
         ax = fig.add_subplot(111)                
 
-    if not names:
-        names = ["Data {}".format(i) for i in range(len(series))]
+    if not label:
+        label = ["Data {}".format(i) for i in range(len(series))]
 
     for idx, data in enumerate(series):
-        ax.hist(data.flatten(), bins=bins, density=True, histtype='step', label=names[idx])
+        ax.hist(data.flatten(), bins=bins, density=True, histtype='step', label=label[idx])
         
-    if len(series)==1 and 'predict' in names: 
+    if len(series)==1 and 'predict' in label: 
         ax.properties()['children'][0].set_color('#FF800E')
 
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
@@ -83,7 +83,7 @@ def pdf_plot(series: List[np.ndarray],
 
 
 def cdf_plot(series: List[np.ndarray], 
-             names: Optional[List[str]] = None, 
+             label: Optional[List[str]] = None, 
              figsize = (6,6),
              ax = None,
              ks = False,
@@ -91,7 +91,7 @@ def cdf_plot(series: List[np.ndarray],
     """ CDF plot
 
     @param series: series of numpy arrays to build a cdf plot
-    @param names: name of series in case of multiseries plot
+    @param label: name of series in case of multiseries plot
     @return: pyplot object
     """
     mpl.style.use(style)
@@ -100,8 +100,8 @@ def cdf_plot(series: List[np.ndarray],
         fig = plt.figure(figsize = figsize)
         ax = fig.add_subplot(111)
 
-    if not names:
-        names = ["Data {}".format(i) for i in range(len(series))]
+    if not label:
+        label = ["Data {}".format(i) for i in range(len(series))]
 
     func = []
     val = np.zeros((len(series),np.prod(np.shape(series[0]))))
@@ -111,7 +111,7 @@ def cdf_plot(series: List[np.ndarray],
         #cdf calculation via linear interpolation
         length = len(val[idx])
         yvals = np.linspace(0,length-1, length)/length
-        ax.plot(val[idx], yvals, label=names[idx])
+        ax.plot(val[idx], yvals, label=label[idx])
         func.append(interp1d(val[idx], yvals))  
         
         if idx==1 and ks==True:
@@ -143,12 +143,12 @@ def cdf_plot(series: List[np.ndarray],
 
 
 def slice_plot(series: List[np.ndarray], 
-               names: Optional[List[str]] = None, 
+               label: Optional[List[str]] = None, 
                cmap = 'viridis',
                figsize = (16,6)):
     mpl.rcParams.update(plot_params())
-    if not names:
-        names = ["Data {}".format(i) for i in range(len(series))]
+    if not label:
+        label = ["Data {}".format(i) for i in range(len(series))]
     
     #colormap range is based on the target slice
     vmin = np.amin(series[-1])
@@ -159,32 +159,39 @@ def slice_plot(series: List[np.ndarray],
         ax = fig.add_subplot(121+idx)
         im = ax.imshow(data, cmap=cmap, vmin=vmin, vmax = vmax)
         plt.colorbar(im).ax.tick_params(labelsize=14)
-        ax.set_title(names[idx])
+        ax.set_title(label[idx])
     plt.tight_layout()
     
     return ax
 
 
 def line_plot(series: List[np.ndarray], 
-              names: Optional[List[str]] = None, 
+              label: Optional[List[str]] = None, 
               plot_type = 'plot',
               figsize = (6,6),
               ax = None,
+              linestyle = None,
               style = style):
     mpl.style.use(style)
     mpl.rcParams.update(plot_params())
-    if not names:
-        names = ["Data {}".format(i) for i in range(len(series))]
+    if not label:
+        label = ["Data {}".format(i) for i in range(len(series))]
+    if not linestyle:
+        linestyle = ['-' for i in range(len(series))]
         
     if ax==None: 
         fig = plt.figure(figsize = figsize)
         ax = fig.add_subplot(111)
         
     for idx, data in enumerate(series):
-        if plot_type == 'plot': ax.plot(data[0], data[1], label = names[idx])
-        elif plot_type == 'semilogx': ax.semilogx(data[0], data[1], label = names[idx])
-        elif plot_type == 'semilogy': ax.semilogy(data[0], data[1], label = names[idx])
-        elif plot_type == 'loglog': ax.loglog(data[0], data[1], label = names[idx])
+        if plot_type == 'plot': 
+            ax.plot(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
+        elif plot_type == 'semilogx': 
+            ax.semilogx(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
+        elif plot_type == 'semilogy': 
+            ax.semilogy(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
+        elif plot_type == 'loglog': 
+            ax.loglog(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
             
     ax.legend(loc=0)
     plt.tight_layout()

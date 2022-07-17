@@ -18,8 +18,8 @@ import torch
 
 from sapsan.core.models import Experiment, ExperimentBackend, Estimator
 from sapsan.lib.backends.fake import FakeBackend
-from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot, plot_params
-from sapsan.utils.shapes import combine_cubes, slice_of_cube
+from sapsan.utils.plot import pdf_plot, cdf_plot, slice_plot, line_plot, plot_params
+from sapsan.utils.shapes import combine_data, slice_of_cube
 
 class Evaluate(Experiment):
     def __init__(self,
@@ -93,7 +93,7 @@ class Evaluate(Experiment):
 
         self.run_id = self.backend.start(self.run_name, nested = True)
 
-        pred = self.model.predict(self.inputs, self.model.config)              
+        predict = self.model.predict(self.inputs, self.model.config)   
 
         end = time.time()
         runtime = end - start
@@ -102,26 +102,25 @@ class Evaluate(Experiment):
         #determine n_output_channels form prediction
         if self.flat:
             self.n_output_channels = int(np.around(
-                                     np.prod(pred.shape)/np.prod(self.inputs.shape[1:])
+                                     np.prod(predict.shape)/np.prod(self.inputs.shape[1:])
                                      )) #flat arrays don't have batches
-        elif len(pred.shape)<(self.axis+2): 
+        elif len(predict.shape)<(self.axis+2): 
             self.n_output_channels = int(np.around(
-                                         np.prod(pred.shape[1:])/np.prod(self.inputs.shape[2:])
+                                         np.prod(predict.shape[1:])/np.prod(self.inputs.shape[2:])
                                          ))
-        else: self.n_output_channels = pred.shape[1]            
+        else: self.n_output_channels = predict.shape[1]            
 
         if self.targets_given: 
-            series = [self.targets, pred]
-            names = ['target', 'predict']
+            series = [self.targets, predict]
+            label = ['target', 'predict']
         else: 
-            series = [pred]
-            names = ['predict']
-
-        slices_cubes = self.analytic_plots(series, names)
+            series = [predict]
+            label = ['predict']
+        outdata = self.analytic_plots(series, label)
 
         if self.targets_given:
-            self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(slices_cubes['target_cube'], 
-                      slices_cubes['pred_cube'])).mean()         
+            self.experiment_metrics["eval - MSE Loss"] = np.square(np.subtract(outdata['target_restored'], 
+                      outdata['predict_restored'])).mean()         
 
         for metric, value in self.get_metrics().items():
             self.backend.log_metric(metric, value)
@@ -132,72 +131,100 @@ class Evaluate(Experiment):
         for artifact in self.artifacts:
             self.backend.log_artifact(artifact)
 
-
         self.backend.end()
         self._cleanup()
 
         print("eval - runtime: ", runtime)
 
-        cube_series = dict()
-        for key, value in slices_cubes.items():
-            if 'cube' in key: cube_series[key] = value
+        restored_series = dict()
+        for key, value in outdata.items():
+            if 'restored' in key: restored_series[key] = value
 
-        return cube_series
+        return restored_series
     
     
-    def flatten(self, pred):
-        slices_cubes = dict()         
-        if self.axis == 3:
-            cube_shape = (self.n_output_channels, self.input_size[0],
-                          self.input_size[1], self.input_size[2])
-        if self.axis == 2: 
-            cube_shape = (self.n_output_channels, self.input_size[0], self.input_size[1])
+    def flatten(self, predict):
+        outdata = dict()    
+        if self.axis == 3:            
+            restored_shape = (self.n_output_channels, self.input_size[0],
+                              self.input_size[1], self.input_size[2])            
+        elif self.axis == 2: 
+            restored_shape = (self.n_output_channels, self.input_size[0], self.input_size[1])            
+        elif self.axis == 1: 
+            restored_shape = (self.n_output_channels, self.input_size[0])
             
-        pred_cube = pred.reshape(cube_shape)
-        pred_slice = slice_of_cube(pred_cube)
-        slices_cubes['pred_slice'] = pred_slice
-        slices_cubes['pred_cube'] = pred_cube
+        predict_restored = predict.reshape(restored_shape)
+        if self.axis == 3: predict = slice_of_cube(predict_restored)
+        else: predict = predict_restored
+        outdata['predict_restored'] = predict_restored                       
+        outdata['predict'] = predict[0]  
                       
-        if self.targets_given:              
-            target_cube = self.targets.reshape(cube_shape)
-            target_slice = slice_of_cube(target_cube)
-            slices_cubes['target_slice'] = target_slice
-            slices_cubes['target_cube'] = target_cube
-                      
-        return slices_cubes
+        if self.targets_given:            
+            target_restored = self.targets.reshape(restored_shape)
+            if self.axis == 3: target = slice_of_cube(target_restored)
+            else: target = target_restored
+            outdata['target_restored'] = target_restored                
+            outdata['target'] = target[0]
+        
+        print("Warning: only the first target will be plotted. The full target can be found in the output['target_restored']")
+        return outdata
     
     
-    def split_batch(self, pred):
-        slices_cubes = dict()
+    def split_batch(self, predict):
+        outdata = dict()
         n_entries = self.inputs.shape[0]
-        cube_shape = (n_entries, self.n_output_channels,
-                      self.batch_size[0], self.batch_size[1], self.batch_size[2])
-        pred_cube = pred.reshape(cube_shape)     
-        pred_slice = slice_of_cube(combine_cubes(pred_cube,
-                                                 self.input_size, self.batch_size))
-        slices_cubes['pred_slice'] = pred_slice
-        slices_cubes['pred_cube'] = pred_cube
+        
+        if self.axis == 3:            
+            restored_shape = (n_entries, self.n_output_channels, 
+                              self.batch_size[0], self.batch_size[1], self.batch_size[2])            
+        elif self.axis == 2: 
+            restored_shape = (n_entries, self.n_output_channels, 
+                              self.batch_size[0], self.batch_size[1])            
+        elif self.axis == 1: 
+            restored_shape = (n_entries, self.n_output_channels, 
+                              self.batch_size[0])
+            
+        predict_restored = predict.reshape(restored_shape)     
+        if self.axis == 3: predict = slice_of_cube(combine_data(predict_restored,
+                                                                self.input_size, 
+                                                                self.batch_size,
+                                                                self.axis))
+        elif self.axis == 2: predict = combine_data(predict_restored,
+                                                    self.input_size, 
+                                                    self.batch_size,
+                                                    self.axis)
+        else: predict = predict_restored
+        outdata['predict'] = predict
+        outdata['predict_restored'] = predict_restored
                       
         if self.targets_given: 
-            target_cube = self.targets.reshape(cube_shape)
-            target_slice = slice_of_cube(combine_cubes(target_cube,
-                                         self.input_size, self.batch_size))
-            slices_cubes['target_slice'] = target_slice
-            slices_cubes['target_cube'] = target_cube
+            target_restored = self.targets.reshape(restored_shape)
+            if self.axis == 3: target = slice_of_cube(combine_data(target_restored,
+                                                                   self.input_size, 
+                                                                   self.batch_size,
+                                                                   self.axis))
+            elif self.axis == 2: target = combine_data(target_restored,
+                                                       self.input_size, 
+                                                       self.batch_size,
+                                                       self.axis)
+            else: target = target_restored
+            outdata['target'] = target
+            outdata['target_restored'] = target_restored
                       
-        return slices_cubes
+        return outdata
                       
                       
-    def analytic_plots(self, series, names):
+    def analytic_plots(self, series, label):
         mpl.rcParams.update(plot_params())
                       
         fig = plt.figure(figsize=(12,6), dpi=60)
         (ax1, ax2) = fig.subplots(1,2)
 
-        pdf = pdf_plot(series, names=names, ax=ax1)
+        #print("Series shapes", np.shape(series), series[0].shape)
+        pdf = pdf_plot(series, label=label, ax=ax1)
         self.set_axes_pars(pdf)
         
-        cdf, ks_stat = cdf_plot(series, names=names, ax=ax2, ks=True)
+        cdf, ks_stat = cdf_plot(series, label=label, ax=ax2, ks=True)
         cdf = self.set_axes_pars(cdf)
         
         plt.tight_layout()
@@ -206,24 +233,33 @@ class Evaluate(Experiment):
         
         self.experiment_metrics["eval - KS Stat"] = ks_stat
                 
-        pred = series[names.index('predict')]
+        predict = series[label.index('predict')]
 
-        if self.flat: slices_cubes = self.flatten(pred)
-        else: slices_cubes = self.split_batch(pred)
+        if self.flat: outdata = self.flatten(predict)
+        else: outdata = self.split_batch(predict)
         
-        slice_series = []
-        slice_names = []
-        for key, value in slices_cubes.items():
-            if 'slice' in key: 
-                slice_series.append(value)
-                slice_names.append(key)
-                      
-        slices = slice_plot(slice_series, names=slice_names, cmap=self.cmap)
+        plot_label = ['target','predict']
+        if self.axis>1: 
+            plot_series = []                        
+            for key, value in outdata.items():
+                if key in plot_label: 
+                    plot_series.append(value)
+
+            slices = slice_plot(plot_series, label=plot_label, cmap=self.cmap)
+            
+        elif self.axis==1:
+            print('The data is 1D: plotting profiles...')
+            profiles = line_plot([[np.arange(self.input_size[0]),outdata['target'][0,0]], 
+                                  [np.arange(self.input_size[0]),outdata['predict'][0,0]]], 
+                                 label=plot_label, figsize=(10,6))
+            profiles.set_xlabel('index')
+            profiles.set_ylabel('value')
+            
         plt.tight_layout()
-        plt.savefig("slices_plot.png")
-        self.artifacts.append("slices_plot.png")
-                      
-        return slices_cubes
+        plt.savefig("spatial_plot.png")
+        self.artifacts.append("spatial_plot.png")
+        
+        return outdata
     
     def set_axes_pars(self, ax):
         for key in self.axes_pars:

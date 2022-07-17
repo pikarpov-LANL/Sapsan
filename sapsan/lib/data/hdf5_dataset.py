@@ -20,7 +20,7 @@ import h5py as h5
 import warnings
 
 from sapsan.core.models import Dataset, Sampling
-from sapsan.utils.shapes import split_cube_by_batch, split_square_by_batch
+from sapsan.utils.shapes import split_data_by_batch
 from .data_functions import torch_splitter, flatten
 
 class HDF5Dataset(Dataset):
@@ -119,12 +119,9 @@ class HDF5Dataset(Dataset):
     def split_batch(self, input_data):
         # columns_length ex: 12 features * 3 dim = 36  
         columns_length = input_data.shape[0]
-        if self.axis == 3:
-            return split_cube_by_batch(input_data, self.input_size,
-                                      self.batch_size, columns_length)
-        if self.axis == 2:
-            return split_square_by_batch(input_data, self.input_size,
-                                      self.batch_size, columns_length)
+        if self.axis == 3 or self.axis==2:
+            return split_data_by_batch(input_data, self.input_size,
+                                      self.batch_size, columns_length, self.axis)
     
     def _get_path(self, checkpoint, feature):
         """Return absolute path to required feature at specific checkpoint."""
@@ -186,7 +183,8 @@ class HDF5Dataset(Dataset):
 
 
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
-        print('Features: ',self.features,self.features_label)
+        print('Features: ',self.features)
+        print('Fetures_label:',self.features_label)
         for i, checkpoint in enumerate(self.checkpoints):
             features_checkpoint_batch = self._get_input_data(checkpoint,
                                                              self.features,
