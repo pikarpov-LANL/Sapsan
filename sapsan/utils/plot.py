@@ -167,10 +167,10 @@ def slice_plot(series: List[np.ndarray],
 
 def line_plot(series: List[np.ndarray], 
               label: Optional[List[str]] = None, 
-              plot_type = 'plot',
+              plot_type = 'plot',              
               figsize = (6,6),
-              ax = None,
               linestyle = None,
+              ax = None,              
               style = style):
     mpl.style.use(style)
     mpl.rcParams.update(plot_params())
