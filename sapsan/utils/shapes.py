@@ -26,14 +26,14 @@ def split_data_by_batch(data: np.ndarray,
                                        batch_size[0], batch_size[1])
 
 
-def combine_data(cubes: np.ndarray,
+def combine_data(data: np.ndarray,
                  input_size: tuple,
                  batch_size: tuple,
                  axis: int) -> np.ndarray:
     """ Combines batches into one big cube or square.
 
     Reverse of split_data_by_batch function.
-    @param cubes: (batch, channels, batch_size, batch_size, batch_size)
+    @param data: (batch, channels, batch_size, batch_size, batch_size)
     """    
     n_per_dim = np.empty(axis, dtype=int)
     for i in range(axis):
@@ -43,11 +43,11 @@ def combine_data(cubes: np.ndarray,
         y = []
         for j in range(n_per_dim[1]):
             if axis==2: 
-                y.append(cubes[i * n_per_dim[0] * n_per_dim[1] + j])
+                y.append(data[i * n_per_dim[0] * n_per_dim[1] + j])
             elif axis==3:
                 z = []
                 for k in range(n_per_dim[2]):
-                    z.append(cubes[i * n_per_dim[0] * n_per_dim[1] + j * n_per_dim[2] + k])
+                    z.append(data[i * n_per_dim[0] * n_per_dim[1] + j * n_per_dim[2] + k])
                 y.append(np.concatenate(z, axis=3))
         x.append(np.concatenate(y, axis=2))
     return np.concatenate(x, axis=1)
