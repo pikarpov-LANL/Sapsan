@@ -199,10 +199,17 @@ def line_plot(series: List[np.ndarray],
     return ax
 
         
-def log_plot(show_log = True, log_path = 'logs/logs/train.csv', 
-             delimiter=',', valid_log_path = 'logs/logs/valid.csv'):
+def log_plot(show_log = True, 
+             log_path = 'logs/logs/train.csv', 
+             valid_log_path = 'logs/logs/valid.csv', 
+             delimiter=',',
+             train_name = 'train_loss',
+             valid_name = 'valid_loss',
+             train_column = 1,
+             valid_column = 1,
+             epoch_column = 0):
     
-    plot_data = {'epoch':[], 'train_loss':[], 'valid_loss':[]}
+    plot_data = {'epoch':[], train_name:[], valid_name:[]}
 
     data = np.genfromtxt(log_path, delimiter=delimiter, 
                       skip_header=1, dtype=np.float32)
@@ -212,9 +219,11 @@ def log_plot(show_log = True, log_path = 'logs/logs/train.csv',
     
     if len(data.shape)==1: data = np.array([data]); data_valid = np.array([data_valid])
 
-    plot_data['epoch'] = data[:, 0]
-    plot_data['train_loss'] = data[:, 1]
-    plot_data['valid_loss'] = data_valid[:, 1]
+    if epoch_column == None: plot_data['epoch'] = np.linspace(1,len(data),len(data), dtype=int)
+    else: plot_data['epoch'] = data[:, epoch_column]
+        
+    plot_data[train_name] = data[:, train_column]
+    plot_data[valid_name] = data_valid[:, valid_column]
 
     df = pd.DataFrame(plot_data)
 
@@ -223,10 +232,10 @@ def log_plot(show_log = True, log_path = 'logs/logs/train.csv',
     else:
         plotting_routine = px.line
         
-    if any(i<0 for i in plot_data['train_loss']): log_y=False
+    if any(i<0 for i in plot_data[train_name]): log_y=False
     else: log_y = True
         
-    fig = plotting_routine(df, x="epoch", y=["train_loss", "valid_loss"], log_y=log_y,
+    fig = plotting_routine(df, x="epoch", y=[train_name, valid_name], log_y=log_y,
                   title='Training Progress', width=700, height=400)
     fig.update_layout(yaxis=dict(exponentformat='e'))
     fig.layout.hovermode = 'x' 

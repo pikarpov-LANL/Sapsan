@@ -138,7 +138,7 @@ class Evaluate(Experiment):
 
         restored_series = dict()
         for key, value in outdata.items():
-            if 'restored' in key: restored_series[key] = value
+            if 'restored' in key: restored_series[key.split('_restored')[0]] = value
 
         return restored_series
     
