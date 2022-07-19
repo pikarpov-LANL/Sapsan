@@ -3,56 +3,52 @@ from skimage.util import view_as_blocks
 from logging import warning
 from typing import List, Tuple, Dict, Optional
 
-def split_cube_by_batch(data: np.ndarray,
+def split_data_by_batch(data: np.ndarray,
                         input_size: tuple,
                         batch_size: tuple,
-                        n_features: int) -> np.ndarray:
-    """ --3D-- Splits big cube into smaller ones into batches.
+                        n_features: int,
+                        axis: int) -> np.ndarray:
+    """ -Splits data into smaller cubes or squares of batches.
 
     @param data: (channels, batch_size, batch_size, batch_size)
     @return (batch, channels, batch_size, batch_size, batch_size)
     """    
     batch = int(np.prod(input_size) / np.prod(batch_size))
-    return view_as_blocks(data, block_shape=(n_features, batch_size[0],
-                                             batch_size[1], batch_size[2])
-                          ).reshape(batch, n_features,
-                                    batch_size[0], batch_size[1], batch_size[2])
-
-def split_square_by_batch(data: np.ndarray,
-                       input_size: tuple,
-                       batch_size: tuple,
-                       n_features: int) -> np.ndarray:
-    """ --2D-- Splits big square into smaller ones into batches.
-
-    @param data: (channels, batch_size, batch_size)
-    @return (batch, channels, batch_size, batch_size)
-    """
-    batch = int(np.prod(input_size) / np.prod(batch_size))
-    return view_as_blocks(data, block_shape=(n_features, batch_size[0],
+    if axis==3:
+        return view_as_blocks(data, block_shape=(n_features, batch_size[0],
+                                                 batch_size[1], batch_size[2])
+                              ).reshape(batch, n_features,
+                                        batch_size[0], batch_size[1], batch_size[2])
+    elif axis==2:
+        return view_as_blocks(data, block_shape=(n_features, batch_size[0],
                                                  batch_size[1])
-                          ).reshape(batch, n_features,
-                                    batch_size[0], batch_size[1])
+                             ).reshape(batch, n_features,
+                                       batch_size[0], batch_size[1])
 
 
-def combine_cubes(cubes: np.ndarray,
-                  input_size: tuple,
-                  batch_size: tuple) -> np.ndarray:
-    """ Combines batches into one big cube.
+def combine_data(data: np.ndarray,
+                 input_size: tuple,
+                 batch_size: tuple,
+                 axis: int) -> np.ndarray:
+    """ Combines batches into one big cube or square.
 
-    Reverse of split_cube_by_batch function.
-    @param cubes: (batch, channels, batch_size, batch_size, batch_size)
+    Reverse of split_data_by_batch function.
+    @param data: (batch, channels, batch_size, batch_size, batch_size)
     """    
-    n_per_dim = np.empty(3, dtype=int)
-    for i in range(3):
+    n_per_dim = np.empty(axis, dtype=int)
+    for i in range(axis):
         n_per_dim[i] = int(input_size[i] / batch_size[i])
     x = []    
     for i in range(n_per_dim[0]):
         y = []
         for j in range(n_per_dim[1]):
-            z = []
-            for k in range(n_per_dim[2]):
-                z.append(cubes[i * n_per_dim[0] * n_per_dim[1] + j * n_per_dim[2] + k])
-            y.append(np.concatenate(z, axis=3))
+            if axis==2: 
+                y.append(data[i * n_per_dim[0] * n_per_dim[1] + j])
+            elif axis==3:
+                z = []
+                for k in range(n_per_dim[2]):
+                    z.append(data[i * n_per_dim[0] * n_per_dim[1] + j * n_per_dim[2] + k])
+                y.append(np.concatenate(z, axis=3))
         x.append(np.concatenate(y, axis=2))
     return np.concatenate(x, axis=1)
 
