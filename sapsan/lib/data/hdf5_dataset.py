@@ -185,6 +185,7 @@ class HDF5Dataset(Dataset):
     def _load_data_numpy(self) -> Tuple[np.ndarray, np.ndarray]:
         print('Features: ',self.features)
         print('Fetures_label:',self.features_label)
+
         for i, checkpoint in enumerate(self.checkpoints):
             features_checkpoint_batch = self._get_input_data(checkpoint,
                                                              self.features,
