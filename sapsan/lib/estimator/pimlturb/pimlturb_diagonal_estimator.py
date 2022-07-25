@@ -122,10 +122,7 @@ class SmoothL1_KSLoss(torch.nn.Module):
         try: 
             self.device = predictions.get_device()
             if self.device==-1: self.device=torch.device('cpu')
-        except: self.device=torch.device('cpu')
-
-        if write == 'train': batch_size = self.train_size
-        elif write == 'valid': batch_size = self.valid_size            
+        except: self.device=torch.device('cpu')           
 
         size = list(targets.size())[0]  
         lossks= torch.zeros(size).to(self.device)
@@ -177,15 +174,17 @@ class SmoothL1_KSLoss(torch.nn.Module):
                 fracks*lossks.mean()/self.maxks)
         
         #----------------
-        if write_idx == 0:            
-            self.iter_losses_l1 = torch.zeros(batch_size,requires_grad=False).to(self.device)
-            self.iter_losses_ks = torch.zeros(batch_size,requires_grad=False).to(self.device)
+        if write_idx == 0:
+            if write == 'train': self.batch_size = self.train_size
+            elif write == 'valid': self.batch_size = self.valid_size 
+            self.iter_losses_l1 = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
+            self.iter_losses_ks = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
         
         self.iter_losses_l1[write_idx] = lossl1.mean().detach()
         self.iter_losses_ks[write_idx] = lossks.mean().detach()
         #----------------     
         
-        if write_idx == (batch_size-1):
+        if write_idx == (self.batch_size-1):
             mean_iter_l1 = self.iter_losses_l1.mean()
             mean_iter_ks = self.iter_losses_ks.mean()
             
