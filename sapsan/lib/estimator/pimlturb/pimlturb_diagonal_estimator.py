@@ -241,7 +241,7 @@ class PIMLTurb(TorchBackend):
         self.beta = betal1
         
         x_shape, y_shape = get_loader_shape(self.loaders)                
-                
+
         self.model = PIMLTurbModel(x_shape[1], y_shape[2]**3, activ, sigma)
         
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
@@ -283,7 +283,7 @@ class PIMLTurb(TorchBackend):
             
         for epoch in np.linspace(1,int(self.config.n_epochs),int(self.config.n_epochs), dtype='int'):     
             iter_loss = np.zeros(len(self.loaders['train']))
-            
+
             for idx, (x, y) in enumerate(self.loaders['train']):
                 x = x.to(self.device)
                 y = y.to(self.device)
@@ -309,7 +309,7 @@ class PIMLTurb(TorchBackend):
                     y_pred = self.model(x)                                    
                     
                     loss_valid, stop = self.loss_func(y_pred, y, 'valid', idx)
-    
+
                     iter_loss_valid[idx] = loss_valid.item()
 
                 epoch_loss_valid = iter_loss_valid.mean()
