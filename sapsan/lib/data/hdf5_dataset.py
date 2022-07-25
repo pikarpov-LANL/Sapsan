@@ -31,8 +31,7 @@ class HDF5Dataset(Dataset):
                  features: List[str]=["None"],
                  target: List[str]=["None"],
                  batch_size: int = None,
-                 batch_num: int = None,
-                 batch_num_to_load: int = None,
+                 batch_num: int = 1,
                  sampler: Optional[Sampling] = None,
                  time_granularity: float = 1,
                  features_label: Optional[List[str]] = ["None"],
@@ -71,7 +70,8 @@ class HDF5Dataset(Dataset):
         if self.batch_size!=None and self.batch_num==None:             
             self.batch_num = int(np.prod(np.array(self.input_size))/np.prod(np.array(self.batch_size)))
         if self.batch_size==None: self.batch_size = self.input_size
-        if self.batch_num==None: self.batch_num = len(self.checkpoints)
+        if self.batch_num==None:             
+            self.batch_num = len(self.checkpoints)
 
         #if 'target' is not a part of the file name and target_label is given = still load target
         if self.target_label!=["None"] and self.target==["None"]:
