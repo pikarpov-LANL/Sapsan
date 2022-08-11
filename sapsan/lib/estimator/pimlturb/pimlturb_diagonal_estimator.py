@@ -297,7 +297,7 @@ class PIMLTurb(TorchBackend):
                 iter_loss[idx] = loss.item()
                         
             epoch_loss = iter_loss.mean()
-            print(f'train ({epoch}/{int(self.config.n_epochs)}) loss: {epoch_loss}')                        
+            print(f'train ({epoch}/{int(self.config.n_epochs)}) loss: {epoch_loss:.4e}')
                         
             with torch.set_grad_enabled(False):
                 iter_loss_valid = np.zeros(len(self.loaders['valid']))
@@ -312,7 +312,7 @@ class PIMLTurb(TorchBackend):
                     iter_loss_valid[idx] = loss_valid.item()
 
                 epoch_loss_valid = iter_loss_valid.mean()
-                print(f'valid ({epoch}/{int(self.config.n_epochs)}) loss: {epoch_loss_valid}')
+                print(f'valid ({epoch}/{int(self.config.n_epochs)}) loss: {epoch_loss_valid:.4e}')
             
             self.write_loss([epoch, epoch_loss, epoch_loss_valid], epoch)            
             
