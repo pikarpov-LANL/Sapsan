@@ -20,6 +20,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils import data
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
@@ -84,106 +85,100 @@ class SmoothL1_KSLoss(torch.nn.Module):
     The loss functions combines a statistical (Kolmogorov-Smirnov)
     and a spatial loss (Smooth L1).
     
-    Corresponding 'losses_train_log.txt' and 'losses_valid_log.txt'
+    Corresponding 'train_l1ks_log.txt' and 'valid_l1ks_log.txt'
     are written out to include the individual loss evolutions.
     '''    
-    def __init__(self, ks_stop, scalel1, beta, train_size, valid_size):
+    def __init__(self, ks_stop, ks_frac, ks_scale, l1_scale, beta, train_size, valid_size):
         super(SmoothL1_KSLoss, self).__init__()
         self.first_write = True
         self.first_iter = True
         self.ks_stop = ks_stop
-        self.scalel1 = scalel1
+        self.ks_frac = ks_frac
+        self.ks_scale = ks_scale        
+        self.l1_scale = l1_scale
         self.beta = beta
         self.train_size = train_size
         self.valid_size = valid_size
         self.stop = False   
         
-    def write_train(self, losses, fname = "losses_train_log.txt"):
+    def write_log(self, losses):
         if self.first_write:
-            if os.path.exists(fname): os.remove(fname)
+            if os.path.exists(self.log_fname): os.remove(self.log_fname)
         
-        with open(fname,'a') as f:
+        with open(self.log_fname,'a') as f:
             if self.first_write:
-                f.write("mean(L1_loss) \t mean(KS_loss) \t norm(L1_loss) \t norm(KS_loss) \t norm(L1_loss)*%.3e"%self.scaling)
+                f.write(f"mean(L1_loss) \t mean(KS_loss) "\
+                        f"\t mean(L1_loss)*{self.l1_scale:.3e} \t mean(KS_loss)*{self.ks_scale:.3e}")
             f.write("\n")
             np.savetxt(f, losses.detach().cpu().numpy(), fmt='%.3e', newline="\t")
             
-    def write_valid(self, losses, fname = "losses_valid_log.txt"):
-        if self.first_write:
-            if os.path.exists(fname): os.remove(fname)
-        
-        with open(fname,'a') as f:
-            if self.first_write:
-                f.write("mean(L1_valid) \t mean(KS_valid)")
-            f.write("\n")
-            np.savetxt(f, losses.detach().cpu().numpy(), fmt='%.3e', newline="\t")
-        
     def forward(self, predictions, targets, write, write_idx):      
         try: 
             self.device = predictions.get_device()
             if self.device==-1: self.device=torch.device('cpu')
         except: self.device=torch.device('cpu')           
-
-        size = list(targets.size())[0]  
-        lossks= torch.zeros(size).to(self.device)
         
         #-----SmoothL1----
-        lossl1 = 0
+        l1_loss = 0
 
         self.beta = 0.1*targets.max()
         diff = predictions-targets
         mask = (diff.abs() < self.beta)
-        lossl1 += mask * (0.5*diff**2 / self.beta)
-        lossl1 += (~mask) * (diff.abs() - 0.5*self.beta)
+        l1_loss += mask * (0.5*diff**2 / self.beta)
+        l1_loss += (~mask) * (diff.abs() - 0.5*self.beta)
+           
+        #--------KS-------
+        distr = torch.distributions.normal.Normal(loc=targets.mean(), 
+                                                  scale=targets.std(), 
+                                                  validate_args=False)  
+        cdf,idx = distr.cdf(targets).flatten().to(self.device).sort()
         
-        for i in range(size):                        
-            #-------KS------
-            distr = torch.distributions.normal.Normal(loc=0, scale=1, validate_args=False)        
+        distr = torch.distributions.normal.Normal(loc=predictions.mean(), 
+                                                  scale=predictions.std(), 
+                                                  validate_args=False) 
+        cdf_pred,idx_pred = distr.cdf(predictions).flatten().to(self.device).sort()     
+                                
+        vals,idx = targets.flatten().to(self.device).sort()
+        vals_pred,idx_pred = predictions.flatten().to(self.device).sort()        
 
-            cdf = distr.cdf(targets[i]).to(self.device)
-            cdf_pred = distr.cdf(predictions[i]).to(self.device)
-
-            cdf, idx = cdf.flatten().to(self.device).sort()
-            cdf_pred, idx_pred = cdf_pred.flatten().to(self.device).sort()
-
-            y = torch.linspace(0,1,list(cdf.size())[0]).to(self.device)
-
-            y_new = Interp1d()(cdf, y, cdf_pred)[0]
-            
-            ks = torch.max(torch.abs(y-y_new)).to(self.device)         
-            
-            lossks[i] = ks
+        cdf_interp = Interp1d()(vals_pred, cdf_pred, vals)[0]       
         
+        ks_loss = torch.max(torch.abs(cdf-cdf_interp)).to(self.device)           
+        
+        #--Print Metrics-- 
         if self.first_iter:
-            self.maxl1 = lossl1.mean().detach()                      
-            self.maxks = lossks.mean().detach()
+            self.maxl1 = l1_loss.mean().detach()                      
+            self.maxks = ks_loss.mean().detach()
             self.max_ratio = self.maxks/self.maxl1
                         
-            print('---Max L1, KS losses and their ratio--')
+            print('---Initial (max) L1, KS losses and their ratio--')
             print(self.maxl1, self.maxks, self.max_ratio)
-            print('--------------------------------------')
+            print('------------------------------------------------')
             
-            self.scaling = self.maxl1*self.scalel1
             self.first_iter = False
 
-        #fractions that KS and L1 contribute to the total loss
-        fracks = 0.5
-        fracl1 = 1 - fracks        
+        #----Calc Loss----
+        #fractions that KS and L1 contribute to the total loss        
+        l1_frac = 1-self.ks_frac
         
-        loss = (fracl1*lossl1.mean()/self.maxl1*self.scaling +
-                fracks*lossks.mean()/self.maxks)
+        loss = (l1_frac*l1_loss.mean()*self.l1_scale +
+                self.ks_frac*ks_loss.mean()*self.ks_scale)
         
-        #----------------
+        #---Save Batch----
         if write_idx == 0:
-            if write == 'train': self.batch_size = self.train_size
-            elif write == 'valid': self.batch_size = self.valid_size 
+            if write == 'train': 
+                self.batch_size = self.train_size
+                self.log_fname = "train_l1ks_log.txt"
+            elif write == 'valid': 
+                self.batch_size = self.valid_size 
+                self.log_fname = "valid_l1ks_log.txt"                
             self.iter_losses_l1 = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
             self.iter_losses_ks = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
         
-        self.iter_losses_l1[write_idx] = lossl1.mean().detach()
-        self.iter_losses_ks[write_idx] = lossks.mean().detach()
-        #----------------     
+        self.iter_losses_l1[write_idx] = l1_loss.mean().detach()
+        self.iter_losses_ks[write_idx] = ks_loss.mean().detach()
         
+        #---Write Logs----
         if write_idx == (self.batch_size-1):
             mean_iter_l1 = self.iter_losses_l1.mean()
             mean_iter_ks = self.iter_losses_ks.mean()
@@ -191,14 +186,10 @@ class SmoothL1_KSLoss(torch.nn.Module):
             if mean_iter_ks < self.ks_stop or self.stop==True:
                 self.stop = True
             
-            if write == 'train':
-                self.write_train(torch.tensor([mean_iter_l1, mean_iter_ks,
-                                              mean_iter_l1/self.maxl1,
-                                              mean_iter_ks/self.maxks,
-                                              mean_iter_l1/self.maxl1*self.scaling]))      
-            elif write == 'valid':
-                self.write_valid(torch.tensor([mean_iter_l1, mean_iter_ks]))
-                self.first_write = False                  
+            self.write_log(torch.tensor([mean_iter_l1, mean_iter_ks,
+                                         mean_iter_l1*self.l1_scale,
+                                         mean_iter_ks*self.ks_scale]))      
+            if write == 'valid': self.first_write = False                  
         
         return loss, self.stop
     
@@ -226,8 +217,10 @@ class PIMLTurb(TorchBackend):
     def __init__(self, activ, loss,
                        loaders,
                        ks_stop = 0.1,
-                       scalel1 = 1e6,
-                       betal1 = 1,
+                       ks_frac = 0.5,
+                       ks_scale = 1,
+                       l1_scale = 1,                 
+                       l1_beta = 1,
                        sigma = 1,
                        config = PIMLTurbConfig(), 
                        model = PIMLTurbModel()):
@@ -236,8 +229,10 @@ class PIMLTurb(TorchBackend):
         self.loaders = loaders
         self.device = self.config.kwargs['device']
         self.ks_stop = ks_stop
-        self.scalel1 = scalel1
-        self.beta = betal1
+        self.ks_frac = ks_frac
+        self.ks_scale = ks_scale
+        self.l1_scale = l1_scale        
+        self.beta = l1_beta
         
         x_shape, y_shape = get_loader_shape(self.loaders)                
 
@@ -246,7 +241,9 @@ class PIMLTurb(TorchBackend):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
         
         if loss == "SmoothL1_KSLoss": 
-            self.loss_func = SmoothL1_KSLoss(self.ks_stop, self.scalel1, self.beta,
+            self.loss_func = SmoothL1_KSLoss(ks_stop = self.ks_stop, ks_frac = self.ks_frac,
+                                             ks_scale = self.ks_scale, l1_scale = self.l1_scale, 
+                                             beta = self.beta,
                                              train_size = len(self.loaders['train']), 
                                              valid_size = len(self.loaders['valid']))
         else: 
@@ -259,20 +256,15 @@ class PIMLTurb(TorchBackend):
         self.config.parameters["model - loss"] = str(self.loss_func).partition("(")[0]
         self.config.parameters["model - activ"] = activ
         
-    def write_loss(self, losses, epoch, fname = "train_log.txt", fname_valid='valid_log.txt'):
-        if epoch==1:
-            if os.path.exists(fname): os.remove(fname)
-            if os.path.exists(fname_valid): os.remove(fname_valid)
-        
-        with open(fname,'a') as f:
-            if epoch == 1: f.write("epoch \t train_loss")
-            f.write("\n")
-            np.savetxt(f, [[losses[0],losses[1]]], fmt='%d \t %.3e', newline="\t")
-            
-        with open(fname_valid,'a') as f:
-            if epoch == 1: f.write("epoch \t valid_loss")
-            f.write("\n")
-            np.savetxt(f, [[losses[0],losses[2]]], fmt='%d \t %.3e', newline="\t")
+    def write_loss(self, losses, epoch, fname_train = "train_log.txt", fname_valid='valid_log.txt'):
+        for idx, fname in enumerate([fname_train, fname_valid]):
+            if epoch==1:
+                if os.path.exists(fname): os.remove(fname)
+
+            with open(fname,'a') as f:
+                if epoch == 1: f.write("epoch \t loss")
+                f.write("\n")
+                np.savetxt(f, [[losses[0],losses[idx+1]]], fmt='%d \t %.3e', newline="\t")
         
     def train(self):        
         self.model.to(self.device)
@@ -282,7 +274,6 @@ class PIMLTurb(TorchBackend):
             
         for epoch in np.linspace(1,int(self.config.n_epochs),int(self.config.n_epochs), dtype='int'):     
             iter_loss = np.zeros(len(self.loaders['train']))
-
             for idx, (x, y) in enumerate(self.loaders['train']):
                 x = x.to(self.device)
                 y = y.to(self.device)
@@ -320,6 +311,6 @@ class PIMLTurb(TorchBackend):
                 print('Reached sufficient KS Loss, stopping...')
                 break
                     
-            print('---')            
+            print('-----')            
                 
         return self.model
