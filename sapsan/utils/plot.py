@@ -114,15 +114,17 @@ def cdf_plot(series: List[np.ndarray],
         ax.plot(val[idx], yvals, label=label[idx])
         func.append(interp1d(val[idx], yvals))  
         
-        if idx==1 and ks==True:
+        minima = max([min(val[0]), min(val[1])])
+        maxima = min([max(val[0]), max(val[1])])
+        
+        if idx==1 and ks==True and minima < maxima:
             ks_stat, pvalue = ks_2samp(val[0], val[1])
-            minima = max([min(val[0]), min(val[1])])
-            maxima = min([max(val[0]), max(val[1])])
-
+                                    
             xtest = np.linspace(minima, maxima, length*10)
+
             D = abs(func[0](xtest)-func[1](xtest))
             Dmax = max(D)
-            Dpos = xtest[np.argmax(D)]
+            Dpos = xtest[np.argmax(D)]            
             ax.axvline(x=Dpos, linewidth=1, color='tab:red', linestyle='--')
 
             txt = ('pvalue = %.3e\n'%pvalue+
@@ -130,7 +132,10 @@ def cdf_plot(series: List[np.ndarray],
                      #r'$\rm ks_{line}$'+' = %.3e\n'%Dmax+
                      r'$\rm line_{pos}$'+' = %.3e'%Dpos)
 
-            ax.text(0.05, 0.55, txt, transform=ax.transAxes, fontsize=14)        
+            ax.text(0.05, 0.55, txt, transform=ax.transAxes, fontsize=14)                
+        elif idx==1 and ks==True and minima >= maxima: 
+            print('Warning: Value ranges do not overlap: KS stat cannot be computed.')
+            ks_stat = 1
 
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
     ax.legend(loc=0)
