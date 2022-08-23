@@ -1,5 +1,9 @@
 import setuptools
-from sapsan._version import __version__
+#from sapsan._version import __version__
+
+version = {}
+with open("sapsan/_version.py") as fv:
+	exec(fv.read(), version)
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -9,7 +13,7 @@ with open("requirements.txt", 'r') as f:
     
 setuptools.setup(
     name="sapsan",
-    version=__version__,
+    version=version['__version__'],
     author="Platon Karpov, Iskandar Sitdikov",
     author_email="plkarpov@ucsc.edu",
     description="Sapsan project",
