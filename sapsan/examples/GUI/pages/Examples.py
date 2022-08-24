@@ -4,6 +4,7 @@ import inspect
 import time
 import json
 import signal
+import inspect
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
@@ -29,7 +30,7 @@ from sapsan.lib.backends import FakeBackend, MLflowBackend
 from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
 from sapsan import Train, Evaluate
 from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3d, CNN3dConfig
-from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel
+from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel as model
 from sapsan.utils.plot import model_graph, pdf_plot, cdf_plot, slice_plot, plot_params
 
 st.set_page_config(
@@ -39,12 +40,12 @@ st.set_page_config(
 
 #initialization of defaults
 cf = configparser.RawConfigParser()
-widget_values = {}           
+widget_values = {}
 
 st.title('Sapsan Configuration')
 st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
 
-st.sidebar.markdown("General Configuration")
+st.sidebar.markdown("**General Configuration**")
 
 try:
     cf.read('temp.txt')
@@ -68,14 +69,14 @@ def run_experiment():
     #Load the data 
     x, y, data_loader = load_data(widget_values['checkpoints'])
     y = flatten(y)
+    shape = x.shape
     loaders = data_loader.convert_to_torch([x, y])
 
     st.write("Dataset loaded...")
 
-    estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         patience=int(widget_values['patience']), 
-                                         min_delta=float(widget_values['min_delta'])),
-                      loaders=loaders)
+    estimator = define_estimator(loaders)
+    #graph = model_graph(estimator.model, shape)
+    #st.graphviz_chart(graph.build_dot())
 
     #Set the experiment
     training_experiment = Train(backend=tracking_backend,
@@ -83,11 +84,13 @@ def run_experiment():
                                 data_parameters = data_loader,
                                 show_log = False)
 
-    #Plot progress        
+    #Plot progress            
     progress_slot = st.empty()
     epoch_slot = st.empty()
+    trainig_bar = st.progress(0)       
 
-    thread = Thread(target=show_log, args=(progress_slot, epoch_slot))
+    thread = Thread(target=show_log, args=(progress_slot, epoch_slot,
+                                           trainig_bar, widget_values['n_epochs']))
     add_script_run_ctx(thread)
     thread.start()
 
@@ -122,10 +125,6 @@ def run_experiment():
     cdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax2)
     plot_static()
 
-#    pred_slice, target_slice, pred_cube, target_cube = evaluation_experiment.split_batch(pred_cube)
-#    slice_plot([pred_slice, target_slice], label=['prediction', 'target'], cmap=evaluation_experiment.cmap)
-                 
-    #if self.axis>1: 
     plot_label = ['predict','target']
     plot_series = []       
     outdata = evaluation_experiment.split_batch(results['predict'])
@@ -134,8 +133,15 @@ def run_experiment():
             plot_series.append(value)
     slices = slice_plot(plot_series, label=plot_label, cmap='viridis')
     st.pyplot(plt)    
-
-
+    
+def define_estimator(loaders):
+    estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
+                                         patience=int(widget_values['patience']), 
+                                         min_delta=float(widget_values['min_delta'])),
+                      loaders=loaders)    
+    
+    return estimator
+    
 def load_data(checkpoints):
     #Load the data      
     features = widget_values['features'].split(',')
@@ -146,7 +152,6 @@ def load_data(checkpoints):
 
     checkpoints = np.array([int(i) for i in checkpoints.split(',')])
 
-    #print('--ST Shapes--', batch_size, input_size)
     data_loader = HDF5Dataset(path=widget_values['path'],
                               features=features,
                               target=target,
@@ -159,7 +164,7 @@ def load_data(checkpoints):
     return x, y, data_loader    
 
 
-def show_log(progress_slot, epoch_slot):        
+def show_log(progress_slot, epoch_slot, training_bar, n_epochs):        
     '''
     Show loss vs epoch progress with plotly, dynamically.
     The plot will be updated every 0.1 second
@@ -191,8 +196,8 @@ def show_log(progress_slot, epoch_slot):
         if current_epoch == last_epoch:
             pass
         else:     
-            epoch_slot.markdown('Epoch:$~$**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch, train_loss))
-            plot_data['epoch'] = data[:, 0]
+            epoch_slot.markdown('Epoch:$~$**%d**/**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch,n_epochs,train_loss))
+            plot_data['epoch'] = data[:, 0]               
             plot_data['train_loss'] = data[:, 1]
             df = pd.DataFrame(plot_data)
 
@@ -201,17 +206,17 @@ def show_log(progress_slot, epoch_slot):
             else:
                 plotting_routine = px.line
 
+            training_bar.progress(len(plot_data['epoch'])/n_epochs)
             fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
                           title='Training Progress', width=700, height=400)
             fig.update_layout(yaxis=dict(exponentformat='e'))
             fig.layout.hovermode = 'x'
             progress_slot.plotly_chart(fig)
 
-            last_epoch = current_epoch
+            last_epoch = current_epoch            
 
         if current_epoch == widget_values['n_epochs']: 
             return
-
 
         time.sleep(0.1) 
 
@@ -233,44 +238,6 @@ def make_recording_widget(f):
         return widget_value
 
     return wrapper
-
-def widget_history_checkbox(title, params):
-    if st.sidebar.checkbox(title):
-        widget_history_checked(params)
-    else:
-        widget_history_unchecked(params)
-
-def widget_history_checked(params):
-    widget_type = {number:int, number_main:int, text:str, text_main:str, checkbox:bool}
-    for i in range(len(params)):
-        label = params[i]['label']
-        default = params[i]['default']
-        widget = params[i]['widget']
-
-        not_widget_params = ['default', 'widget', 'widget_type']
-        additional_params = {key:value for key, value in params[i].items() if key not in not_widget_params}
-        try:
-            if widget_values[label+'_flag'] == True:
-                widget_values[label+'_flag'] = False
-                try:
-                    widget_values[label+'_default'] = widget_type[widget](temp[label])
-                    widget(value = widget_type[widget](temp[label]), **additional_params)
-                except: widget(value = widget_values[label+'_default'], **additional_params)
-            else:
-                widget(value = widget_values[label+'_default'], **additional_params)
-        except: 
-            widget_values[label+'_flag'] = False
-            widget(value = widget_type[widget](default), **additional_params)
-
-def widget_history_unchecked(params):
-    widget_type = {number:int, number_main:int, text:str, text_main:str, checkbox:bool}
-    for i in range(len(params)):
-        label = params[i]['label']
-        default = params[i]['default']
-        widget = params[i]['widget']
-
-        widget_values[label+'_flag'] = True        
-        widget_values[label+'_default'] = widget_type[widget](default)
 
 def load_config(config_file):
     cf.read(config_file)
@@ -298,7 +265,7 @@ text_main = make_recording_widget(st.text_input)
 checkbox = make_recording_widget(st.sidebar.checkbox)
 selectbox = make_recording_widget(st.sidebar.selectbox)
 
-config_file = st.sidebar.text_input('configuration file', "config.txt", type='default')
+config_file = st.sidebar.text_input('Configuration File', "config.txt", type='default')
 
 if st.sidebar.button('reload config'):
     #st.caching.clear_cache()
@@ -321,50 +288,45 @@ else:
 
 st.sidebar.text('>Collapse all sidebar pars to reset<')
 
-widget_history_checked([{'label':'experiment name', 'default':config['experiment name'], 'widget':text}])
+widget_values['experiment name'] = st.sidebar.text_input(label='Experiment Name',value=config['experiment name'])
 
-if st.sidebar.checkbox('Backend', value=False):        
-    widget_values['backend_selection'] = selectbox(
+with st.sidebar.expander('Backend'):
+    widget_values['backend_selection'] = st.selectbox(
         'What backend to use?',
         widget_values['backend_list'], index=widget_values['backend_selection_index'])
-
-    widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
-
-
+    
     if widget_values['backend_selection'] == 'MLflow':
-        widget_history_checked([{'label':'mlflow_host', 'default':config['mlflow_host'], 'widget':text}])
-        widget_history_checked([{'label':'mlflow_port', 'default':config['mlflow_port'], 
-                                 'widget':number, 'min_value':1024, 'max_value':65535}])
-else:
-    widget_history_unchecked([{'label':'mlflow_host', 'default':config['mlflow_host'], 'widget':text}])
-    widget_history_unchecked([{'label':'mlflow_port', 'default':config['mlflow_port'], 'widget':number,
-                                                                'min_value':1024, 'max_value':65535}]) 
+        widget_values['mlflow_host'] = st.text_input(label='MLflow host',value=config['mlflow_host'])
+        widget_values['mlflow_port'] = st.number_input(label='MLflow port',value=int(config['mlflow_port']),
+                                                       min_value=1024,max_value=65535,format='%d')
 
+with st.sidebar.expander('Data: train'):
+    widget_values['path'] = st.text_input(label='Path',value=config['path'])
+    widget_values['checkpoints'] = st.text_input(label='Checkpoints',value=config['checkpoints'])
+    widget_values['features'] = st.text_input(label='Input features',value=config['features'])
+    widget_values['target'] = st.text_input(label='Input target',value=config['target'])
+    widget_values['input_size'] = st.text_input(label='Input Size',value=config['input_size'])
+    widget_values['sample_to'] = st.text_input(label='Sample to size',value=config['sample_to'])
+    widget_values['batch_size'] = st.text_input(label='Batch Size',value=config['batch_size'])
 
-widget_history_checkbox('Data: train',[{'label':'path', 'default':config['path'], 'widget':text},
-                                {'label':'checkpoints', 'default':config['checkpoints'],'widget':text},
-                                {'label':'features', 'default':config['features'], 'widget':text},
-                                {'label':'target', 'default':config['target'], 'widget':text},
-                                {'label':'input_size', 'default':config['input_size'], 'widget':text},
-                                {'label':'sample_to', 'default':config['sample_to'], 'widget':text},
-                                {'label':'batch_size', 'default':config['batch_size'], 'widget':text}])
+with st.sidebar.expander('Data: test'):
+    widget_values['checkpoint_test'] = st.text_input(label='Checkpoint: test',value=config['checkpoint_test'])    
 
-widget_history_checkbox('Data: test',[{'label':'checkpoint_test', 
-                                       'default':config['checkpoint_test'],'widget':text}])
-
-
-
-widget_history_checkbox('Model',[{'label':'n_epochs', 
-                                  'default':config['n_epochs'], 'widget':number, 'min_value':1},
-                                 {'label':'patience', 'default':config['patience'], 'widget':number, 'min_value':0},
-                                 {'label':'min_delta', 'default':config['min_delta'], 'widget':text}])  
+with st.sidebar.expander('Model'):
+    widget_values['n_epochs'] = st.number_input(label='# of Epochs',value=int(config['n_epochs']), 
+                                                min_value=1,format='%d')
+    
+    widget_values['patience'] = st.number_input(label='Patience',value=int(config['patience']), 
+                                                min_value=0,format='%d')
+    widget_values['min_delta'] = st.number_input(label='Min Delta',value=float(config['min_delta']), 
+                                                step=float(config['min_delta'])*0.5,format='%.1e')    
 
 #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
 if widget_values['sampler_selection'] == "Equidistant3D":
     sampler = EquidistantSampling(text_to_list(widget_values['sample_to']))    
 
 show_config = [
-    ['experiment name',  widget_values["experiment name"]],
+    ['experiment name', widget_values["experiment name"]],
     ['data path', widget_values['path']],
     ['checkpoints', widget_values['checkpoints']],
     ['features', widget_values['features']],
@@ -387,10 +349,7 @@ with st.expander("Show configuration"):
 
 with st.expander("Show model graph"):    
     st.write('Please load the data first or enter the data shape manualy, comma separated.')
-    #st.write('Note: the number of features will be changed to 1 in the graph')
-
-    widget_history_checked([{'label':'Data Shape', 
-                             'default':'16,1,8,8,8', 'widget':text_main}])
+    widget_values['Data Shape'] = st.text_input(label='Data Shape', value='16,1,8,8,8')
 
     shape = widget_values['Data Shape']
     shape = np.array([int(i) for i in shape.split(',')])
@@ -399,25 +358,29 @@ with st.expander("Show model graph"):
     #Load the data  
     if st.button('Load Data'):
         x, y, data_loader = load_data(widget_values['checkpoints'])
+        y = flatten(y)
+        loaders = data_loader.convert_to_torch([x, y])
+
         shape = x.shape
 
-    try:
-        graph = model_graph(estimator.model, shape)
-        st.graphviz_chart(graph.build_dot())
-    except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
+        #try:
+        estimator = define_estimator(loaders)
 
-if st.checkbox("Show code of model"):           
-    st.code(inspect.getsource(CNN3dModel), language='python')        
-    widget_history_checked([{'label':'edit_port', 'default':8601, 'widget':number_main,
-                                                  'min_value':1024, 'max_value':65535}])
+    #graph = model_graph(estimator.model, shape)
+    #st.graphviz_chart(graph.build_dot())
+    #except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
+
+with st.expander("Show model code"):            
+    st.code(inspect.getsource(model), language='python')    
+
+    widget_values['edit_port'] = st.number_input(label='Edit Port',value=8601,min_value=1024,max_value=65535,format='%d')    
 
     if st.button('Edit'):
-        os.system('jupyter notebook ../../lib/estimator/cnn/spacial_3d_encoder.py --no-browser --port=%d &'%widget_values['edit_port'])
-        webbrowser.open('http://localhost:%d'%widget_values['edit_port'], new=2)
-
-else:
-    widget_history_unchecked([{'label':'edit_port', 'default':config["edit_port"], 'widget':number_main,
-                                          'min_value':1024, 'max_value':65535}])
+        estimator_path = inspect.getsourcefile(model)
+        st.info(f'Location: {estimator_path}')
+        
+        os.system(f"jupyter notebook {estimator_path} --NotebookApp.password='' --NotebookApp.token='' --no-browser --port={widget_values['edit_port']:n} &")
+        webbrowser.open(f"http://localhost:{widget_values['edit_port']:n}/edit/cnn3d_estimator.py", new=2)
 
 st.markdown("---")
 
@@ -441,4 +404,4 @@ if widget_values['backend_selection'] == 'MLflow':
 with open('temp.txt', 'w') as file:
     file.write('[config]\n')
     for key, value in widget_values.items():
-        file.write('%s = %s\n'%(key, value))                            
+        file.write('%s = %s\n'%(key, value))
