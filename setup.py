@@ -28,9 +28,11 @@ setuptools.setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     install_requires=requirements,
-    python_requires='>=3.7, <3.9',
+    python_requires='>=3.7, <=3.10',
     include_package_data = True,
     entry_points='''
         [console_scripts]
