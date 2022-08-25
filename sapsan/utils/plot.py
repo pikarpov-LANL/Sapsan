@@ -12,6 +12,7 @@ from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from cycler import cycler
 import plotly.express as px
 import pandas as pd
@@ -48,6 +49,7 @@ def pdf_plot(series: List[np.ndarray],
              bins: int = 100, 
              label: Optional[List[str]] = None, 
              figsize = (6,6),
+             dpi = 60,
              ax = None,
              style = style):
     """ PDF plot
@@ -60,7 +62,7 @@ def pdf_plot(series: List[np.ndarray],
     mpl.style.use(style)
     mpl.rcParams.update(plot_params())    
     if ax==None: 
-        fig = plt.figure(figsize = figsize)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)                
 
     if not label:
@@ -76,7 +78,8 @@ def pdf_plot(series: List[np.ndarray],
     ax.legend(loc=0)
     ax.set_yscale("log")
     ax.set_xlabel("Values")
-    ax.set_ylabel("PDF")
+    ax.set_ylabel('Probability Density')
+    ax.set_title('PDF')
     plt.tight_layout()
 
     return ax
@@ -85,6 +88,7 @@ def pdf_plot(series: List[np.ndarray],
 def cdf_plot(series: List[np.ndarray], 
              label: Optional[List[str]] = None, 
              figsize = (6,6),
+             dpi=60,
              ax = None,
              ks = False,
              style = style):
@@ -97,7 +101,7 @@ def cdf_plot(series: List[np.ndarray],
     mpl.style.use(style)
     mpl.rcParams.update(plot_params())
     if ax==None: 
-        fig = plt.figure(figsize = figsize)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
 
     if not label:
@@ -140,7 +144,8 @@ def cdf_plot(series: List[np.ndarray],
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
     ax.legend(loc=0)
     ax.set_xlabel('Values')
-    ax.set_ylabel('CDF')
+    ax.set_ylabel('Cumulative Density')
+    ax.set_title('CDF')
     plt.tight_layout()
     
     if ks: return ax, ks_stat
@@ -150,7 +155,8 @@ def cdf_plot(series: List[np.ndarray],
 def slice_plot(series: List[np.ndarray], 
                label: Optional[List[str]] = None, 
                cmap = 'viridis',
-               figsize = (16,6),
+               figsize = (12,6),
+               dpi = 60,
                ax = None):
     mpl.rcParams.update(plot_params())
     if not label:
@@ -163,13 +169,17 @@ def slice_plot(series: List[np.ndarray],
     vmin = np.amin(series[-1])
     vmax = np.amax(series[-1])
     
-    fig = plt.figure(figsize = figsize)
+    fig = plt.figure(figsize = figsize, dpi=dpi)
     for idx, data in enumerate(series):
         if ax==None or idx>0:         
             ax = fig.add_subplot(121+idx)
                 
         im = ax.imshow(data, cmap=cmap, vmin=vmin, vmax = vmax)
-        plt.colorbar(im).ax.tick_params(labelsize=14)
+        
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)                
+        plt.colorbar(im,cax=cax).ax.tick_params(labelsize=14)
+        
         ax.set_title(label[idx])
     plt.tight_layout()
     
@@ -180,6 +190,7 @@ def line_plot(series: List[np.ndarray],
               label: Optional[List[str]] = None, 
               plot_type = 'plot',              
               figsize = (6,6),
+              dpi = 60,
               linestyle = None,
               ax = None,              
               style = style):
@@ -191,7 +202,7 @@ def line_plot(series: List[np.ndarray],
         linestyle = ['-' for i in range(len(series))]
         
     if ax==None: 
-        fig = plt.figure(figsize = figsize)
+        fig = plt.figure(figsize=figsize, dpi=dpi)
         ax = fig.add_subplot(111)
         
     for idx, data in enumerate(series):

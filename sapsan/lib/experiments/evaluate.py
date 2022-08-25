@@ -220,7 +220,6 @@ class Evaluate(Experiment):
         fig = plt.figure(figsize=(12,6), dpi=60)
         (ax1, ax2) = fig.subplots(1,2)
 
-        #print("Series shapes", np.shape(series), series[0].shape)
         pdf = pdf_plot(series, label=label, ax=ax1)
         self.set_axes_pars(pdf)
         
