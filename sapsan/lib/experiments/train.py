@@ -53,19 +53,21 @@ class Train(Experiment):
         
         #only if catalyst.runner is used
         if os.path.exists('model_details.txt'):
-            self.artifacts.append('model_details.txt')
-            
-            with open('model_forward.txt', 'w') as fw:
-                fw.write(inspect.getsource(self.model.model.forward))
-            self.artifacts.append('model_forward.txt')
+            self.artifacts.append('model_details.txt')                        
             
             #plot the training log if pytorch is used
             try: 
                 log = log_plot(self.show_log)
                 log.write_html("runtime_log.html")
                 self.artifacts.append("runtime_log.html")
-            except: print("Couldn't plot the training log: train.csv not found")
-        else: pass        
+            except: print("WARNING: Couldn't plot the training log - train.csv not found")
+        else: pass
+        
+        try:
+            with open('model_forward.txt', 'w') as fw:
+                fw.write(inspect.getsource(self.model.model.forward))
+            self.artifacts.append('model_forward.txt')
+        except: pass
         
         #only if catalyst.runner is used
         if 'train' in self.get_metrics():
