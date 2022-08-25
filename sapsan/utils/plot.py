@@ -144,7 +144,7 @@ def cdf_plot(series: List[np.ndarray],
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
     ax.legend(loc=0)
     ax.set_xlabel('Values')
-    ax.set_ylabel('Cumulative Density')
+    ax.set_ylabel('Cumulative Probability')
     ax.set_title('CDF')
     plt.tight_layout()
     
