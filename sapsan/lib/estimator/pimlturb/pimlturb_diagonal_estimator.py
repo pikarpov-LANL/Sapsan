@@ -20,6 +20,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils import data
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
