@@ -153,7 +153,7 @@ def setup_package(name: str):
 def sapsan():
     pass
     
-@sapsan.command("create", help="Sets up a new project with an custom estimator template.")
+@sapsan.command("create", help="Sets up a new project with an estimator template")
 @click.option('--name', '-n', default="new_project", show_default=True, help="name of the new project")
 @click.option('--gtb/--no-gtb','--get_torch_backend', default=False, show_default=True, 
               help="Copies torch_backend.py into working directory to customize the Catalyst Runner - adjust its Distributed Data Parallel (DDP) settings")

@@ -311,6 +311,9 @@ class PIMLTurb(TorchBackend):
                 print('Reached sufficient KS Loss, stopping...')
                 break
                     
-            print('-----')            
+            print('-----')     
+            
+        with open('model_details.txt', 'w') as file:                    
+            file.write(f'{str(self.model)}\n\n{str(self.optimizer)}\n\n{str(self.scheduler)}')            
                 
         return self.model

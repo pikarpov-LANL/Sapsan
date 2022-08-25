@@ -1,0 +1,19 @@
+[sapsan_config]
+experiment_name = CNN experiment
+mlflow_host = localhost
+mlflow_port = 9000
+edit_port = 8601
+input_size = (32,32,32)
+sample_to = (16,16,16)
+batch_size = (8,8,8)
+n_epochs = 5
+patience = 10
+min_delta = 1e-5
+path = ../data/cnn_krr/t{checkpoint:1.0f}/{feature}_dim32_fm15.h5
+checkpoints = 0
+checkpoint_test = 0
+features = u
+target = u
+backend_selection = Fake
+sampler_selection = Equidistant3D
+
