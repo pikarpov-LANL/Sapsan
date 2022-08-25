@@ -1,5 +1,4 @@
 import setuptools
-#from sapsan._version import __version__
 
 version = {}
 with open("sapsan/_version.py") as fv:
