@@ -17,7 +17,6 @@ import configparser
 import webbrowser
 from io import BytesIO
 from threading import Thread
-#from st_state_patch import SessionState
 
 import torch
 import streamlit as st
@@ -40,17 +39,11 @@ st.set_page_config(
 
 #initialization of defaults
 cf = configparser.RawConfigParser()
-widget_values = {}
 
 st.title('Sapsan Configuration')
-st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once you are done, you can see the summary of your runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
+st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once ready, you can see the summary of the runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
 
 st.sidebar.markdown("**General Configuration**")
-
-try:
-    cf.read('temp.txt')
-    temp = dict(cf.items('config'))
-except: pass
 
 def run_experiment():
     '''
@@ -59,15 +52,15 @@ def run_experiment():
     this is the only function you need to edit to set up your own GUI demo.
     '''
 
-    if widget_values['backend_selection'] == 'Fake':
-        tracking_backend = FakeBackend(widget_values['experiment name'])
+    if st.session_state.backend_selection == 'Fake':
+        tracking_backend = FakeBackend(st.session_state.experiment_name)
 
-    elif widget_values['backend_selection'] == 'MLflow':
-        tracking_backend = MLflowBackend(widget_values['experiment name'], 
-        widget_values['mlflow_host'],widget_values['mlflow_port'])
+    elif st.session_state.backend_selection == 'MLflow':
+        tracking_backend = MLflowBackend(st.session_state.experiment_name, 
+        st.session_state.mlflow_host, st.session_state.mlflow_port)
 
     #Load the data 
-    x, y, data_loader = load_data(widget_values['checkpoints'])
+    x, y, data_loader = load_data(st.session_state.checkpoints)
     y = flatten(y)
     shape = x.shape
     loaders = data_loader.convert_to_torch([x, y])
@@ -89,21 +82,19 @@ def run_experiment():
     epoch_slot = st.empty()
     trainig_bar = st.progress(0)       
 
-    thread = Thread(target=show_log, args=(progress_slot, epoch_slot,
-                                           trainig_bar, widget_values['n_epochs']))
+    thread = Thread(target=show_log, args=(progress_slot, epoch_slot,trainig_bar))
     add_script_run_ctx(thread)
     thread.start()
 
     start = time.time()
     #Train the model
     trained_estimator = training_experiment.run()
-
-    st.write('Trained in %.2f sec'%((time.time()-start)))
-    st.success('Done! Plotting...')
+    
+    st.success(f'Finished training in {(time.time()-start):.2f} s!')
 
     #--- Test the model ---
     #Load the test data
-    x, y, data_loader = load_data(widget_values['checkpoint_test'])
+    x, y, data_loader = load_data(st.session_state.checkpoint_test)
     loaders = data_loader.convert_to_torch([x, y])
 
     #Set the test experiment
@@ -118,11 +109,13 @@ def run_experiment():
     #Plots metrics
     mpl.rcParams.update(plot_params())
 
-    fig = plt.figure(figsize=(12,6), dpi=60)
-    (ax1, ax2) = fig.subplots(1,2)
-
-    pdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax1)
-    cdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax2)
+    fig = plt.figure(figsize=(14,6), dpi=60)
+    (ax0, ax1) = fig.subplots(1,2)
+    
+    pdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax0)
+    cdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax1)
+    plt.subplots_adjust(left=0.07,right=0.9,wspace=0.27)
+    #plt.tight_layout(w_pad=7)
     plot_static()
 
     plot_label = ['predict','target']
@@ -131,40 +124,40 @@ def run_experiment():
     for key, value in outdata.items():
         if key in plot_label:
             plot_series.append(value)
-    slices = slice_plot(plot_series, label=plot_label, cmap='viridis')
+    slice_plot(plot_series, label=plot_label, cmap='viridis')#,ax=ax[1,0])
+    #slice_plot(plot_series[1:], label=plot_label, cmap='viridis')#,ax=ax[1,1])
+    plt.subplots_adjust(left=0.1,wspace=-0.1)
     st.pyplot(plt)    
-    
+        
 def define_estimator(loaders):
-    estimator = CNN3d(config=CNN3dConfig(n_epochs=int(widget_values['n_epochs']), 
-                                         patience=int(widget_values['patience']), 
-                                         min_delta=float(widget_values['min_delta'])),
+    estimator = CNN3d(config=CNN3dConfig(n_epochs=st.session_state.n_epochs, 
+                                         patience=st.session_state.patience,
+                                         min_delta=st.session_state.min_delta),
                       loaders=loaders)    
     
     return estimator
     
 def load_data(checkpoints):
     #Load the data      
-    features = widget_values['features'].split(',')
+    features = st.session_state.features.split(',')
     features = [i.strip() for i in features]
 
-    target = widget_values['target'].split(',')
+    target = st.session_state.target.split(',')
     target = [i.strip() for i in target]     
 
-    checkpoints = np.array([int(i) for i in checkpoints.split(',')])
-
-    data_loader = HDF5Dataset(path=widget_values['path'],
+    data_loader = HDF5Dataset(path=st.session_state.path,
                               features=features,
                               target=target,
-                              checkpoints=checkpoints,
-                              batch_size=text_to_list(widget_values['batch_size']),
-                              input_size=text_to_list(widget_values['input_size']),
+                              checkpoints=text_to_list(st.session_state.checkpoints),
+                              batch_size=text_to_list(st.session_state.batch_size),
+                              input_size=text_to_list(st.session_state.input_size),
                               sampler=sampler,
                               shuffle = False)
     x, y = data_loader.load_numpy()
     return x, y, data_loader    
 
 
-def show_log(progress_slot, epoch_slot, training_bar, n_epochs):        
+def show_log(progress_slot, epoch_slot, training_bar):        
     '''
     Show loss vs epoch progress with plotly, dynamically.
     The plot will be updated every 0.1 second
@@ -196,7 +189,7 @@ def show_log(progress_slot, epoch_slot, training_bar, n_epochs):
         if current_epoch == last_epoch:
             pass
         else:     
-            epoch_slot.markdown('Epoch:$~$**%d**/**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch,n_epochs,train_loss))
+            epoch_slot.markdown('Epoch:$~$**%d**/**%d** $~~~~~$ Train Loss:$~$**%.4e**'%(current_epoch,st.session_state.n_epochs,train_loss))
             plot_data['epoch'] = data[:, 0]               
             plot_data['train_loss'] = data[:, 1]
             df = pd.DataFrame(plot_data)
@@ -206,7 +199,7 @@ def show_log(progress_slot, epoch_slot, training_bar, n_epochs):
             else:
                 plotting_routine = px.line
 
-            training_bar.progress(len(plot_data['epoch'])/n_epochs)
+            training_bar.progress(len(plot_data['epoch'])/st.session_state.n_epochs)
             fig = plotting_routine(df, x="epoch", y="train_loss", log_y=True,
                           title='Training Progress', width=700, height=400)
             fig.update_layout(yaxis=dict(exponentformat='e'))
@@ -215,7 +208,7 @@ def show_log(progress_slot, epoch_slot, training_bar, n_epochs):
 
             last_epoch = current_epoch            
 
-        if current_epoch == widget_values['n_epochs']: 
+        if current_epoch == st.session_state.n_epochs: 
             return
 
         time.sleep(0.1) 
@@ -227,26 +220,22 @@ def plot_static():
     st.image(buf) 
 
 # ----- Backend Widget Functions -----
-def make_recording_widget(f):
-    """
-    Return a function that wraps a streamlit widget and records the
-    widget's values to a global dictionary.
-    """
-    def wrapper(label, *args, **kwargs):
-        widget_value = f(label, *args, **kwargs)
-        widget_values[label] = widget_value
-        return widget_value
-
-    return wrapper
-
 def load_config(config_file):
     cf.read(config_file)
-    config = dict(cf.items('sapsan_config'))
+    config = OrderedDict(cf.items('sapsan_config'))
+    str_type = ['path','checkpoints','features','target','input_size','sample_to','batch_size','checkpoint_test']
+    for key, value in config.items():
+        if key not in str_type:
+            try: value = int(value)
+            except: 
+                try: value = float(value)
+                except: pass
+        config[key]=value
     return config
 
 def selectbox_params():
-    widget_values['backend_list'] = ['Fake', 'MLflow']
-    widget_values['backend_selection_index'] = widget_values['backend_list'].index(widget_values['backend_selection'])
+    st.session_state.backend_list = ['Fake', 'MLflow']
+    st.session_state.backend_selection_index = st.session_state.backend_list.index(st.session_state.backend_selection)
 
 def text_to_list(value):
     to_clean = ['(', ')', '[', ']', ' ']
@@ -256,108 +245,85 @@ def text_to_list(value):
 
 
 #--- Load Default ---    
-#state = SessionState()   
-#button = make_recording_widget(st.sidebar.button)
-number = make_recording_widget(st.sidebar.number_input)
-number_main = make_recording_widget(st.number_input)
-text = make_recording_widget(st.sidebar.text_input)
-text_main = make_recording_widget(st.text_input)
-checkbox = make_recording_widget(st.sidebar.checkbox)
-selectbox = make_recording_widget(st.sidebar.selectbox)
-
 config_file = st.sidebar.text_input('Configuration File', "config.txt", type='default')
 
-if st.sidebar.button('reload config'):
-    #st.caching.clear_cache()
-    config = load_config(config_file)
-
-    for key, value in config.items():
-        widget_values[key+'_default'] = value
-        widget_values[key] = value
-        widget_values[key+'flag'] = None
-
-    selectbox_params()                
-    st.sidebar.text('... loaded config %s'%config_file)
-
-else:
+if st.sidebar.button('Reload Config'):
     config = load_config(config_file)
     for key, value in config.items():
-        if key in widget_values: pass
-        else: widget_values[key] = value
+        setattr(st.session_state, key, value)    
+else: 
+    config = load_config(config_file)
+    for key, value in config.items():
+        if key in st.session_state.keys(): pass
+        else: setattr(st.session_state, key, value)    
     selectbox_params()
-
-st.sidebar.text('>Collapse all sidebar pars to reset<')
-
-widget_values['experiment name'] = st.sidebar.text_input(label='Experiment Name',value=config['experiment name'])
+        
+st.sidebar.text_input(label='Experiment Name',value=config['experiment_name'],key='experiment_name')
 
 with st.sidebar.expander('Backend'):
-    widget_values['backend_selection'] = st.selectbox(
-        'What backend to use?',
-        widget_values['backend_list'], index=widget_values['backend_selection_index'])
+    st.selectbox(
+        label='What backend to use?',key='backend_selection',
+        options=st.session_state.backend_list, index=st.session_state.backend_selection_index)
     
-    if widget_values['backend_selection'] == 'MLflow':
-        widget_values['mlflow_host'] = st.text_input(label='MLflow host',value=config['mlflow_host'])
-        widget_values['mlflow_port'] = st.number_input(label='MLflow port',value=int(config['mlflow_port']),
-                                                       min_value=1024,max_value=65535,format='%d')
+    if st.session_state.backend_selection == 'MLflow':
+        st.text_input(label='MLflow host',value=config['mlflow_host'],key='mlflow_host')
+        st.number_input(label='MLflow port',value=config['mlflow_port'],key='mlflow_port',
+                        min_value=1024,max_value=65535,format='%d')
 
 with st.sidebar.expander('Data: train'):
-    widget_values['path'] = st.text_input(label='Path',value=config['path'])
-    widget_values['checkpoints'] = st.text_input(label='Checkpoints',value=config['checkpoints'])
-    widget_values['features'] = st.text_input(label='Input features',value=config['features'])
-    widget_values['target'] = st.text_input(label='Input target',value=config['target'])
-    widget_values['input_size'] = st.text_input(label='Input Size',value=config['input_size'])
-    widget_values['sample_to'] = st.text_input(label='Sample to size',value=config['sample_to'])
-    widget_values['batch_size'] = st.text_input(label='Batch Size',value=config['batch_size'])
+    st.text_input(label='Path',value=config['path'],key='path')
+    st.text_input(label='Checkpoints',value=config['checkpoints'],key='checkpoints')
+    st.text_input(label='Input features',value=config['features'],key='features')
+    st.text_input(label='Input target',value=config['target'],key='target')
+    st.text_input(label='Input Size',value=config['input_size'],key='input_size')
+    st.text_input(label='Sample to size',value=config['sample_to'],key='sample_to')
+    st.text_input(label='Batch Size',value=config['batch_size'],key='batch_size')
 
 with st.sidebar.expander('Data: test'):
-    widget_values['checkpoint_test'] = st.text_input(label='Checkpoint: test',value=config['checkpoint_test'])    
-
-with st.sidebar.expander('Model'):
-    widget_values['n_epochs'] = st.number_input(label='# of Epochs',value=int(config['n_epochs']), 
-                                                min_value=1,format='%d')
+    st.text_input(label='Checkpoint: test',value=config['checkpoint_test'],key='checkpoint_test')    
     
-    widget_values['patience'] = st.number_input(label='Patience',value=int(config['patience']), 
-                                                min_value=0,format='%d')
-    widget_values['min_delta'] = st.number_input(label='Min Delta',value=float(config['min_delta']), 
-                                                step=float(config['min_delta'])*0.5,format='%.1e')    
+with st.sidebar.expander('Model'):
+    st.number_input(label='# of Epochs',value=config['n_epochs'],key='n_epochs',min_value=1,format='%d')
+    st.number_input(label='Patience',value=config['patience'],key='patience',min_value=0,step=1,format='%d')    
+    st.number_input(label='Min Delta',value=config['min_delta'],key='min_delta',step=config['min_delta']*0.5,format='%.1e')
 
 #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
-if widget_values['sampler_selection'] == "Equidistant3D":
-    sampler = EquidistantSampling(text_to_list(widget_values['sample_to']))    
+if st.session_state.sampler_selection == "Equidistant3D":
+    sampler = EquidistantSampling(text_to_list(st.session_state.sample_to))    
 
 show_config = [
-    ['experiment name', widget_values["experiment name"]],
-    ['data path', widget_values['path']],
-    ['checkpoints', widget_values['checkpoints']],
-    ['features', widget_values['features']],
-    ['target', widget_values['target']],
-    ['Reduce each dimension to', widget_values['sample_to']],
-    ['Batch size per dimension', widget_values['batch_size']],
-    ['number of epochs', widget_values['n_epochs']],
-    ['patience', widget_values['patience']],
-    ['min_delta', widget_values['min_delta']],
-    ['backend_selection', widget_values['backend_selection']],
-    ['checkpoint: test', widget_values['checkpoint_test']],
+    ['experiment name', st.session_state.experiment_name],
+    ['data path', st.session_state.path],
+    ['features', st.session_state.features],
+    ['target', st.session_state.target],
+    ['checkpoints', st.session_state.checkpoints],
+    ['checkpoint: test', st.session_state.checkpoint_test],        
+    ['Reduce each dimension to', st.session_state.sample_to],
+    ['Batch size per dimension', st.session_state.batch_size],
+    ['number of epochs', st.session_state.n_epochs],    
+    ['patience', st.session_state.patience],    
+    ['min_delta', st.session_state.min_delta],
+    ['backend_selection', st.session_state.backend_selection],    
     ]
 
-if widget_values['backend_selection']=='MLflow': 
-    show_config.append(['mlflow_host', widget_values['mlflow_host']])
-    show_config.append(['mlflow_port', widget_values['mlflow_port']])
+if st.session_state.backend_selection=='MLflow': 
+    show_config.append(['mlflow_host', st.session_state.mlflow_host])
+    show_config.append(['mlflow_port', st.session_state.mlflow_port])
 
 with st.expander("Show configuration"):    
-    st.table(pd.DataFrame(show_config, columns=["key", "value"]))
+    st.table(pd.DataFrame(show_config, columns=["Key", "Value"]))
 
 with st.expander("Show model graph"):    
     st.write('Please load the data first or enter the data shape manualy, comma separated.')
-    widget_values['Data Shape'] = st.text_input(label='Data Shape', value='16,1,8,8,8')
+    st.text_input(label='Data Shape',key='data_shape',value='16,1,8,8,8')
 
-    shape = widget_values['Data Shape']
+    shape = st.session_state.data_shape
     shape = np.array([int(i) for i in shape.split(',')])
     shape[1] = 1
 
     #Load the data  
     if st.button('Load Data'):
-        x, y, data_loader = load_data(widget_values['checkpoints'])
+        x, y, data_loader = load_data(st.session_state.checkpoints)
         y = flatten(y)
         loaders = data_loader.convert_to_torch([x, y])
 
@@ -373,17 +339,16 @@ with st.expander("Show model graph"):
 with st.expander("Show model code"):            
     st.code(inspect.getsource(model), language='python')    
 
-    widget_values['edit_port'] = st.number_input(label='Edit Port',value=8601,min_value=1024,max_value=65535,format='%d')    
+    st.number_input(label='Edit Port',key='edit_port',value=8601,min_value=1024,max_value=65535,format='%d')    
 
     if st.button('Edit'):
         estimator_path = inspect.getsourcefile(model)
         st.info(f'Location: {estimator_path}')
         
-        os.system(f"jupyter notebook {estimator_path} --NotebookApp.password='' --NotebookApp.token='' --no-browser --port={widget_values['edit_port']:n} &")
-        webbrowser.open(f"http://localhost:{widget_values['edit_port']:n}/edit/cnn3d_estimator.py", new=2)
+        os.system(f"jupyter notebook {estimator_path} --NotebookApp.password='' --NotebookApp.token='' --no-browser --port={st.session_state.edit_port:n} &")
+        webbrowser.open(f"http://localhost:{st.session_state.edit_port:n}/edit/cnn3d_estimator.py", new=2)
 
 st.markdown("---")
-
 if st.button("Run experiment"):
     start = time.time()
 
@@ -394,14 +359,24 @@ if st.button("Run experiment"):
 
     run_experiment()
 
-    st.write('Finished in %.2f sec'%((time.time()-start))) 
+    st.success(f'Total runtime: {(time.time()-start):.2f} s')
 
-if widget_values['backend_selection'] == 'MLflow':
+if st.session_state.backend_selection == 'MLflow':
     if st.button("MLflow tracking"):
-        webbrowser.open('http://%s:%s'%(widget_values['mlflow_host'], widget_values['mlflow_port']), new=2)
+        webbrowser.open('http://%s:%s'%(st.session_state.mlflow_host, st.session_state.mlflow_port), new=2)
 
+st.sidebar.markdown("---")
 
-with open('temp.txt', 'w') as file:
-    file.write('[config]\n')
-    for key, value in widget_values.items():
-        file.write('%s = %s\n'%(key, value))
+with st.sidebar.expander('Super Secret'):
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        if st.button('❄️'):
+            st.snow()
+    with col2:
+        if st.button('🎈'):
+            st.balloons()    
+
+#with open('temp.txt', 'w') as file:
+#    file.write('[config]\n')
+#    for key, value in widget_values.items():
+#        file.write('%s = %s\n'%(key, value))                            

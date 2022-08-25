@@ -134,7 +134,7 @@ def cdf_plot(series: List[np.ndarray],
 
             ax.text(0.05, 0.55, txt, transform=ax.transAxes, fontsize=14)                
         elif idx==1 and ks==True and minima >= maxima: 
-            print('Warning: Value ranges do not overlap: KS stat cannot be computed.')
+            print('WARNING: Value ranges do not overlap: KS stat cannot be computed.')
             ks_stat = 1
 
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
@@ -150,10 +150,14 @@ def cdf_plot(series: List[np.ndarray],
 def slice_plot(series: List[np.ndarray], 
                label: Optional[List[str]] = None, 
                cmap = 'viridis',
-               figsize = (16,6)):
+               figsize = (16,6),
+               ax = None):
     mpl.rcParams.update(plot_params())
     if not label:
         label = ["Data {}".format(i) for i in range(len(series))]
+    if len(series)>1 and ax!=None: 
+        print("WARNING: ax is reset to None because more than 1 dataset was passed")
+        ax = None
     
     #colormap range is based on the target slice
     vmin = np.amin(series[-1])
@@ -161,7 +165,9 @@ def slice_plot(series: List[np.ndarray],
     
     fig = plt.figure(figsize = figsize)
     for idx, data in enumerate(series):
-        ax = fig.add_subplot(121+idx)
+        if ax==None or idx>0:         
+            ax = fig.add_subplot(121+idx)
+                
         im = ax.imshow(data, cmap=cmap, vmin=vmin, vmax = vmax)
         plt.colorbar(im).ax.tick_params(labelsize=14)
         ax.set_title(label[idx])

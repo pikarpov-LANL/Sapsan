@@ -1,5 +1,5 @@
 [sapsan_config]
-experiment name = CNN experiment
+experiment_name = CNN experiment
 mlflow_host = localhost
 mlflow_port = 9000
 edit_port = 8601
