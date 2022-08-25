@@ -1,2 +1,3 @@
+include requirements.txt
 include sapsan/examples/*.ipynb
 recursive-include sapsan/examples/data *.h5
