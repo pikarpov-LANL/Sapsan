@@ -32,7 +32,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.10',
     ],
     install_requires=requirements,
-    python_requires='>=3.7, <=3.10',
+    python_requires='>=3.7, <3.11',
     include_package_data = True,
     entry_points='''
         [console_scripts]
