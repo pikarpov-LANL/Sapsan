@@ -1,0 +1,47 @@
+name: Manually publish Python 🐍 distributions 📦 to PyPI
+
+# without version commit
+
+on:
+  workflow_dispatch:
+jobs:
+  build-n-publish:
+    name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
+    runs-on: ubuntu-22.04
+    env:
+      release_version: ${{ github.event.release.tag_name }}
+
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.9
+    - name: Install wheel
+      run: >-
+        python -m
+        pip install
+        --user
+        --upgrade
+        setuptools wheel
+    - name: Install PyTorch
+      run: |
+        pip3 install torch==1.8.2 torchvision==0.9.2 torchaudio==0.8.2 --extra-index-url https://download.pytorch.org/whl/lts/1.8/cpu
+    - name: Install dependencies
+      run: |        
+        pip3 install -r requirements.txt
+    - name: Set version for release
+      run: >-
+        rm sapsan/_version.py &&
+        echo "__version__ = '${release_version}'" >> sapsan/_version.py &&
+        echo $release_version
+    - name: Build a binary wheel and a source tarball
+      run: >-
+        python
+        setup.py
+        sdist bdist_wheel
+    - name: Publish distribution 📦 to PyPI
+#      if: startsWith(github.event.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.pypi_password }}
