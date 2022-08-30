@@ -6,7 +6,7 @@ import sys
 
 from sapsan.lib.backends import MLflowBackend
 from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
-from sapsan import Train, Evaluate, model_graph
+from sapsan.lib import Train, Evaluate
 
 #Importing your custom estimator, i.e. ML algorithm
 from {name}_estimator import {name_upper}, {name_upper}Config
