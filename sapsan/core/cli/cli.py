@@ -145,7 +145,7 @@ def setup_package(name: str):
 
 @click.group(help="""
     Base Sapsan cli function. Further descriptions and tutorials for Sapsan 
-    and the CLI can be found on https://github.com/pikarpov-LANL/Sapsan/wiki
+    and the CLI can be found on https://sapsan-wiki.github.io/overview/getting_started/#command-line-interface-cli-jupyter-notebooks
 """)
 @click.version_option(version = __version__, prog_name="Sapsan", 
                       message = "%(prog)s %(version)s")

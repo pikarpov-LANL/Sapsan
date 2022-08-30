@@ -27,16 +27,17 @@ style = 'tableau-colorblind10'
 
 def plot_params():
     params = {'font.size': 14, 'legend.fontsize': 14, 
-              'axes.labelsize': 20, 'axes.titlesize':24,
+              'axes.labelsize': 20, 'axes.titlesize': 24,
               'xtick.labelsize': 17,'ytick.labelsize': 17,
-              'axes.linewidth': 1, 'patch.linewidth': 3, 'lines.linewidth': 3,
+              'axes.linewidth': 1, 'patch.linewidth': 3, 
+              'lines.linewidth': 3,
               'xtick.major.width': 1.5,'ytick.major.width': 1.5,
               'xtick.minor.width': 1.25,'ytick.minor.width': 1.25,
               'xtick.major.size': 7,'ytick.major.size': 7,
               'xtick.minor.size': 4,'ytick.minor.size': 4,
               'xtick.direction': 'in','ytick.direction': 'in',              
-              'axes.formatter.limits' : [-7, 7], 
-              'axes.grid':True, 'grid.linestyle': ':', 'grid.color':'#999999',
+              'axes.formatter.limits': [-7, 7],'axes.grid': True, 
+              'grid.linestyle': ':','grid.color': '#999999',
               'text.usetex': False,}
               #'axes.prop_cycle': cycler('color', ['#FF800E', '#006BA4', '#ABABAB', '#595959', 
                #                                   '#5F9ED1', '#C85200', '#898989', '#A2C8EC', 
@@ -144,7 +145,7 @@ def cdf_plot(series: List[np.ndarray],
     ax.ticklabel_format(axis='x', style='sci', scilimits=(-2,2)) 
     ax.legend(loc=0)
     ax.set_xlabel('Values')
-    ax.set_ylabel('Cumulative Probability')
+    ax.set_ylabel('Cumulative Distribution')
     ax.set_title('CDF')
     plt.tight_layout()
     

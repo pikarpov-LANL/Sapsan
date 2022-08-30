@@ -10,7 +10,7 @@ Feel free to check out a website version at [sapsan.app](http://sapsan.app). The
 
 ## [Sapsan's Wiki](https://sapsan-wiki.github.io/)
 
-Please refer to Sapsan's Github Wiki to learn more about the framework's details and capabilities.
+Please refer to Sapsan's Wiki to learn more about the framework's details and capabilities.
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ sapsan test
 
 ### 4. Run Examples
 
-To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](/details/estimators/#convolution-neural-network-cnn), [PICAE](/details/estimators/#physics-informed-convolutional-autoencoder-picae), or [PIMLTurb](/details/estimators/#physics-informed-cnn-for-turbulence-modeling-pimlturb) on 3D data, and [KRR](/details/estimators/#kernel-ridge-regression-krr) on 2D data). To copy the examples, type:
+To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://sapsan-wiki.github.io/details/estimators/#convolution-neural-network-cnn), [PIMLTurb](https://sapsan-wiki.github.io/details/estimators/#physics-informed-cnn-for-turbulence-modeling-pimlturb), [PICAE](https://sapsan-wiki.github.io/details/estimators/#physics-informed-convolutional-autoencoder-picae) or on 3D data, and [KRR](https://sapsan-wiki.github.io/details/estimators/#kernel-ridge-regression-krr) on 2D data). To copy the examples, type:
 ```
 sapsan get_examples
 ```
