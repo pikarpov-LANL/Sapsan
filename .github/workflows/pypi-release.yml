@@ -42,11 +42,6 @@ jobs:
           git add sapsan/_version.py
           git commit -am "version update"
           git push origin HEAD:master
-    - name: Merging master into pk
-      run: |
-          git checkout pk
-          git merge --commit master
-          git push origin HEAD:pk
     - name: Build a binary wheel and a source tarball
       run: >-
         python
