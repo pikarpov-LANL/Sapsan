@@ -1,15 +1,20 @@
-name: Publish Python 🐍 distributions 📦 to PyPI
+name: Manually publish Python 🐍 distributions 📦 to PyPI
+
+# without version commit
 
 on:
-  release:
-    types: [published]
-
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bump Version
+        default: 0.0.0
+        required: true  
 jobs:
   build-n-publish:
     name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-22.04
     env:
-      release_version: ${{ github.event.release.tag_name }}
+      release_version: ${{ github.event.inputs.version }}
 
     steps:
     - uses: actions/checkout@master
@@ -35,13 +40,6 @@ jobs:
         rm sapsan/_version.py &&
         echo "__version__ = '${release_version}'" >> sapsan/_version.py &&
         echo $release_version
-    - name: Commit version
-      run: |
-          git config --global user.name 'pikarpov-LANL'
-          git config --global user.email 'pikarpov-LANL@users.noreply.github.com'
-          git add sapsan/_version.py
-          git commit -am "version update"
-          git push origin HEAD:master
     - name: Build a binary wheel and a source tarball
       run: >-
         python
