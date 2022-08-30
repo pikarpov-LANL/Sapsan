@@ -27,7 +27,7 @@ sys.path.append(str(Path.home())+"/Sapsan/")
 
 from sapsan.lib.backends import FakeBackend, MLflowBackend
 from sapsan.lib.data import HDF5Dataset, EquidistantSampling, flatten
-from sapsan import Train, Evaluate
+from sapsan.lib import Train, Evaluate
 from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel as model
 from sapsan.utils.plot import model_graph, pdf_plot, cdf_plot, slice_plot, plot_params
