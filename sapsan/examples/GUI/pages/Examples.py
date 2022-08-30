@@ -119,17 +119,20 @@ def run_experiment():
     
     pdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax0)
     cdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax1)
+
     plt.subplots_adjust(left=0.07,right=0.9,wspace=0.3)
     plot_static(pdf_cdf_slot)
     #pdf_cdf_slot.pyplot(fig)
 
     slice_slot.markdown('Plotting spatial distributions ...')
+
     plot_label = ['predict','target']
     plot_series = []       
     outdata = evaluation_experiment.split_batch(results['predict'])
     for key, value in outdata.items():
         if key in plot_label:
             plot_series.append(value)
+            
     slice_plot(plot_series, label=plot_label, cmap='viridis')
     slice_slot.pyplot(plt)    
         
@@ -247,7 +250,6 @@ def text_to_list(value):
     value = list([int(i) for i in value.split(',')])
     return value
 
-
 #--------- Load Defaults ---------
  
 config_file = st.sidebar.text_input('Configuration File', "config.txt", type='default')
@@ -268,7 +270,6 @@ setattr(st.session_state, 'edit_port', 8601)
 #------- Define All Widgets -------
         
 st.sidebar.text_input(label='Experiment Name',key='experiment_name')
-
 
 with st.sidebar.expander('Backend'):
     st.selectbox(
