@@ -214,14 +214,15 @@ class PIMLTurbConfig(EstimatorConfig):
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})          
     
 class PIMLTurb(TorchBackend):
-    def __init__(self, activ, loss,
-                       loaders,
-                       ks_stop = 0.1,
-                       ks_frac = 0.5,
-                       ks_scale = 1,
-                       l1_scale = 1,                 
-                       l1_beta = 1,
-                       sigma = 1,
+    def __init__(self, loaders,
+                       activ: str = 'Tanhshrink',
+                       loss: str = 'SmoothL1_KSLoss',                       
+                       ks_stop: float = 0.1,
+                       ks_frac: float = 0.5,
+                       ks_scale: float = 1,
+                       l1_scale: float = 1,                 
+                       l1_beta: float = 1,
+                       sigma: float = 1,
                        config = PIMLTurbConfig(), 
                        model = PIMLTurbModel()):
         super().__init__(config, model)

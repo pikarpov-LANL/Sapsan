@@ -1,14 +1,16 @@
 # Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/images/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
 
-Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While turbulence is important in a wide range of mediums, the pipeline primarily focuses on astrophysical applications. With Sapsan, one can create their own custom models or use either conventional or physics-informed ML approaches for turbulence modeling included with the pipeline ([estimators](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators)). Sapsan is designed to take out all the hard work from data preparation and analysis, leaving you focused on ML model design, layer by layer.
+Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While turbulence is important in a wide range of mediums, the pipeline primarily focuses on astrophysical applications. With Sapsan, one can create their own custom models or use either conventional or physics-informed ML approaches for turbulence modeling included with the pipeline ([estimators](https://sapsan-wiki.github.io/details/estimators/)). Sapsan is designed to take out all the hard work from data preparation and analysis, leaving you focused on ML model design, layer by layer.
 
 Feel free to check out a website version at [sapsan.app](http://sapsan.app). The interface is identical to the GUI of the local version of Sapsan, except lacking the ability to edit the model code on the fly.
 
+[![pypi](https://img.shields.io/pypi/v/sapsan?label=sapsan)](https://pypi.org/project/sapsan/)
+[![pypi](https://img.shields.io/pypi/pyversions/sapsan)](https://pypi.org/project/sapsan/)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.03199/status.svg)](https://doi.org/10.21105/joss.03199)
 
-## [Sapsan's Wiki](https://github.com/pikarpov-LANL/Sapsan/wiki)
+## [Sapsan's Wiki](https://sapsan-wiki.github.io/)
 
-Please refer to Sapsan's Github Wiki to learn more about the framework's details and capabilities.
+Please refer to Sapsan's Wiki to learn more about the framework's details and capabilities.
 
 ## Quick Start
 
@@ -27,7 +29,7 @@ cd Sapsan/
 python setup.py install
 ```
 
-Note: see [Installation Page](https://github.com/pikarpov-LANL/Sapsan/wiki/Installation/) on the Wiki for complete instructions with Graphviz and Docker installation.
+Note: see [Installation Page](https://sapsan-wiki.github.io/overview/installation/) on the Wiki for complete instructions with Graphviz and Docker installation.
 
 ### 3. Test Installation
 
@@ -38,7 +40,7 @@ sapsan test
 
 ### 4. Run Examples
 
-To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#convolution-neural-network-cnn) or [PICAE](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#physics-informed-convolutional-autoencoder-picae) on 3D data, and [KRR](https://github.com/pikarpov-LANL/Sapsan/wiki/Estimators#kernel-ridge-regression-krr) on 2D data). To copy the examples, type:
+To get started and familiarize yourself with the interface, feel free to run the included examples ([CNN](https://sapsan-wiki.github.io/details/estimators/#convolution-neural-network-cnn), [PIMLTurb](https://sapsan-wiki.github.io/details/estimators/#physics-informed-cnn-for-turbulence-modeling-pimlturb), [PICAE](https://sapsan-wiki.github.io/details/estimators/#physics-informed-convolutional-autoencoder-picae) or on 3D data, and [KRR](https://sapsan-wiki.github.io/details/estimators/#kernel-ridge-regression-krr) on 2D data). To copy the examples, type:
 ```
 sapsan get_examples
 ```

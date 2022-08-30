@@ -107,6 +107,11 @@ def run_experiment():
     results = evaluation_experiment.run()
 
     #Plots metrics
+    pdf_cdf_slot = st.empty()
+    slice_slot = st.empty()
+
+    pdf_cdf_slot.markdown('Plotting PDF & CDF ...')
+
     mpl.rcParams.update(plot_params())
 
     fig = plt.figure(figsize=(14,6), dpi=60)
@@ -114,9 +119,12 @@ def run_experiment():
     
     pdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax0)
     cdf_plot([results['predict'], results['target']], label=['prediction', 'target'], ax=ax1)
-    plt.subplots_adjust(left=0.07,right=0.9,wspace=0.27)
-    #plt.tight_layout(w_pad=7)
-    plot_static()
+
+    plt.subplots_adjust(left=0.07,right=0.9,wspace=0.3)
+    plot_static(pdf_cdf_slot)
+    #pdf_cdf_slot.pyplot(fig)
+
+    slice_slot.markdown('Plotting spatial distributions ...')
 
     plot_label = ['predict','target']
     plot_series = []       
@@ -124,10 +132,9 @@ def run_experiment():
     for key, value in outdata.items():
         if key in plot_label:
             plot_series.append(value)
-    slice_plot(plot_series, label=plot_label, cmap='viridis')#,ax=ax[1,0])
-    #slice_plot(plot_series[1:], label=plot_label, cmap='viridis')#,ax=ax[1,1])
-    plt.subplots_adjust(left=0.1,wspace=-0.1)
-    st.pyplot(plt)    
+            
+    slice_plot(plot_series, label=plot_label, cmap='viridis')
+    slice_slot.pyplot(plt)    
         
 def define_estimator(loaders):
     estimator = CNN3d(config=CNN3dConfig(n_epochs=st.session_state.n_epochs, 
@@ -211,15 +218,15 @@ def show_log(progress_slot, epoch_slot, training_bar):
         if current_epoch == st.session_state.n_epochs: 
             return
 
-        time.sleep(0.1) 
+        time.sleep(0.1)
 
-
-def plot_static():
+def plot_static(slot):
     buf = BytesIO()
     plt.savefig(buf, format="png",  dpi=50)
-    st.image(buf) 
+    slot.image(buf)          
 
 # ----- Backend Widget Functions -----
+
 def load_config(config_file):
     cf.read(config_file)
     config = OrderedDict(cf.items('sapsan_config'))
@@ -243,8 +250,8 @@ def text_to_list(value):
     value = list([int(i) for i in value.split(',')])
     return value
 
-
-#--- Load Default ---    
+#--------- Load Defaults ---------
+ 
 config_file = st.sidebar.text_input('Configuration File', "config.txt", type='default')
 
 if st.sidebar.button('Reload Config'):
@@ -257,8 +264,12 @@ else:
         if key in st.session_state.keys(): pass
         else: setattr(st.session_state, key, value)    
     selectbox_params()
+
+setattr(st.session_state, 'edit_port', 8601) 
+
+#------- Define All Widgets -------
         
-st.sidebar.text_input(label='Experiment Name',value=config['experiment_name'],key='experiment_name')
+st.sidebar.text_input(label='Experiment Name',key='experiment_name')
 
 with st.sidebar.expander('Backend'):
     st.selectbox(
@@ -266,26 +277,26 @@ with st.sidebar.expander('Backend'):
         options=st.session_state.backend_list, index=st.session_state.backend_selection_index)
     
     if st.session_state.backend_selection == 'MLflow':
-        st.text_input(label='MLflow host',value=config['mlflow_host'],key='mlflow_host')
-        st.number_input(label='MLflow port',value=config['mlflow_port'],key='mlflow_port',
+        st.text_input(label='MLflow host',key='mlflow_host')
+        st.number_input(label='MLflow port',key='mlflow_port',
                         min_value=1024,max_value=65535,format='%d')
 
 with st.sidebar.expander('Data: train'):
-    st.text_input(label='Path',value=config['path'],key='path')
-    st.text_input(label='Checkpoints',value=config['checkpoints'],key='checkpoints')
-    st.text_input(label='Input features',value=config['features'],key='features')
-    st.text_input(label='Input target',value=config['target'],key='target')
-    st.text_input(label='Input Size',value=config['input_size'],key='input_size')
-    st.text_input(label='Sample to size',value=config['sample_to'],key='sample_to')
-    st.text_input(label='Batch Size',value=config['batch_size'],key='batch_size')
+    st.text_input(label='Path',key='path')
+    st.text_input(label='Checkpoints',key='checkpoints')
+    st.text_input(label='Input features',key='features')
+    st.text_input(label='Input target',key='target')
+    st.text_input(label='Input Size',key='input_size')
+    st.text_input(label='Sample to size',key='sample_to')
+    st.text_input(label='Batch Size',key='batch_size')
 
 with st.sidebar.expander('Data: test'):
-    st.text_input(label='Checkpoint: test',value=config['checkpoint_test'],key='checkpoint_test')    
+    st.text_input(label='Checkpoint: test',key='checkpoint_test')    
     
 with st.sidebar.expander('Model'):
-    st.number_input(label='# of Epochs',value=config['n_epochs'],key='n_epochs',min_value=1,format='%d')
-    st.number_input(label='Patience',value=config['patience'],key='patience',min_value=0,step=1,format='%d')    
-    st.number_input(label='Min Delta',value=config['min_delta'],key='min_delta',step=config['min_delta']*0.5,format='%.1e')
+    st.number_input(label='# of Epochs',key='n_epochs',min_value=1,format='%d')
+    st.number_input(label='Patience',key='patience',min_value=0,step=1,format='%d')    
+    st.number_input(label='Min Delta',key='min_delta',step=config['min_delta']*0.5,format='%.1e')
 
 #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
 if st.session_state.sampler_selection == "Equidistant3D":
@@ -339,7 +350,7 @@ with st.expander("Show model graph"):
 with st.expander("Show model code"):            
     st.code(inspect.getsource(model), language='python')    
 
-    st.number_input(label='Edit Port',key='edit_port',value=8601,min_value=1024,max_value=65535,format='%d')    
+    st.number_input(label='Edit Port',key='edit_port',min_value=1024,max_value=65535,format='%d')    
 
     if st.button('Edit'):
         estimator_path = inspect.getsourcefile(model)
