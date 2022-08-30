@@ -4,12 +4,17 @@ name: Manually publish Python 🐍 distributions 📦 to PyPI
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: Bump Version
+        default: 0.0.0
+        required: true  
 jobs:
   build-n-publish:
     name: Build and publish Sapsan Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-22.04
     env:
-      release_version: ${{ github.event.release.tag_name }}
+      release_version: ${{ github.event.inputs.version }}
 
     steps:
     - uses: actions/checkout@master
