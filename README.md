@@ -1,4 +1,4 @@
-# Sapsan  <a href="http://sapsan.app"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/images/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
+# Sapsan  <a href="https://sapsan-wiki.github.io/"><img src="https://github.com/pikarpov-LANL/Sapsan/blob/images/docs/images/logo3_black_slim_notitle_whitebg.png?raw=true"  alt="Sapsan logo" align="right" width="100"></a>
 
 Sapsan is a pipeline for Machine Learning (ML) based turbulence modeling. While turbulence is important in a wide range of mediums, the pipeline primarily focuses on astrophysical applications. With Sapsan, one can create their own custom models or use either conventional or physics-informed ML approaches for turbulence modeling included with the pipeline ([estimators](https://sapsan-wiki.github.io/details/estimators/)). Sapsan is designed to take out all the hard work from data preparation and analysis, leaving you focused on ML model design, layer by layer.
 
