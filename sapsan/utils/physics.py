@@ -49,7 +49,7 @@ class PowerSpectrum():
 
     def generate_k(self):
         half = [int(i/2) for i in self.dim]
-        k_ar = np.zeros(self.u.shape)
+        k_ar = np.zeros(self.u.shape, dtype=int)
 
         if self.axis == 1:
             for a in range(0, half[0]):                
@@ -75,12 +75,13 @@ class PowerSpectrum():
                                                 [-a-1,b,-c-1],[a,-b-1,-c-1]])
                         for gp in grid_points:
                             k_ar[:,gp[0],gp[1],gp[2]] = [a,b,c]
-                                    
-        k2 = 0
+                                        
+        k2 = np.zeros(self.u.shape[1:])
         for i in range(self.axis):
             k2 += k_ar[i]**2
-        
+                    
         k = np.sqrt(k2)
+
         return k
     
     def spectrum_plot(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
@@ -94,11 +95,11 @@ class PowerSpectrum():
                         plot_type = 'loglog')
         
         if kolmogorov:
-            ax = line_plot([[k_bins, self.kolmogorov(kl_A, k_bins)]], 
+            # does not include the 0th bin (modes below 0.5)
+            ax = line_plot([[k_bins[1:], self.kolmogorov(kl_A, k_bins[1:])]], 
                             label = ['kolmogorov'], 
                             plot_type = 'loglog', ax = ax)
         
-        ax.set_xlim((1e0))
         ax.set_xlabel('$\mathrm{log(k)}$')
         ax.set_ylabel('$\mathrm{log(E(k))}$')    
         ax.set_title('Power Spectrum')
@@ -106,31 +107,32 @@ class PowerSpectrum():
         return ax
         
     def calculate(self):
-        vk = np.zeros((self.u.shape))
-        vk2 = 0
+        uk = np.zeros((self.u.shape))
+        Ek = np.zeros((self.u.shape[1:]))
 
-        for i in range(self.axis):
-            vk[i] = fftpack.fftn(self.u[i]).real
-            vk2 += vk[i]**2
-
-        ek = vk2
-
+        # mode (k) grid
         k = self.generate_k()
+
+        # fourier transform of u to get kinetic energy E(k)   
+        for i in range(self.axis):
+            uk[i] = fftpack.fftn(self.u[i]).real
+            Ek += uk[i]**2      
 
         sort_index = np.argsort(k, axis=None)
         k = np.sort(k, axis=None)
-        ek = np.take_along_axis(ek, sort_index, axis=None)
+        Ek = np.take_along_axis(Ek, sort_index, axis=None)
 
         start = 0
         kmax = int(np.ceil(np.amax(k)))
         Ek_bins = np.zeros([kmax+1])
 
         for i in range(kmax+1):
-            for j in range(start, len(ek)):
+            for j in range(start, len(Ek)):
                 if k[j]>i-0.5 and k[j]<=i+0.5:
-                    Ek_bins[i]+=ek[j]
+                    Ek_bins[i] += Ek[j]**2
                     start+=1
                 else: break
+            Ek_bins[i] = np.sqrt(Ek_bins[i])
 
         k_bins = np.arange(kmax+1)
         
