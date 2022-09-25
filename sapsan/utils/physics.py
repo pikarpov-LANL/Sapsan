@@ -136,7 +136,7 @@ class PowerSpectrum():
 
         k_bins = np.arange(kmax+1)
         
-        print('Power Spectrum has been calculated. k and E(k) have been returned')
+        print('Power Spectrum has been calculated. k and E(k) have been returned.')
         
         return k_bins, Ek_bins
         
