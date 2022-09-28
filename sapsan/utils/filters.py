@@ -4,19 +4,19 @@ def spectral(im: np.ndarray, fm: int):
     from scipy import fftpack
     
     #Spectral Filter
-    axis = len(np.shape(im))
-    dim = np.shape(im)[0]
     form = np.shape(im)
-    half = np.zeros(len(form))
+    axis = len(form)
+    dim = form[0]    
+    half = np.zeros(axis, dtype=int)
+    
+    assert axis in [2,3], "Input variable has to be in the following format: for 3D [D, H, W], and for 2D [D, H]"
 
     im_fft = fftpack.fftn(im)
 
     im_fft = np.fft.fftshift(im_fft)
 
-    half[0] = int(form[0]/2)
-    half[1] = int(form[1]/2)
-    if axis==3: half[2] = int(form[2]/2)
-    half = [int(i) for i in half]
+    for i in range(axis):
+        half[i] = form[i]/2
 
     temp = np.zeros(np.shape(im_fft), dtype=complex)
     if axis==2: temp[half[0]-fm:half[0]+fm,
@@ -45,17 +45,19 @@ def box(im: np.ndarray, ksize):
     import cv2
     #Box filter
 
-    dim = np.shape(im)[0]
-    axis = len(np.shape(im))
+    form = np.shape(im)
+    axis = len(form)
+    dim = form[0]
         
-    if axis==2: im_new = cv2.boxFilter(im, ddepth=-1, ksize=(int(ksize), int(ksize)))
-    else: raise ValueError('Box filter only supports 2D image input')
+    assert axis in [2], "Box filter only supports 2D image input of shape [D, H]"
+        
+    im_new = cv2.boxFilter(im, ddepth=-1, ksize=(int(ksize), int(ksize)))
 
     return im_new
 
 
 def gaussian(im: np.ndarray, sigma):
-    from scipy import ndimage
+    from scipy import ndimage        
     
     #Gaussian Filter
     return ndimage.gaussian_filter(im, sigma)

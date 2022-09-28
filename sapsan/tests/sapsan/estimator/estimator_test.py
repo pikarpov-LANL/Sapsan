@@ -13,6 +13,7 @@ class TestCnnEstimator(unittest.TestCase):
 
     def setUp(self) -> None:
         self.resources_path = "./test_resources"
+        if os.path.exists(self.resources_path): shutil.rmtree(self.resources_path)
         os.mkdir(self.resources_path)
 
         

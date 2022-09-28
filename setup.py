@@ -36,5 +36,6 @@ setuptools.setup(
     entry_points='''
         [console_scripts]
         sapsan=sapsan.core.cli.cli:sapsan
-    '''
+    ''',
+	zip_safe=False
 )

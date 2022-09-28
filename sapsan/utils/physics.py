@@ -37,9 +37,9 @@ def ReynoldsStress(u, filt=gaussian, filt_size=2, only_x_components = False):
 
 class PowerSpectrum():
     def __init__(self, u: np.ndarray):
-        assert len(u.shape) == 4, "Input variable has to be in the following format: [axis, D, H, W]"
+        self.axis = u.shape[0]
+        assert self.axis in [1,2,3], "Input variable has to be in the following format: for 3D [axis, D, H, W], for 2D [axis, D, H], and for 1D [axis, D]"
         self.u = u
-        self.axis = len(self.u.shape)-1
         self.dim = self.u.shape[1:]
         self.k_bins = None
         self.Ek_bins = None
@@ -49,21 +49,39 @@ class PowerSpectrum():
 
     def generate_k(self):
         half = [int(i/2) for i in self.dim]
-        k_ar = np.zeros(self.u.shape)
+        k_ar = np.zeros(self.u.shape, dtype=int)
 
-        for a in range(0, half[0]):
-            for b in range(0, half[1]):
-                for c in range(0, half[2]):
-                    grid_points = np.array([[a,b,c],[a,b,-c-1],
-                                            [a,-b-1,c],[-a-1,b,c],
-                                            [-a-1,-b-1,c],[-a-1,-b-1,-c-1],
-                                            [-a-1,b,-c-1],[a,-b-1,-c-1]])
+        if self.axis == 1:
+            for a in range(0, half[0]):                
+                grid_points = np.array([[a],[-a-1]])
+                for gp in grid_points:
+                    k_ar[:,gp[0]] = [a]                
 
+        elif self.axis == 2:
+            for a in range(0, half[0]):                    
+                for b in range(0, half[1]):                
+                    grid_points = np.array([[a,b],[a,-b-1],
+                                            [-a-1,b],[-a-1,-b-1]])
                     for gp in grid_points:
-                        k_ar[:,gp[0],gp[1],gp[2]] = [a,b,c]
+                        k_ar[:,gp[0],gp[1]] = [a,b]                
 
-        k2 = k_ar[0]**2+k_ar[1]**2+k_ar[2]**2
+        elif self.axis == 3:
+            for a in range(0, half[0]):                    
+                for b in range(0, half[1]):                                
+                    for c in range(0, half[2]):
+                        grid_points = np.array([[a,b,c],[a,-b-1,c],
+                                                [-a-1,b,c],[-a-1,-b-1,c],
+                                                [a,b,-c-1],[-a-1,-b-1,-c-1],
+                                                [-a-1,b,-c-1],[a,-b-1,-c-1]])
+                        for gp in grid_points:
+                            k_ar[:,gp[0],gp[1],gp[2]] = [a,b,c]
+                                        
+        k2 = np.zeros(self.u.shape[1:])
+        for i in range(self.axis):
+            k2 += k_ar[i]**2
+                    
         k = np.sqrt(k2)
+
         return k
     
     def spectrum_plot(self, k_bins, Ek_bins, kolmogorov=True, kl_A = None):
@@ -72,9 +90,16 @@ class PowerSpectrum():
         
         if kl_A == None: kl_A = np.amax(Ek_bins)*1e1
             
-        ax = line_plot([[k_bins, Ek_bins], [k_bins, self.kolmogorov(kl_A, k_bins)]], 
-                        names = ['data', 'kolmogorov'], plot_type = 'loglog')
-        ax.set_xlim((1e0))
+        ax = line_plot([[k_bins, Ek_bins]], 
+                        label = ['data'], 
+                        plot_type = 'loglog')
+        
+        if kolmogorov:
+            # does not include the 0th bin (modes below 0.5)
+            ax = line_plot([[k_bins[1:], self.kolmogorov(kl_A, k_bins[1:])]], 
+                            label = ['kolmogorov'], 
+                            plot_type = 'loglog', ax = ax)
+        
         ax.set_xlabel('$\mathrm{log(k)}$')
         ax.set_ylabel('$\mathrm{log(E(k))}$')    
         ax.set_title('Power Spectrum')
@@ -82,35 +107,36 @@ class PowerSpectrum():
         return ax
         
     def calculate(self):
-        vk = np.zeros((self.u.shape))
+        uk = np.zeros((self.u.shape))
+        Ek = np.zeros((self.u.shape[1:]))
 
-        for i in range(self.axis):
-            vk[i] = fftpack.fftn(self.u[i]).real
-            if i==0: vk2 = vk[0]**2
-            else: vk2 += vk[i]**2
-
-        ek = vk2
-
+        # mode (k) grid
         k = self.generate_k()
+
+        # fourier transform of u to get kinetic energy E(k)   
+        for i in range(self.axis):
+            uk[i] = fftpack.fftn(self.u[i]).real
+            Ek += uk[i]**2      
 
         sort_index = np.argsort(k, axis=None)
         k = np.sort(k, axis=None)
-        ek = np.take_along_axis(ek, sort_index, axis=None)
+        Ek = np.take_along_axis(Ek, sort_index, axis=None)
 
         start = 0
         kmax = int(np.ceil(np.amax(k)))
         Ek_bins = np.zeros([kmax+1])
 
         for i in range(kmax+1):
-            for j in range(start, len(ek)):
+            for j in range(start, len(Ek)):
                 if k[j]>i-0.5 and k[j]<=i+0.5:
-                    Ek_bins[i]+=ek[j]
+                    Ek_bins[i] += Ek[j]**2
                     start+=1
                 else: break
+            Ek_bins[i] = np.sqrt(Ek_bins[i])
 
         k_bins = np.arange(kmax+1)
         
-        print('Power Spectrum has been calculated. k and E(k) have been returned')
+        print('Power Spectrum has been calculated. k and E(k) have been returned.')
         
         return k_bins, Ek_bins
         
