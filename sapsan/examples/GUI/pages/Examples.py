@@ -257,19 +257,17 @@ config_file = st.sidebar.text_input('Configuration File', "config.txt", type='de
 if st.sidebar.button('Reload Config'):
     config = load_config(config_file)
     for key, value in config.items():
-        setattr(st.session_state, key, value)    
+        setattr(st.session_state, key, value)      
 else: 
     config = load_config(config_file)
     for key, value in config.items():
         if key in st.session_state.keys(): pass
         else: setattr(st.session_state, key, value)    
-    selectbox_params()
+    selectbox_params()     
 
-setattr(st.session_state, 'edit_port', 8601) 
-
-#------- Define All Widgets -------
+#------- Define All Widgets -------    
         
-st.sidebar.text_input(label='Experiment Name',key='experiment_name')
+st.sidebar.text_input(label='Experiment Name',value=config['experiment_name'],key='experiment_name')
 
 with st.sidebar.expander('Backend'):
     st.selectbox(
@@ -277,26 +275,26 @@ with st.sidebar.expander('Backend'):
         options=st.session_state.backend_list, index=st.session_state.backend_selection_index)
     
     if st.session_state.backend_selection == 'MLflow':
-        st.text_input(label='MLflow host',key='mlflow_host')
-        st.number_input(label='MLflow port',key='mlflow_port',
+        st.text_input(label='MLflow host',value=config['mlflow_host'],key='mlflow_host')
+        st.number_input(label='MLflow port',value=config['mlflow_port'],key='mlflow_port',
                         min_value=1024,max_value=65535,format='%d')
 
 with st.sidebar.expander('Data: train'):
-    st.text_input(label='Path',key='path')
-    st.text_input(label='Checkpoints',key='checkpoints')
-    st.text_input(label='Input features',key='features')
-    st.text_input(label='Input target',key='target')
-    st.text_input(label='Input Size',key='input_size')
-    st.text_input(label='Sample to size',key='sample_to')
-    st.text_input(label='Batch Size',key='batch_size')
+    st.text_input(label='Path',value=config['path'],key='path')
+    st.text_input(label='Checkpoints',value=config['checkpoints'],key='checkpoints')
+    st.text_input(label='Input features',value=config['features'],key='features')
+    st.text_input(label='Input target',value=config['target'],key='target')
+    st.text_input(label='Input Size',value=config['input_size'],key='input_size')
+    st.text_input(label='Sample to size',value=config['sample_to'],key='sample_to')
+    st.text_input(label='Batch Size',value=config['batch_size'],key='batch_size')
 
 with st.sidebar.expander('Data: test'):
-    st.text_input(label='Checkpoint: test',key='checkpoint_test')    
+    st.text_input(label='Checkpoint: test',value=config['checkpoint_test'],key='checkpoint_test')    
     
 with st.sidebar.expander('Model'):
-    st.number_input(label='# of Epochs',key='n_epochs',min_value=1,format='%d')
-    st.number_input(label='Patience',key='patience',min_value=0,step=1,format='%d')    
-    st.number_input(label='Min Delta',key='min_delta',step=config['min_delta']*0.5,format='%.1e')
+    st.number_input(label='# of Epochs',value=config['n_epochs'],key='n_epochs',min_value=1,format='%d')
+    st.number_input(label='Patience',value=config['patience'],key='patience',min_value=0,step=1,format='%d')    
+    st.number_input(label='Min Delta',value=config['min_delta'],key='min_delta',step=config['min_delta']*0.5,format='%.1e')
 
 #sampler_selection = st.sidebar.selectbox('What sampler to use?', ('Equidistant3D', ''), )
 if st.session_state.sampler_selection == "Equidistant3D":
@@ -350,7 +348,7 @@ with st.expander("Show model graph"):
 with st.expander("Show model code"):            
     st.code(inspect.getsource(model), language='python')    
 
-    st.number_input(label='Edit Port',key='edit_port',min_value=1024,max_value=65535,format='%d')    
+    st.number_input(label='Edit Port',key='edit_port',value=config['edit_port'],min_value=1024,max_value=65535,format='%d')    
 
     if st.button('Edit'):
         estimator_path = inspect.getsourcefile(model)
@@ -385,9 +383,4 @@ with st.sidebar.expander('Super Secret'):
             st.snow()
     with col2:
         if st.button('🎈'):
-            st.balloons()    
-
-#with open('temp.txt', 'w') as file:
-#    file.write('[config]\n')
-#    for key, value in widget_values.items():
-#        file.write('%s = %s\n'%(key, value))                            
+            st.balloons()
