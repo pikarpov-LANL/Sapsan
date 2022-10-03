@@ -113,10 +113,10 @@ class SmoothL1_KSLoss(torch.nn.Module):
             np.savetxt(f, losses.detach().cpu().numpy(), fmt='%.3e', newline="\t")
             
     def forward(self, predictions, targets, write, write_idx):      
-        try: 
+        if predictions.is_cuda:
             self.device = predictions.get_device()
             if self.device==-1: self.device=torch.device('cpu')
-        except: self.device=torch.device('cpu')           
+        else: self.device=torch.device('cpu')           
         
         #-----SmoothL1----
         l1_loss = 0

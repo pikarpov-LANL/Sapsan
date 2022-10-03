@@ -20,11 +20,11 @@ class Gaussian(torch.nn.Module):
 
         return kernel        
         
-    def forward(self, tensor):        
-        try: 
+    def forward(self, tensor):  
+        if tensor.is_cuda:
             self.device = tensor.get_device()
             if self.device==-1: self.device=torch.device('cpu')
-        except: self.device=torch.device('cpu')
+        else: self.device=torch.device('cpu') 
         
         k = self.make_gaussian_kernel()
         
