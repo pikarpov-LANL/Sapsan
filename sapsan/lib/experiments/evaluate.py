@@ -110,12 +110,12 @@ class Evaluate(Experiment):
                                          ))
         else: self.n_output_channels = predict.shape[1]            
 
+        series = [predict]
+        label = ['predict']
         if self.targets_given: 
-            series = [self.targets, predict]
-            label = ['target', 'predict']
-        else: 
-            series = [predict]
-            label = ['predict']
+            series.insert(0,self.targets)
+            label.insert(0,'target')
+
         outdata = self.analytic_plots(series, label)
 
         if self.targets_given:
@@ -237,7 +237,8 @@ class Evaluate(Experiment):
         if self.flat: outdata = self.flatten(predict)
         else: outdata = self.split_batch(predict)
         
-        plot_label = ['target','predict']
+        plot_label = ['predict']
+        if self.targets_given: plot_label.insert(0,'target') 
         if self.axis>1: 
             plot_series = []                        
             for key, value in outdata.items():
@@ -248,9 +249,12 @@ class Evaluate(Experiment):
             
         elif self.axis==1:
             print('The data is 1D: plotting profiles...')
-            profiles = line_plot([[np.arange(self.input_size[0]),outdata['target'][0,0]], 
-                                  [np.arange(self.input_size[0]),outdata['predict'][0,0]]], 
-                                 label=plot_label, figsize=(10,6))
+                        
+            profile_data = [[np.arange(self.input_size[0]),outdata['predict'][0,0]]]
+            if self.targets_given:
+                profile_data.insert(0, [np.arange(self.input_size[0]),outdata['target'][0,0]])
+                
+            profiles = line_plot(profile_data, label=plot_label, figsize=(10,6))
             profiles.set_xlabel('index')
             profiles.set_ylabel('value')
             
