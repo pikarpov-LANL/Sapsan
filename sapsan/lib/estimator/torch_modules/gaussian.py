@@ -9,6 +9,7 @@ class Gaussian(torch.nn.Module):
     def __init__(self, sigma=2):
         super(Gaussian, self).__init__()
         self.sigma = sigma
+        self.device = torch.device('cpu')
 
     def make_gaussian_kernel(self):
         ks = int(self.sigma * 5)
@@ -20,16 +21,15 @@ class Gaussian(torch.nn.Module):
 
         return kernel        
         
-    def forward(self, tensor):        
-        try: 
-            self.device = tensor.get_device()
-            if self.device==-1: self.device=torch.device('cpu')
-        except: self.device=torch.device('cpu')
+    def forward(self, tensor):  
+        if tensor.is_cuda:
+            self.device = torch.device('cuda:%d'%tensor.get_device()) 
+        else: self.device = torch.device('cpu') 
         
         k = self.make_gaussian_kernel()
         
         # Separable 1D convolution
-        vol_in = tensor[...]
+        vol_in = tensor[:]
         k1d = k[None, None, :, None, None].to(self.device)
         for i in range(3):
             vol_in = vol_in.permute(0, 1, 4, 2, 3)                        
