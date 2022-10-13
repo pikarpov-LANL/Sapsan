@@ -11,13 +11,13 @@ from sapsan.core.models import ExperimentBackend
 class MLflowBackend(ExperimentBackend):
     def __init__(self, name: str = 'experiment',
                        host: str = 'localhost', 
-                       port: int = 9000):
+                       port: int = 5000):
         super().__init__(name)
         self.host = host
         self.port = port
         
-        self.mlflow_url = "http://{host}:{port}".format(host=host,
-                                                        port=port)
+        self.mlflow_url = "http://%s:%s"%(self.host, self.port)
+        
         mlflow.set_tracking_uri(self.mlflow_url)
         if self.check_open_port():
             print("%s:%s is busy"%(self.host, self.port))
