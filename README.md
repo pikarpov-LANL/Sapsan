@@ -8,9 +8,9 @@ Feel free to check out a website version at [sapsan.app](http://sapsan.app). The
 [![pypi](https://img.shields.io/pypi/pyversions/sapsan)](https://pypi.org/project/sapsan/)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.03199/status.svg)](https://doi.org/10.21105/joss.03199)
 
-## [Sapsan's Wiki](https://sapsan-wiki.github.io/)
+## [Documentation](https://sapsan-wiki.github.io/)
 
-Please refer to Sapsan's Wiki to learn more about the framework's details and capabilities.
+Please refer to Sapsan's Wiki for detailed installation, tutorials, troubleshooting, and API, as well as to learn more about the framework's capabilities.
 
 ## Quick Start
 
