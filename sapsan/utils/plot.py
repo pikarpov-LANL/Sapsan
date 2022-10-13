@@ -151,7 +151,7 @@ def cdf_plot(series: List[np.ndarray],
     plt.tight_layout()
     
     if ks: 
-        if len(series)==1: ks_stat = None
+        if len(series)==1: ks_stat = -1
         return ax, ks_stat
     else: return ax
 
