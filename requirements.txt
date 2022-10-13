@@ -6,7 +6,7 @@ h5py>=2.10.0
 jupyter>=1.0.0
 jupytext>=1.11
 matplotlib>=3.3.2
-mlflow>=1.20.1,<=1.25
+mlflow>=1.23
 notebook>=6.4.3
 numpy>=v1.21.0
 opencv-python>=4.5.4
