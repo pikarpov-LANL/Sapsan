@@ -26,19 +26,19 @@ import sapsan.utils.hiddenlayer as hl
 style = 'tableau-colorblind10'
 
 def plot_params():
-    params = {'font.size': 14, 'legend.fontsize': 14, 
-              'axes.labelsize': 20, 'axes.titlesize': 24,
-              'xtick.labelsize': 17,'ytick.labelsize': 17,
-              'axes.linewidth': 1, 'patch.linewidth': 3, 
-              'lines.linewidth': 3,
-              'xtick.major.width': 1.5,'ytick.major.width': 1.5,
-              'xtick.minor.width': 1.25,'ytick.minor.width': 1.25,
-              'xtick.major.size': 7,'ytick.major.size': 7,
-              'xtick.minor.size': 4,'ytick.minor.size': 4,
-              'xtick.direction': 'in','ytick.direction': 'in',              
-              'axes.formatter.limits': [-7, 7],'axes.grid': True, 
-              'grid.linestyle': ':','grid.color': '#999999',
-              'text.usetex': False,}
+    params = {'font.size':         14,   'legend.fontsize':   14, 
+              'axes.labelsize':    20,   'axes.titlesize':    24,
+              'xtick.labelsize':   17,   'ytick.labelsize':   17,
+              'axes.linewidth':    1,    'patch.linewidth':   3, 
+              'lines.linewidth':   3, 
+              'xtick.major.width': 1.5,  'ytick.major.width': 1.5,
+              'xtick.minor.width': 1.25, 'ytick.minor.width': 1.25,
+              'xtick.major.size':  7,    'ytick.major.size':  7,
+              'xtick.minor.size':  4,    'ytick.minor.size':  4,
+              'xtick.direction':  'in',  'ytick.direction':  'in',              
+              'axes.grid':         True, 'axes.formatter.limits': [-7, 7], 
+              'grid.linestyle':   ':',   'grid.color':       '#999999',
+              'text.usetex':       False,}
               #'axes.prop_cycle': cycler('color', ['#FF800E', '#006BA4', '#ABABAB', '#595959', 
                #                                   '#5F9ED1', '#C85200', '#898989', '#A2C8EC', 
                #                                   '#FFBC79', '#CFCFCF']),
@@ -47,12 +47,12 @@ def plot_params():
 
 
 def pdf_plot(series: List[np.ndarray], 
-             bins: int = 100, 
-             label: Optional[List[str]] = None, 
+             bins:   int = 100, 
+             label:  Optional[List[str]] = None, 
              figsize = (6,6),
-             dpi = 60,
-             ax = None,
-             style = style):
+             dpi     = 60,
+             ax      = None,
+             style   = style):
     """ PDF plot
 
     @param series: series of numpy arrays to build a pdf plot from
@@ -64,7 +64,7 @@ def pdf_plot(series: List[np.ndarray],
     mpl.rcParams.update(plot_params())    
     if ax==None: 
         fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_subplot(111)                
+        ax  = fig.add_subplot(111)                
 
     if not label:
         label = ["Data {}".format(i) for i in range(len(series))]
@@ -89,10 +89,10 @@ def pdf_plot(series: List[np.ndarray],
 def cdf_plot(series: List[np.ndarray], 
              label: Optional[List[str]] = None, 
              figsize = (6,6),
-             dpi=60,
-             ax = None,
-             ks = False,
-             style = style):
+             dpi     = 60,
+             ax      = None,
+             ks      = False,
+             style   = style):
     """ CDF plot
 
     @param series: series of numpy arrays to build a cdf plot
@@ -103,7 +103,7 @@ def cdf_plot(series: List[np.ndarray],
     mpl.rcParams.update(plot_params())
     if ax==None: 
         fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_subplot(111)
+        ax  = fig.add_subplot(111)
 
     if not label:
         label = ["Data {}".format(i) for i in range(len(series))]
@@ -127,7 +127,7 @@ def cdf_plot(series: List[np.ndarray],
                                     
             xtest = np.linspace(minima, maxima, length*10)
 
-            D = abs(func[0](xtest)-func[1](xtest))
+            D    = abs(func[0](xtest)-func[1](xtest))
             Dmax = max(D)
             Dpos = xtest[np.argmax(D)]            
             ax.axvline(x=Dpos, linewidth=1, color='tab:red', linestyle='--')
@@ -155,10 +155,10 @@ def cdf_plot(series: List[np.ndarray],
 
 def slice_plot(series: List[np.ndarray], 
                label: Optional[List[str]] = None, 
-               cmap = 'viridis',
+               cmap    = 'viridis',
                figsize = (12,6),
-               dpi = 60,
-               ax = None):
+               dpi     = 60,
+               ax      = None):
     mpl.rcParams.update(plot_params())
     if not label:
         label = ["Data {}".format(i) for i in range(len(series))]
@@ -190,11 +190,11 @@ def slice_plot(series: List[np.ndarray],
 def line_plot(series: List[np.ndarray], 
               label: Optional[List[str]] = None, 
               plot_type = 'plot',              
-              figsize = (6,6),
-              dpi = 60,
+              figsize   = (6,6),
+              dpi       = 60,
               linestyle = None,
-              ax = None,              
-              style = style):
+              ax        = None,              
+              style     = style):
     mpl.style.use(style)
     mpl.rcParams.update(plot_params())
     if not label:
@@ -204,17 +204,15 @@ def line_plot(series: List[np.ndarray],
         
     if ax==None: 
         fig = plt.figure(figsize=figsize, dpi=dpi)
-        ax = fig.add_subplot(111)
-        
+        ax  = fig.add_subplot(111)
+       
+    if   plot_type == 'plot'    : plot_func = ax.plot
+    elif plot_type == 'semilogx': plot_func = ax.semilogx
+    elif plot_type == 'semilogy': plot_func = ax.semilogy
+    elif plot_type == 'loglog'  : plot_func = ax.loglog  
+                
     for idx, data in enumerate(series):
-        if plot_type == 'plot': 
-            ax.plot(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
-        elif plot_type == 'semilogx': 
-            ax.semilogx(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
-        elif plot_type == 'semilogy': 
-            ax.semilogy(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
-        elif plot_type == 'loglog': 
-            ax.loglog(data[0], data[1], linestyle=linestyle[idx], label=label[idx])
+        plot_func(data[0], data[1], linestyle=linestyle[idx], label=label[idx])                    
             
     ax.legend(loc=0)
     plt.tight_layout()
@@ -222,23 +220,23 @@ def line_plot(series: List[np.ndarray],
     return ax
 
         
-def log_plot(show_log = True, 
-             log_path = 'logs/logs/train.csv', 
+def log_plot(show_log       = True, 
+             log_path       = 'logs/logs/train.csv', 
              valid_log_path = 'logs/logs/valid.csv', 
-             delimiter=',',
-             train_name = 'train_loss',
-             valid_name = 'valid_loss',
-             train_column = 1,
-             valid_column = 1,
-             epoch_column = 0):
+             delimiter      = ',',
+             train_name     = 'train_loss',
+             valid_name     = 'valid_loss',
+             train_column   = 1,
+             valid_column   = 1,
+             epoch_column   = 0):
     
     plot_data = {'epoch':[], train_name:[], valid_name:[]}
 
     data = np.genfromtxt(log_path, delimiter=delimiter, 
-                      skip_header=1, dtype=np.float32)
+                         skip_header=1, dtype=np.float32)
     
     data_valid = np.genfromtxt(valid_log_path, delimiter=delimiter, 
-                      skip_header=1, dtype=np.float32)
+                               skip_header=1, dtype=np.float32)
     
     if len(data.shape)==1: data = np.array([data]); data_valid = np.array([data_valid])
 
@@ -259,7 +257,7 @@ def log_plot(show_log = True,
     else: log_y = True
         
     fig = plotting_routine(df, x="epoch", y=[train_name, valid_name], log_y=log_y,
-                  title='Training Progress', width=700, height=400)
+                           title='Training Progress', width=700, height=400)
     fig.update_layout(yaxis=dict(exponentformat='e'))
     fig.layout.hovermode = 'x' 
 
