@@ -119,8 +119,9 @@ def cdf_plot(series: List[np.ndarray],
         ax.plot(val[idx], yvals, label=label[idx])
         func.append(interp1d(val[idx], yvals))  
         
-        minima = max([min(val[0]), min(val[1])])
-        maxima = min([max(val[0]), max(val[1])])
+        if len(series)>1:
+            minima = max([min(val[0]), min(val[1])])
+            maxima = min([max(val[0]), max(val[1])])
         
         if idx==1 and ks==True and minima < maxima:
             ks_stat, pvalue = ks_2samp(val[0], val[1])
@@ -149,7 +150,9 @@ def cdf_plot(series: List[np.ndarray],
     ax.set_title('CDF')
     plt.tight_layout()
     
-    if ks: return ax, ks_stat
+    if ks: 
+        if len(series)==1: ks_stat = -1
+        return ax, ks_stat
     else: return ax
 
 
