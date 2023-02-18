@@ -55,10 +55,10 @@ class Evaluate(Experiment):
                 print('Warning: no target given; only predicting...')
         else:
             try:
-                self.inputs, self.targets = iter(self.model.loaders['train']).next()
+                self.inputs, self.targets = next(iter(self.model.loaders['train']))
                 self.targets = self.targets.numpy()
             except: 
-                self.inputs = iter(self.model.loaders['train']).next()[0]
+                self.inputs = next(iter(self.model.loaders['train']))[0]
                 self.targets_given = False
                 print('Warning: no target given; only predicting...')
         
