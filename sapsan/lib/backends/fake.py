@@ -27,6 +27,12 @@ class FakeBackend(ExperimentBackend):
     def log_artifact(self, path: str):
         #logging.info("Logging artifact {path}".format(path=path))
         pass
+    
+    def log_model(self, model, artifact_path:str):
+        pass
+    
+    def load_model(self, model_uri:str, dst_path=None):
+        pass
 
     def close_active_run(self):
         pass

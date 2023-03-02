@@ -62,6 +62,12 @@ class MLflowBackend(ExperimentBackend):
 
     def log_artifact(self, path: str):
         mlflow.log_artifact(path)
+        
+    def log_model(self, pytorch_model, artifact_path:str):
+        mlflow.pytorch.log_model(pytorch_model, artifact_path)
+        
+    def load_model(self, model_uri:str, dst_path=None):
+        mlflow.pytorch.load_model(model_uri, dst_path)
 
     def close_active_run(self):
         while mlflow.active_run()!=None: mlflow.end_run()
