@@ -11,20 +11,20 @@ class KRRModel():
     def __init__(self, kernel='rbf', alpha=1.0, gamma=None):
         super(KRRModel, self).__init__()
         self.kernel = kernel
-        self.alpha = alpha
-        self.gamma = gamma
-        self.model = KernelRidge(kernel = self.kernel,
-                                 alpha = self.alpha,
-                                 gamma = self.gamma)
+        self.alpha  = alpha
+        self.gamma  = gamma
+        self.model  = KernelRidge(kernel = self.kernel,
+                                  alpha = self.alpha,
+                                  gamma = self.gamma)
     
 class KRRConfig(EstimatorConfig):
     def __init__(self,
-                 alpha: float = 1.0,
-                 gamma = False,
-                 kernel: str = 'rbf',
+                 alpha:  float = 1.0,
+                 gamma:  bool  = False,
+                 kernel: str   = 'rbf',
                  *args, **kwargs):
-        self.alpha = alpha
-        self.gamma = gamma
+        self.alpha  = alpha
+        self.gamma  = gamma
         self.kernel = kernel
         self.kwargs = kwargs
         
@@ -37,13 +37,13 @@ class KRRConfig(EstimatorConfig):
 class KRR(SklearnBackend):
     def __init__(self, loaders,
                        config = KRRConfig(),
-                       model = KRRModel()):
+                       model  = KRRModel()):
         super().__init__(config, model)
-        self.config = config
+        self.config  = config
         self.loaders = loaders
         
         self.estimator = KRRModel(kernel=config.kernel, alpha=config.alpha, gamma=config.gamma)
-        self.model = self.estimator.model
+        self.model     = self.estimator.model
         
         for param, value in self.model.get_params().items():
             self.config.parameters["model - %s"%param] = value

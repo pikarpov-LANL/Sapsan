@@ -1,19 +1,16 @@
 """
 Physics-Informed Convolutional model to predict
-the diagonal Reynolds stress tensor terms, which
-can later be used to calculate Turbulent Pressure.
+ratio of turbulent pressure to gas pressure in 1D.
 
 The loss function here is a custom combination of
 statistical (Kolmogorov-Smirnov) and spatial (Smooth L1)
 losses.
-
-The model has been published in P.I.Karpov, arXiv:2205.08663
-
 """
 
 import numpy as np
 import sys
 import os
+
 import torch
 
 from sapsan.core.models import EstimatorConfig
@@ -23,43 +20,30 @@ from sapsan.lib.data import get_loader_shape
 from sapsan.lib.estimator.torch_modules import Interp1d
 from sapsan.lib.estimator.torch_modules import Gaussian
 
-class PIMLTurbModel(torch.nn.ModuleDict):
+class PIMLTurb1DModel(torch.nn.ModuleDict):
     def __init__(self, D_in = 1, D_out = 1, activ = "ReLU", sigma=1):
-        super(PIMLTurbModel, self).__init__()       
+        super(PIMLTurb1DModel, self).__init__()       
         
-        if D_out>=116**3:  stride1=2; stride2=2; stride3=2
-        elif D_out>=39**3: stride1=1; stride2=2; stride3=2
-        elif D_out>=17**3: stride1=1; stride2=1; stride3=1
-        else:              stride1=1; stride2=1; stride3=1
+        # TODO: pass the output array size instead of hard-coding it below
+        D_out=200
             
-        self.conv3d1    = torch.nn.Conv3d(D_in, D_in*2, kernel_size=2, stride=stride1)
-        self.conv3d2    = torch.nn.Conv3d(D_in*2, D_in*4, kernel_size=2, stride=stride2)
-        self.conv3d3    = torch.nn.Conv3d(D_in*4, D_in*8, kernel_size=2, stride=stride3)
-
-        self.pool       = torch.nn.MaxPool3d(kernel_size=2)
-
-        self.activation = getattr(torch.nn, activ)()
-
-        self.linear     = torch.nn.Linear(D_in*8, D_in*16)
-        self.linear2    = torch.nn.Linear(D_in*16, D_out)
+        self.conv1d     = torch.nn.Conv1d(D_in, D_in*2, kernel_size=3, stride=2)        
         
-        self.gaussian   = Gaussian(sigma=sigma)
+        self.pool       = torch.nn.MaxPool1d(kernel_size=2)
+        self.activation = getattr(torch.nn, activ)()
+        
+        self.linear     = torch.nn.Linear(D_in*98, D_in*196)
+        self.linear2    = torch.nn.Linear(D_in*196, D_out)
+        
+        self.gaussian   = Gaussian(sigma=2, axis=1)
 
     def forward(self, x):         
         x       = x.float()
         x_shape = x.size()
         
-        x = self.conv3d1(x)        
-        x = self.pool(x)
-        
-        x = self.activation(x)        
-        x = self.conv3d2(x)
-        x = self.pool(x)
-        
-        x = self.activation(x)        
-        x = self.conv3d3(x)
-        x = self.pool(x)
-
+        x = self.conv1d(x)        
+        x = self.pool(x)       
+         
         x = self.activation(x) 
         x = x.view(x.size(0), -1)
         x = self.linear(x)
@@ -67,9 +51,9 @@ class PIMLTurbModel(torch.nn.ModuleDict):
         x = self.linear2(x) 
         
         x_shape    = list(x_shape)
-        x_shape[1] = 1        
+        x_shape[1] = 1
         
-        x = torch.reshape(x,x_shape)                                       
+        x = torch.reshape(x,x_shape)  
         x = torch.mul(x,x)
         x = self.gaussian(x)
         
@@ -94,7 +78,7 @@ class SmoothL1_KSLoss(torch.nn.Module):
         self.beta        = beta
         self.train_size  = train_size
         self.valid_size  = valid_size
-        self.stop        = False    
+        self.stop        = False   
         
     def write_log(self, losses):
         if self.first_write:
@@ -165,8 +149,8 @@ class SmoothL1_KSLoss(torch.nn.Module):
                 self.log_fname  = "train_l1ks_log.txt"
             elif write == 'valid': 
                 self.batch_size = self.valid_size 
-                self.log_fname  = "valid_l1ks_log.txt"              
-                  
+                self.log_fname  = "valid_l1ks_log.txt"   
+                             
             self.iter_losses_l1 = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
             self.iter_losses_ks = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
         
@@ -189,7 +173,7 @@ class SmoothL1_KSLoss(torch.nn.Module):
         return loss, self.stop
     
     
-class PIMLTurbConfig(EstimatorConfig):
+class PIMLTurb1DConfig(EstimatorConfig):
     def __init__(self,
                  n_epochs:  int   = 1,
                  patience:  int   = 10,
@@ -198,35 +182,30 @@ class PIMLTurbConfig(EstimatorConfig):
                  lr:        float = 1e-3,
                  min_lr           = None,                 
                  *args, **kwargs):
-        
         self.n_epochs  = n_epochs
         self.logdir    = logdir
         self.patience  = patience
         self.min_delta = min_delta
         self.lr        = lr
-        
         if min_lr==None: self.min_lr = lr*1e-2
-        else:            self.min_lr = min_lr        
-        
+        else: self.min_lr = min_lr        
         self.kwargs     = kwargs
         self.parameters = {f'model - {k}': v for k, v in self.__dict__.items() if k != 'kwargs'}
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})          
+         
     
-    
-class PIMLTurb(TorchBackend):
-    def __init__(self, loaders,
-                       activ:    str = 'Tanhshrink',
-                       loss:     str = 'SmoothL1_KSLoss',                       
-                       ks_stop:  float = 0.1,
-                       ks_frac:  float = 0.5,
-                       ks_scale: float = 1,
-                       l1_scale: float = 1,                 
-                       l1_beta:  float = 1,
-                       sigma:    float = 1,
-                       config          = PIMLTurbConfig(), 
-                       model           = PIMLTurbModel()):
+class PIMLTurb1D(TorchBackend):
+    def __init__(self, activ, loss,
+                       loaders,
+                       ks_stop  = 0.1,
+                       ks_frac  = 0.5,
+                       ks_scale = 1,
+                       l1_scale = 1,                 
+                       l1_beta  = 1,
+                       sigma    = 1,
+                       config   = PIMLTurb1DConfig(), 
+                       model    = PIMLTurb1DModel()):
         super().__init__(config, model)
-        
         self.config   = config
         self.loaders  = loaders
         self.device   = self.config.kwargs['device']
@@ -238,7 +217,7 @@ class PIMLTurb(TorchBackend):
         
         x_shape, y_shape = get_loader_shape(self.loaders)                
 
-        self.model     = PIMLTurbModel(x_shape[1], y_shape[2]**3, activ, sigma)
+        self.model     = PIMLTurb1DModel(x_shape[1], y_shape[2]**3, activ, sigma)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
         
         if loss == "SmoothL1_KSLoss": 
@@ -252,14 +231,14 @@ class PIMLTurb(TorchBackend):
             sys.exit()
         
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
-                                                                    patience=self.config.patience,
-                                                                    min_lr=self.config.min_lr) 
-        self.config.parameters["model - loss"]  = str(self.loss_func).partition("(")[0]
+                                                               patience=self.config.patience,
+                                                               min_lr=self.config.min_lr) 
+        self.config.parameters["model - loss"] = str(self.loss_func).partition("(")[0]
         self.config.parameters["model - activ"] = activ
         
     def write_loss(self, losses, epoch, fname_train = "train_log.txt", fname_valid='valid_log.txt'):
         for idx, fname in enumerate([fname_train, fname_valid]):
-            if epoch == 1:
+            if epoch==1:
                 if os.path.exists(fname): os.remove(fname)
 
             with open(fname,'a') as f:
@@ -267,9 +246,10 @@ class PIMLTurb(TorchBackend):
                 f.write("\n")
                 np.savetxt(f, [[losses[0],losses[idx+1]]], fmt='%d \t %.3e', newline="\t")
         
-    def train(self):        
+    def train(self):    
+        self.model = self.model#.double()
         self.model.to(self.device)
-        
+                
         if 'cuda' in str(self.device):
             self.optimizer_to(self.optimizer, self.device)      
             
@@ -279,16 +259,18 @@ class PIMLTurb(TorchBackend):
                 x = x.to(self.device)
                 y = y.to(self.device)
                 
-                y_pred     = self.model(x)
-                loss, stop = self.loss_func(y_pred, y, 'train', idx)
+                y_pred = self.model(x)
                 
+                loss, stop = self.loss_func(y_pred, y, 'train', idx)
+                                
                 self.optimizer.zero_grad()
                 loss.backward()
+                
                 self.optimizer.step()
                 
                 iter_loss[idx] = loss.item()
-                        
-            epoch_loss = iter_loss.mean()
+
+            epoch_loss = iter_loss.mean()            
             print(f'train ({epoch}/{int(self.config.n_epochs)}) loss: {epoch_loss:.4e}')
                         
             with torch.set_grad_enabled(False):
@@ -297,7 +279,7 @@ class PIMLTurb(TorchBackend):
                     x = x.to(self.device)
                     y = y.to(self.device)
 
-                    y_pred = self.model(x)                                    
+                    y_pred = self.model(x)     
                     
                     loss_valid, stop = self.loss_func(y_pred, y, 'valid', idx)
 
@@ -312,9 +294,11 @@ class PIMLTurb(TorchBackend):
                 print('Reached sufficient KS Loss, stopping...')
                 break
                     
-            print('-----')     
-            
+            print('-----')  
+
         with open('model_details.txt', 'w') as file:                    
-            file.write(f'{str(self.model)}\n\n{str(self.optimizer)}\n\n{str(self.scheduler)}')            
-                
+            file.write('%s\n\n%s\n\n%s'%(str(self.model),
+                                   str(self.optimizer),
+                                   str(self.scheduler)))
+        
         return self.model

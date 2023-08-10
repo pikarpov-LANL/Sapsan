@@ -20,45 +20,46 @@ class PICAEModel(torch.nn.Module):
     """
     Init and define stacked Conv Autoencoder layers and Physics layers 
     """
-    def __init__(self, input_dim = (128,128,128), 
-                       input_size = 3, 
-                       batch = 4, 
-                       nfilters = 6, 
+    def __init__(self, input_dim   = (128,128,128), 
+                       input_size  = 3, 
+                       batch       = 4, 
+                       nfilters    = 6, 
                        kernel_size = (3,3,3), 
                        enc_nlayers = 3, 
                        dec_nlayers = 3,
-                       config = {}):        
+                       config      = {}):        
         super(PICAEModel, self).__init__()
-        self.il = input_dim[0]
-        self.jl = input_dim[1]
-        self.kl = input_dim[2]
-        self.input_size= input_size # no. of channels
-        self.nfilters = nfilters
-        self.batch= batch
-        self.kernel_size = kernel_size
-        self.output_size = 6 #6 gradient components for 3 vector components of a CURL
-        self.encoder_nlayers= enc_nlayers
-        self.decoder_nlayers= dec_nlayers
-        self.total_layers = self.encoder_nlayers + self.decoder_nlayers
-        self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
-        self.config = config
         
-        self.tb = TorchBackend
+        self.il               = input_dim[0]
+        self.jl               = input_dim[1]
+        self.kl               = input_dim[2]
+        self.input_size       = input_size # no. of channels
+        self.nfilters         = nfilters
+        self.batch            = batch
+        self.kernel_size      = kernel_size
+        self.output_size      = 6 #6 gradient components for 3 vector components of a CURL
+        self.encoder_nlayers  = enc_nlayers
+        self.decoder_nlayers  = dec_nlayers
+        self.total_layers     = self.encoder_nlayers + self.decoder_nlayers
+        self.outlayer_padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
+        self.config           = config
+        
+        self.tb               = TorchBackend
         
         #self.device = self.tb.device
         self.device = self.tb.set_device(self) 
 
         ############## Define Encoder layers
-        encoder_cell_list=[]
+        encoder_cell_list = []
         for layer in range(self.encoder_nlayers):
             if layer == 0:
-                cell_inpsize = self.input_size
+                cell_inpsize    = self.input_size
                 cell_outputsize = self.nfilters
-                stridelen = 2
+                stridelen       = 2
             else:
-                cell_inpsize = self.nfilters
+                cell_inpsize    = self.nfilters
                 cell_outputsize = self.nfilters
-                stridelen = 2
+                stridelen       = 2
        
             encoder_cell_list.append(torch.nn.Conv3d(out_channels = cell_outputsize, 
                                                      in_channels = cell_inpsize, 
@@ -72,15 +73,15 @@ class PICAEModel(torch.nn.Module):
         decoder_cell_list=[]
         for layer in range(self.decoder_nlayers):
             if layer == (self.decoder_nlayers -1):
-                cell_inpsize = self.nfilters
+                cell_inpsize    = self.nfilters
                 cell_outputsize = self.input_size
-                cell_padding = 0
-                stridelen = 2
+                cell_padding    = 0
+                stridelen       = 2
             else:
-                cell_inpsize = self.nfilters
+                cell_inpsize    = self.nfilters
                 cell_outputsize = self.nfilters
-                cell_padding = 0
-                stridelen = 2        
+                cell_padding    = 0
+                stridelen       = 2        
             
             decoder_cell_list.append(torch.nn.ConvTranspose3d(
                                                   out_channels = cell_outputsize, 
@@ -94,15 +95,15 @@ class PICAEModel(torch.nn.Module):
         
         ############# Physics Layers
         #d/dx
-        self.ddxKernel = torch.zeros(3, 3, 3)
+        self.ddxKernel        = torch.zeros(3, 3, 3)
         self.ddxKernel[1,0,1] = -0.5
         self.ddxKernel[1,2,1] = 0.5
         #d/dy
-        self.ddyKernel = torch.zeros(3, 3, 3)
+        self.ddyKernel        = torch.zeros(3, 3, 3)
         self.ddyKernel[0,1,1] = -0.5
         self.ddyKernel[2,1,1] = 0.5
         #d/dz
-        self.ddzKernel = torch.zeros(3, 3, 3)
+        self.ddzKernel        = torch.zeros(3, 3, 3)
         self.ddzKernel[1,1,0] = -0.5
         self.ddzKernel[1,1,2] = 0.5
         #### declare weights
@@ -145,23 +146,23 @@ class PICAEModel(torch.nn.Module):
         self.register_buffer('r_curlGrad', self.curlGrad)        
         
     def padHITperiodic(self,field):
-        oldSize = field.size(-1)
-        newSize = oldSize + 3 #2nd order accurate periodic padding at boundary
+        oldSize  = field.size(-1)
+        newSize  = oldSize + 3 #2nd order accurate periodic padding at boundary
         newField = torch.zeros(self.batch,self.input_size,newSize,newSize,newSize).to(self.device)
         
         # fill interior cells
         newField[:,:,:-3,:-3,:-3] = field
         # fill boundary cells with periodic values for 2nd order difference
         #Ghost Cell N+1
-        newField[:,:,-3,::] = newField[:,:,0,::] # i axis
+        newField[:,:,-3,::]  = newField[:,:,0,::] # i axis
         newField[:,:,:,-3,:] = newField[:,:,:,0,:] # j axis
         newField[:,:,:,:,-3] = newField[:,:,:,:,0] # k axis
         #Ghost Cell N+2
-        newField[:,:,-2,::] = newField[:,:,1,::] # i axis
+        newField[:,:,-2,::]  = newField[:,:,1,::] # i axis
         newField[:,:,:,-2,:] = newField[:,:,:,1,:] # j axis
         newField[:,:,:,:,-2] = newField[:,:,:,:,1] # k axis
         #Ghost Cell N+3
-        newField[:,:,-1,::] = newField[:,:,2,::] # i axis
+        newField[:,:,-1,::]  = newField[:,:,2,::] # i axis
         newField[:,:,:,-1,:] = newField[:,:,:,2,:] # j axis
         newField[:,:,:,:,-1] = newField[:,:,:,:,2] # k axis
         return newField      
@@ -197,28 +198,28 @@ class PICAEModel(torch.nn.Module):
 class PICAEConfig(EstimatorConfig):
     
     # set defaults per your liking, add more parameters
-    def __init__(self, nfilters = 6, 
-                       kernel_size = (3,3,3), 
-                       enc_nlayers = 3, 
-                       dec_nlayers = 3,                    
-                       n_epochs = 1,
-                       patience: int = 10,
-                       min_delta: float = 1e-5, 
+    def __init__(self, nfilters:     int   = 6, 
+                       kernel_size:  tuple = (3,3,3), 
+                       enc_nlayers:  int   = 3, 
+                       dec_nlayers:  int   = 3,                    
+                       n_epochs:     int   = 1,
+                       patience:     int   = 10,
+                       min_delta:    float = 1e-5, 
                        weight_decay: float = 1e-5,
-                       logdir: str = "./logs/",
-                       lr: float = 1e-4,
-                       min_lr = None,
+                       logdir:       str   = "./logs/",
+                       lr:           float = 1e-4,
+                       min_lr              = None,
                        *args, **kwargs):
-        self.nfilters = nfilters
-        self.kernel_size = kernel_size
-        self.enc_nlayers = enc_nlayers
-        self.dec_nlayers = dec_nlayers
-        self.n_epochs = n_epochs
-        self.logdir = logdir
-        self.patience = patience
-        self.min_delta = min_delta
+        self.nfilters     = nfilters
+        self.kernel_size  = kernel_size
+        self.enc_nlayers  = enc_nlayers
+        self.dec_nlayers  = dec_nlayers
+        self.n_epochs     = n_epochs
+        self.logdir       = logdir
+        self.patience     = patience
+        self.min_delta    = min_delta
         self.weight_decay = weight_decay
-        self.lr = lr
+        self.lr           = lr
         if min_lr==None: self.min_lr = lr*1e-2
         else: self.min_lr = min_lr        
         self.kwargs = kwargs
@@ -232,9 +233,9 @@ class PICAEConfig(EstimatorConfig):
 class PICAE(TorchBackend):
     def __init__(self, loaders,    
                        config = PICAEConfig(), 
-                       model = PICAEModel()):
+                       model  = PICAEModel()):
         super().__init__(config, model)
-        self.config = config
+        self.config  = config
         self.loaders = loaders
 
         train_shape, valid_shape = np.array(get_loader_shape(loaders))     
