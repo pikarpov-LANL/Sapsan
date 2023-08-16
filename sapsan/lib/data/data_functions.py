@@ -63,6 +63,6 @@ def get_loader_shape(loaders, name = None):
         name = next(iter(loaders))
     else: pass     
     
-    x, y = iter(loaders['%s'%name]).next()
+    x, y = next(iter(loaders['%s'%name]))
     
     return x.shape, y.shape

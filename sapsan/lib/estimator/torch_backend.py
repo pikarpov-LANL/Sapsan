@@ -32,19 +32,18 @@ class TorchBackend(Estimator):
     def __init__(self, config: EstimatorConfig, model):
         super().__init__(config)
 
-        self.runner = SupervisedRunner()
+        self.runner        = SupervisedRunner()
         self.model_metrics = dict()
-        self.model = model
-        self.ddp = False        
+        self.model         = model
+        self.ddp           = False        
 
-    def torch_train(self, loaders, model, 
-                    optimizer, loss_func, scheduler, 
-                    config):
-        self.config = config
-        self.model = model        
-        self.optimizer = optimizer
-        self.loss_func = loss_func
-        self.scheduler = scheduler
+    def torch_train(self, loaders, model, optimizer,
+                          loss_func, scheduler, config):
+        self.config     = config
+        self.model      = model        
+        self.optimizer  = optimizer
+        self.loss_func  = loss_func
+        self.scheduler  = scheduler
         self.loader_key = list(loaders)[0]
         self.metric_key = 'loss'        
         self.import_from_config()
@@ -58,7 +57,7 @@ class TorchBackend(Estimator):
         self.check_logdir()               
         
         if self.loader_key != 'train': 
-            warnings.warn("WARNING: loader to be used for early-stop callback is '%s'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train"%(self.loader_key))
+            warnings.warn(f"WARNING: loader to be used for early-stop callback is '{self.loader_key}'. You can define it manually in /lib/estimator/pytorch_estimator.torch_train")
 
         model = self.model        
         
@@ -69,37 +68,37 @@ class TorchBackend(Estimator):
                                 
         self.print_info()
         
-        self.runner.train(model=model,
-                          criterion=self.loss_func,
-                          optimizer=self.optimizer,
-                          scheduler=self.scheduler,
-                          loaders=loaders,
-                          logdir=self.config.logdir,
-                          num_epochs=self.config.n_epochs,
-                          callbacks=[EarlyStoppingCallback(patience=self.config.patience,
-                                                           min_delta=self.config.min_delta,
-                                                           loader_key=self.loader_key,
-                                                           metric_key=self.metric_key,
-                                                           minimize=True),
-                                    SchedulerCallback(loader_key=self.loader_key,
-                                                      metric_key=self.metric_key,),
-                                    SkipCheckpointCallback(logdir=self.config.logdir),
-                                    ],
-                          verbose=False,
-                          check=False,
-                          engine=self.engine,
-                          ddp=self.ddp,
+        self.runner.train(model      = model,
+                          criterion  = self.loss_func,
+                          optimizer  = self.optimizer,
+                          scheduler  = self.scheduler,
+                          loaders    = loaders,
+                          logdir     = self.config.logdir,
+                          num_epochs = self.config.n_epochs,
+                          callbacks  = [EarlyStoppingCallback(patience   = self.config.patience,
+                                                              min_delta  = self.config.min_delta,
+                                                              loader_key = self.loader_key,
+                                                              metric_key = self.metric_key,
+                                                              minimize   = True),
+                                       SchedulerCallback(loader_key = self.loader_key,
+                                                         metric_key = self.metric_key,),
+                                       SkipCheckpointCallback(logdir = self.config.logdir),
+                                       ],
+                          verbose    = False,
+                          check      = False,
+                          engine     = self.engine,
+                          ddp        = self.ddp,
                           )
         
         self.config.parameters['model - device'] = str(self.runner.device)
-        self.model_metrics['final epoch'] = self.runner.stage_epoch_step
+        self.model_metrics['final epoch']        = self.runner.stage_epoch_step
         for key,value in self.runner.epoch_metrics.items():
             self.model_metrics[key] = value
 
         with open('model_details.txt', 'w') as file:
             file.write('%s\n\n%s\n\n%s'%(str(self.runner.model),
-                                   str(self.runner.optimizer),
-                                   str(self.runner.scheduler)))
+                                         str(self.runner.optimizer),
+                                         str(self.runner.scheduler)))
         
         return model
         
@@ -110,7 +109,7 @@ class TorchBackend(Estimator):
         #overwrite device and ddp setting if provided upon loading the model,
         #otherwise device will be determined by availability and ddp=False
         if 'device' in config.kwargs: self.device = config.kwargs['device']
-        if 'ddp' in config.kwargs: self.ddp = config.kwargs['ddp']
+        if 'ddp'    in config.kwargs: self.ddp    = config.kwargs['ddp']
         
         self.print_info()
         
@@ -119,7 +118,7 @@ class TorchBackend(Estimator):
         else: 
             if not next(self.model.parameters()).is_cuda: self.model.to(self.device)
             cuda_id = next(self.model.parameters()).get_device()
-            data = torch.as_tensor(inputs).cuda(cuda_id)
+            data    = torch.as_tensor(inputs).cuda(cuda_id)
 
         return self.model(data).cpu().data.numpy()               
 
@@ -165,44 +164,72 @@ class TorchBackend(Estimator):
                         if subparam._grad is not None:
                             subparam._grad.data = subparam._grad.data.to(device)    
     
-    def save(self, path):
-        model_save_path = "{path}/model.pt".format(path=path)
-        params_save_path = "{path}/params.json".format(path=path)
+    def save(self, path: str, script=False):
         
-        torch.save({
-                    'epoch': self.runner.stage_epoch_step,
-                    'model_state_dict': self.runner.model.state_dict(),
-                    'optimizer_state_dict': self.runner.optimizer.state_dict(),
-                    'loss': self.runner.epoch_metrics['train']['loss'],
-                    }, model_save_path)
-        self.config.save(params_save_path)
+        if not os.path.isdir(path): raise ValueError('Provided path is not a directory')
+        
+        model_save_path  = f"{path}/model.pt"
+        params_save_path = f"{path}/params.json"
+        
+        if script:             
+            model_script_save_path  = f"{path}/model_script.pt"
+            model_scripted          = torch.jit.script(self.model) 
+            model_scripted.save(model_script_save_path)
+            print(f'Saved the model in TorchScript format: {model_script_save_path}')
+            return
+        
+        if self.runner.model == None:            
+            torch.save(self.model.state_dict(), model_save_path)
+        else:
+            torch.save({
+                        'epoch': self.runner.stage_epoch_step,
+                        'model_state_dict': self.runner.model.state_dict(),
+                        'optimizer_state_dict': self.runner.optimizer.state_dict(),
+                        'loss': self.runner.epoch_metrics['train']['loss'],
+                        }, model_save_path)
+            self.config.save(params_save_path)
+            
+        print(f'Saved the model: {model_save_path}')
 
     @classmethod
-    def load(cls, path: str, estimator=None, load_saved_config=False):
-        model_save_path = "{path}/model.pt".format(path=path)
-        params_save_path = "{path}/params.json".format(path=path)
+    def load(cls, path: str, estimator=None, load_saved_config=False, script=False):
         
-        cfg = cls.load_config(params_save_path)
+        if not os.path.isdir(path): raise ValueError('Provided path is not a directory')
+        
+        model_save_path  = f"{path}/model.pt"
+        params_save_path = f"{path}/params.json"  
+        
+        if script: 
+            model_script_save_path = f"{path}/model_script.pt"
+            estimator              = torch.jit.load(model_script_save_path)   
+            return estimator                 
 
         if load_saved_config==True: 
+            cfg = cls.load_config(params_save_path)
             print('''All config parameters will be loaded from saved params.json 
-(anything provided in model config upon loading will be ignored)''')
+(anything provided in model config upon loading will be ignored)''')            
             for key, value in cfg.items():
                 setattr(estimator.config, key, value)
-
-        checkpoint = torch.load(model_save_path, map_location='cpu')
-        estimator.model.load_state_dict(checkpoint['model_state_dict'])
-        estimator.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        epoch = checkpoint['epoch']
-        loss = checkpoint['loss']
         
-        print('''
+        checkpoint = torch.load(model_save_path, map_location='cpu')
+        
+        try:
+            estimator.model.load_state_dict(checkpoint['model_state_dict'])
+            estimator.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            epoch = checkpoint['epoch']
+            loss  = checkpoint['loss']
+        
+            print('''
  ==== Loaded Model ====
  final Epoch: {epoch}
- final Loss: {loss}
+ final Loss:  {loss}
  ======================
 
 '''.format(epoch=epoch, loss='%.4e'%loss) )
+            
+        except: 
+            warnings.warn('WARNING: Could not load optimizer config. Only loading state_dict.')
+            estimator.model.load_state_dict(checkpoint)
         
         return estimator
     

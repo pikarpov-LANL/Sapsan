@@ -11,16 +11,10 @@ The model has been published in P.I.Karpov, arXiv:2205.08663
 
 """
 
-import json
 import numpy as np
 import sys
 import os
-
 import torch
-from torch.autograd import Variable
-from torch.utils import data
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 
 from sapsan.core.models import EstimatorConfig
 from sapsan.lib.estimator.torch_backend import TorchBackend
@@ -33,26 +27,26 @@ class PIMLTurbModel(torch.nn.ModuleDict):
     def __init__(self, D_in = 1, D_out = 1, activ = "ReLU", sigma=1):
         super(PIMLTurbModel, self).__init__()       
         
-        if D_out>=116**3: stride1=2; stride2=2; stride3=2
+        if D_out>=116**3:  stride1=2; stride2=2; stride3=2
         elif D_out>=39**3: stride1=1; stride2=2; stride3=2
         elif D_out>=17**3: stride1=1; stride2=1; stride3=1
-        else: stride1=1; stride2=1; stride3=1
+        else:              stride1=1; stride2=1; stride3=1
             
-        self.conv3d1 = torch.nn.Conv3d(D_in, D_in*2, kernel_size=2, stride=stride1)
-        self.conv3d2 = torch.nn.Conv3d(D_in*2, D_in*4, kernel_size=2, stride=stride2)
-        self.conv3d3 = torch.nn.Conv3d(D_in*4, D_in*8, kernel_size=2, stride=stride3)
+        self.conv3d1    = torch.nn.Conv3d(D_in, D_in*2, kernel_size=2, stride=stride1)
+        self.conv3d2    = torch.nn.Conv3d(D_in*2, D_in*4, kernel_size=2, stride=stride2)
+        self.conv3d3    = torch.nn.Conv3d(D_in*4, D_in*8, kernel_size=2, stride=stride3)
 
-        self.pool = torch.nn.MaxPool3d(kernel_size=2)
+        self.pool       = torch.nn.MaxPool3d(kernel_size=2)
 
         self.activation = getattr(torch.nn, activ)()
 
-        self.linear = torch.nn.Linear(D_in*8, D_in*16)
-        self.linear2 = torch.nn.Linear(D_in*16, D_out)
+        self.linear     = torch.nn.Linear(D_in*8, D_in*16)
+        self.linear2    = torch.nn.Linear(D_in*16, D_out)
         
-        self.gaussian = Gaussian(sigma=sigma)
+        self.gaussian   = Gaussian(sigma=sigma)
 
     def forward(self, x):         
-        x = x.float()
+        x       = x.float()
         x_shape = x.size()
         
         x = self.conv3d1(x)        
@@ -72,8 +66,9 @@ class PIMLTurbModel(torch.nn.ModuleDict):
         x = self.activation(x)
         x = self.linear2(x) 
         
-        x_shape = list(x_shape)
-        x_shape[1]=1        
+        x_shape    = list(x_shape)
+        x_shape[1] = 1        
+        
         x = torch.reshape(x,x_shape)                                       
         x = torch.mul(x,x)
         x = self.gaussian(x)
@@ -91,15 +86,15 @@ class SmoothL1_KSLoss(torch.nn.Module):
     def __init__(self, ks_stop, ks_frac, ks_scale, l1_scale, beta, train_size, valid_size):
         super(SmoothL1_KSLoss, self).__init__()
         self.first_write = True
-        self.first_iter = True
-        self.ks_stop = ks_stop
-        self.ks_frac = ks_frac
-        self.ks_scale = ks_scale        
-        self.l1_scale = l1_scale
-        self.beta = beta
-        self.train_size = train_size
-        self.valid_size = valid_size
-        self.stop = False   
+        self.first_iter  = True
+        self.ks_stop     = ks_stop
+        self.ks_frac     = ks_frac
+        self.ks_scale    = ks_scale
+        self.l1_scale    = l1_scale
+        self.beta        = beta
+        self.train_size  = train_size
+        self.valid_size  = valid_size
+        self.stop        = False    
         
     def write_log(self, losses):
         if self.first_write:
@@ -121,10 +116,10 @@ class SmoothL1_KSLoss(torch.nn.Module):
         l1_loss = 0
 
         self.beta = 0.1*targets.max()
-        diff = predictions-targets
-        mask = (diff.abs() < self.beta)
-        l1_loss += mask * (0.5*diff**2 / self.beta)
-        l1_loss += (~mask) * (diff.abs() - 0.5*self.beta)
+        diff      = predictions-targets
+        mask      = (diff.abs() < self.beta)
+        l1_loss  += mask * (0.5*diff**2 / self.beta)
+        l1_loss  += (~mask) * (diff.abs() - 0.5*self.beta)
            
         #--------KS-------
         distr = torch.distributions.normal.Normal(loc=targets.mean(), 
@@ -146,8 +141,8 @@ class SmoothL1_KSLoss(torch.nn.Module):
         
         #--Print Metrics-- 
         if self.first_iter:
-            self.maxl1 = l1_loss.mean().detach()                      
-            self.maxks = ks_loss.mean().detach()
+            self.maxl1     = l1_loss.mean().detach()                      
+            self.maxks     = ks_loss.mean().detach()
             self.max_ratio = self.maxks/self.maxl1
                         
             print('---Initial (max) L1, KS losses and their ratio--')
@@ -167,10 +162,11 @@ class SmoothL1_KSLoss(torch.nn.Module):
         if write_idx == 0:
             if write == 'train': 
                 self.batch_size = self.train_size
-                self.log_fname = "train_l1ks_log.txt"
+                self.log_fname  = "train_l1ks_log.txt"
             elif write == 'valid': 
                 self.batch_size = self.valid_size 
-                self.log_fname = "valid_l1ks_log.txt"                
+                self.log_fname  = "valid_l1ks_log.txt"              
+                  
             self.iter_losses_l1 = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
             self.iter_losses_ks = torch.zeros(self.batch_size,requires_grad=False).to(self.device)
         
@@ -192,52 +188,57 @@ class SmoothL1_KSLoss(torch.nn.Module):
         
         return loss, self.stop
     
+    
 class PIMLTurbConfig(EstimatorConfig):
     def __init__(self,
-                 n_epochs: int = 1,
-                 patience: int = 10,
+                 n_epochs:  int   = 1,
+                 patience:  int   = 10,
                  min_delta: float = 1e-5, 
-                 logdir: str = "./logs/",
-                 lr: float = 1e-3,
-                 min_lr = None,                 
+                 logdir:    str   = "./logs/",
+                 lr:        float = 1e-3,
+                 min_lr           = None,                 
                  *args, **kwargs):
-        self.n_epochs = n_epochs
-        self.logdir = logdir
-        self.patience = patience
+        
+        self.n_epochs  = n_epochs
+        self.logdir    = logdir
+        self.patience  = patience
         self.min_delta = min_delta
-        self.lr = lr
+        self.lr        = lr
+        
         if min_lr==None: self.min_lr = lr*1e-2
-        else: self.min_lr = min_lr        
-        self.kwargs = kwargs
+        else:            self.min_lr = min_lr        
+        
+        self.kwargs     = kwargs
         self.parameters = {f'model - {k}': v for k, v in self.__dict__.items() if k != 'kwargs'}
         if bool(self.kwargs): self.parameters.update({f'model - {k}': v for k, v in self.kwargs.items()})          
     
+    
 class PIMLTurb(TorchBackend):
     def __init__(self, loaders,
-                       activ: str = 'Tanhshrink',
-                       loss: str = 'SmoothL1_KSLoss',                       
-                       ks_stop: float = 0.1,
-                       ks_frac: float = 0.5,
+                       activ:    str = 'Tanhshrink',
+                       loss:     str = 'SmoothL1_KSLoss',                       
+                       ks_stop:  float = 0.1,
+                       ks_frac:  float = 0.5,
                        ks_scale: float = 1,
                        l1_scale: float = 1,                 
-                       l1_beta: float = 1,
-                       sigma: float = 1,
-                       config = PIMLTurbConfig(), 
-                       model = PIMLTurbModel()):
+                       l1_beta:  float = 1,
+                       sigma:    float = 1,
+                       config          = PIMLTurbConfig(), 
+                       model           = PIMLTurbModel()):
         super().__init__(config, model)
-        self.config = config
-        self.loaders = loaders
-        self.device = self.config.kwargs['device']
-        self.ks_stop = ks_stop
-        self.ks_frac = ks_frac
+        
+        self.config   = config
+        self.loaders  = loaders
+        self.device   = self.config.kwargs['device']
+        self.ks_stop  = ks_stop
+        self.ks_frac  = ks_frac
         self.ks_scale = ks_scale
         self.l1_scale = l1_scale        
-        self.beta = l1_beta
+        self.beta     = l1_beta
         
         x_shape, y_shape = get_loader_shape(self.loaders)                
 
-        self.model = PIMLTurbModel(x_shape[1], y_shape[2]**3, activ, sigma)
-        
+        self.model     = PIMLTurbModel(x_shape[1], y_shape[2]**3, activ, sigma)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
         
         if loss == "SmoothL1_KSLoss": 
@@ -251,14 +252,14 @@ class PIMLTurb(TorchBackend):
             sys.exit()
         
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
-                                                               patience=self.config.patience,
-                                                               min_lr=self.config.min_lr) 
-        self.config.parameters["model - loss"] = str(self.loss_func).partition("(")[0]
+                                                                    patience=self.config.patience,
+                                                                    min_lr=self.config.min_lr) 
+        self.config.parameters["model - loss"]  = str(self.loss_func).partition("(")[0]
         self.config.parameters["model - activ"] = activ
         
     def write_loss(self, losses, epoch, fname_train = "train_log.txt", fname_valid='valid_log.txt'):
         for idx, fname in enumerate([fname_train, fname_valid]):
-            if epoch==1:
+            if epoch == 1:
                 if os.path.exists(fname): os.remove(fname)
 
             with open(fname,'a') as f:
@@ -278,7 +279,7 @@ class PIMLTurb(TorchBackend):
                 x = x.to(self.device)
                 y = y.to(self.device)
                 
-                y_pred = self.model(x)
+                y_pred     = self.model(x)
                 loss, stop = self.loss_func(y_pred, y, 'train', idx)
                 
                 self.optimizer.zero_grad()

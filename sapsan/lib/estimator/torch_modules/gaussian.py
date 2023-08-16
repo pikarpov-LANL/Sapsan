@@ -1,14 +1,15 @@
 """
 Gaussian kernel done via 1D convolutions which is done
-via PyTorch for a 3D filtering operation within the ML model
+via PyTorch for a 1D or 3D filtering operation within the ML model
 """
 
 import torch 
 
 class Gaussian(torch.nn.Module):
-    def __init__(self, sigma=2):
+    def __init__(self, sigma=2, axis=3):
         super(Gaussian, self).__init__()
-        self.sigma = sigma
+        self.sigma  = sigma
+        self.axis   = axis
         self.device = torch.device('cpu')
 
     def make_gaussian_kernel(self):
@@ -30,10 +31,15 @@ class Gaussian(torch.nn.Module):
         
         # Separable 1D convolution
         vol_in = tensor[:]
-        k1d = k[None, None, :, None, None].to(self.device)
-        for i in range(3):
-            vol_in = vol_in.permute(0, 1, 4, 2, 3)                        
-            vol_in = torch.nn.functional.conv3d(vol_in, k1d, stride=1, padding=(len(k) // 2, 0, 0))
+        
+        if self.axis==1: 
+            k1d = k[None, None, :].to(self.device)
+            vol_in = torch.nn.functional.conv1d(vol_in, k1d, stride=1, padding=(len(k) // 2))
+        else:
+            k1d = k[None, None, :, None, None].to(self.device)
+            for i in range(self.axis):
+                vol_in = vol_in.permute(0, 1, 4, 2, 3)                        
+                vol_in = torch.nn.functional.conv3d(vol_in, k1d, stride=1, padding=(len(k) // 2, 0, 0))
         vol_3d_sep = vol_in
         
-        return vol_3d_sep  
+        return vol_3d_sep   
