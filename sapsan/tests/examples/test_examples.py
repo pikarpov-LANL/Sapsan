@@ -12,7 +12,8 @@ class TestExamples(unittest.TestCase):
         return ['cnn_example.ipynb', 
 				'picae_example.ipynb', 
 				'krr_example.ipynb',
-				'pimlturb_diagonal_example.ipynb']
+				'pimlturb_diagonal_example.ipynb',
+                'pimlturb_1d_example.ipynb']
 
     def test_examples(self):
         """Tests examples"""       

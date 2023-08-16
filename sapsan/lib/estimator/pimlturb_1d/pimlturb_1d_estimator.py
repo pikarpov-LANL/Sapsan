@@ -23,9 +23,6 @@ from sapsan.lib.estimator.torch_modules import Gaussian
 class PIMLTurb1DModel(torch.nn.ModuleDict):
     def __init__(self, D_in = 1, D_out = 1, activ = "ReLU", sigma=1):
         super(PIMLTurb1DModel, self).__init__()       
-        
-        # TODO: pass the output array size instead of hard-coding it below
-        D_out=200
             
         self.conv1d     = torch.nn.Conv1d(D_in, D_in*2, kernel_size=3, stride=2)        
         
@@ -218,7 +215,7 @@ class PIMLTurb1D(TorchBackend):
         
         x_shape, y_shape = get_loader_shape(self.loaders)                
 
-        self.model     = PIMLTurb1DModel(x_shape[1], y_shape[2]**3, activ, sigma)
+        self.model     = PIMLTurb1DModel(x_shape[1], y_shape[2], activ, sigma)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config.lr)        
         
         if loss == "SmoothL1_KSLoss": 
