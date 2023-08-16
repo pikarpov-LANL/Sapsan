@@ -35,7 +35,7 @@ class PIMLTurb1DModel(torch.nn.ModuleDict):
         self.linear     = torch.nn.Linear(D_in*98, D_in*196)
         self.linear2    = torch.nn.Linear(D_in*196, D_out)
         
-        self.gaussian   = Gaussian(sigma=2, axis=1)
+        self.gaussian   = Gaussian(sigma=sigma, axis=1)
 
     def forward(self, x):         
         x       = x.float()
@@ -195,7 +195,8 @@ class PIMLTurb1DConfig(EstimatorConfig):
          
     
 class PIMLTurb1D(TorchBackend):
-    def __init__(self, activ, loss,
+    def __init__(self, activ, 
+                       loss,
                        loaders,
                        ks_stop  = 0.1,
                        ks_frac  = 0.5,
