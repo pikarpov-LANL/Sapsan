@@ -103,9 +103,8 @@ class SmoothL1_KSLoss(torch.nn.Module):
         with open(self.log_fname,'a') as f:
             if self.first_write:
                 f.write(f"mean(L1_loss) \t mean(KS_loss) "\
-                        f"\t mean(L1_loss)*{self.l1_scale:.3e} \t mean(KS_loss)*{self.ks_scale:.3e}")
-            f.write("\n")
-            np.savetxt(f, losses.detach().cpu().numpy(), fmt='%.3e', newline="\t")
+                        f"\t mean(L1_loss)*{self.l1_scale:.3e} \t mean(KS_loss)*{self.ks_scale:.3e} \n")
+            np.savetxt(f, [losses.detach().cpu().numpy()], fmt='%.3e \t %.3e \t %.3e \t %.3e')
             
     def forward(self, predictions, targets, write, write_idx):      
         if predictions.is_cuda:
@@ -263,9 +262,8 @@ class PIMLTurb(TorchBackend):
                 if os.path.exists(fname): os.remove(fname)
 
             with open(fname,'a') as f:
-                if epoch == 1: f.write("epoch \t loss")
-                f.write("\n")
-                np.savetxt(f, [[losses[0],losses[idx+1]]], fmt='%d \t %.3e', newline="\t")
+                if epoch == 1: f.write("epoch \t loss \n")                
+                np.savetxt(f, [[losses[0],losses[idx+1]]], fmt='%d \t %.3e')
         
     def train(self):        
         self.model.to(self.device)

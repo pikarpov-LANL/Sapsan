@@ -240,7 +240,7 @@ def log_plot(show_log       = True,
     
     data_valid = np.genfromtxt(valid_log_path, delimiter=delimiter, 
                                skip_header=1, dtype=np.float32)
-    
+        
     if len(data.shape)==1: data = np.array([data]); data_valid = np.array([data_valid])
 
     if epoch_column == None: plot_data['epoch'] = np.linspace(1,len(data),len(data), dtype=int)
@@ -291,7 +291,9 @@ def model_graph(model, shape: np.array, transforms = None):
     shape = np.array(shape)
     if len(shape) == 5: unit_input = torch.zeros(tuple(shape))
     elif len(shape) == 4: unit_input = torch.zeros(tuple(shape))
-    else: raise ValueError('Input shape can be either of 2D or 3D data')
+    elif len(shape) == 3: unit_input = torch.zeros(tuple(shape))
+    else: raise ValueError('''Invalid input shape: needs to be in format of [N, C, D, H, W] where C=1, 
+                              and [D,H,W] are spatial dimensions. Supported 1D, 2D, and 3D.''')
         
     graph = hl.build_graph(model, unit_input, transforms = transforms)
     graph.theme = hl.graph.THEMES["blue"].copy()
