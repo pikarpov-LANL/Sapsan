@@ -3,7 +3,6 @@ import sys
 import inspect
 import time
 import json
-import signal
 import inspect
 import numpy as np
 from pathlib import Path
@@ -15,6 +14,8 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import configparser
 import webbrowser
+import socket
+import subprocess
 from io import BytesIO
 from threading import Thread
 
@@ -32,6 +33,8 @@ from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3d, CNN3dConfig
 from sapsan.lib.estimator.cnn.cnn3d_estimator import CNN3dModel as model
 from sapsan.utils.plot import model_graph, pdf_plot, cdf_plot, slice_plot, plot_params
 
+st.elements.utils._shown_default_value_warning=True
+
 st.set_page_config(
     page_title="Examples",
     page_icon="🚅",
@@ -41,7 +44,14 @@ st.set_page_config(
 cf = configparser.RawConfigParser()
 
 st.title('Sapsan Configuration')
-st.write('This demo is meant to present capabilities of Sapsan. You can configure each part of the experiment at the sidebar. Once ready, you can see the summary of the runtime parameters under _Show configuration_. In addition you can review the model that is being used (in the custom setup, you will also be able to edit it). Lastly click the _Run experiment_ button to train the test the ML model.')    
+st.write("""
+         This demo is meant to present capabilities of Sapsan. 
+         You can configure each part of the experiment at the sidebar. 
+         Once ready, you can see the summary of the runtime parameters 
+         under _Show configuration_. In addition you can review the model 
+         that is being used (in the custom setup, you will also be able to edit it). 
+         Lastly click the _Run experiment_ button to train the test the ML model.
+         """)    
 
 st.sidebar.markdown("**General Configuration**")
 
@@ -72,10 +82,10 @@ def run_experiment():
     #st.graphviz_chart(graph.build_dot())
 
     #Set the experiment
-    training_experiment = Train(backend=tracking_backend,
-                                model=estimator,
+    training_experiment = Train(backend         = tracking_backend,
+                                model           = estimator,
                                 data_parameters = data_loader,
-                                show_log = False)
+                                show_log        = False)
 
     #Plot progress            
     progress_slot = st.empty()
@@ -99,8 +109,8 @@ def run_experiment():
 
     #Set the test experiment
     trained_estimator.loaders = loaders
-    evaluation_experiment = Evaluate(backend = tracking_backend,
-                                     model = trained_estimator,
+    evaluation_experiment = Evaluate(backend         = tracking_backend,
+                                     model           = trained_estimator,
                                      data_parameters = data_loader)
 
     #Test the model
@@ -126,9 +136,10 @@ def run_experiment():
 
     slice_slot.markdown('Plotting spatial distributions ...')
 
-    plot_label = ['predict','target']
+    plot_label  = ['predict','target']
     plot_series = []       
-    outdata = evaluation_experiment.split_batch(results['predict'])
+    outdata     = evaluation_experiment.split_batch(results['predict'])
+    
     for key, value in outdata.items():
         if key in plot_label:
             plot_series.append(value)
@@ -137,10 +148,10 @@ def run_experiment():
     slice_slot.pyplot(plt)    
         
 def define_estimator(loaders):
-    estimator = CNN3d(config=CNN3dConfig(n_epochs=st.session_state.n_epochs, 
-                                         patience=st.session_state.patience,
-                                         min_delta=st.session_state.min_delta),
-                      loaders=loaders)    
+    estimator = CNN3d(config  = CNN3dConfig(n_epochs  = st.session_state.n_epochs, 
+                                            patience  = st.session_state.patience,
+                                            min_delta = st.session_state.min_delta),
+                      loaders = loaders)    
     
     return estimator
     
@@ -152,14 +163,14 @@ def load_data(checkpoints):
     target = st.session_state.target.split(',')
     target = [i.strip() for i in target]     
 
-    data_loader = HDF5Dataset(path=st.session_state.path,
-                              features=features,
-                              target=target,
-                              checkpoints=text_to_list(st.session_state.checkpoints),
-                              batch_size=text_to_list(st.session_state.batch_size),
-                              input_size=text_to_list(st.session_state.input_size),
-                              sampler=sampler,
-                              shuffle = False)
+    data_loader = HDF5Dataset(path        = st.session_state.path,
+                              features    = features,
+                              target      = target,
+                              checkpoints = text_to_list(st.session_state.checkpoints),
+                              batch_size  = text_to_list(st.session_state.batch_size),
+                              input_size  = text_to_list(st.session_state.input_size),
+                              sampler     = sampler,
+                              shuffle     = False)
     x, y = data_loader.load_numpy()
     return x, y, data_loader    
 
@@ -301,18 +312,18 @@ if st.session_state.sampler_selection == "Equidistant3D":
     sampler = EquidistantSampling(text_to_list(st.session_state.sample_to))    
 
 show_config = [
-    ['experiment name', st.session_state.experiment_name],
-    ['data path', st.session_state.path],
-    ['features', st.session_state.features],
-    ['target', st.session_state.target],
-    ['checkpoints', st.session_state.checkpoints],
-    ['checkpoint: test', st.session_state.checkpoint_test],        
+    ['experiment name',     st.session_state.experiment_name],
+    ['data path',           st.session_state.path],
+    ['features',            st.session_state.features],
+    ['target',              st.session_state.target],
+    ['checkpoints',         st.session_state.checkpoints],
+    ['checkpoint: test',    st.session_state.checkpoint_test],        
     ['Reduce each dimension to', st.session_state.sample_to],
     ['Batch size per dimension', st.session_state.batch_size],
-    ['number of epochs', st.session_state.n_epochs],    
-    ['patience', st.session_state.patience],    
-    ['min_delta', st.session_state.min_delta],
-    ['backend_selection', st.session_state.backend_selection],    
+    ['number of epochs',    st.session_state.n_epochs],    
+    ['patience',            st.session_state.patience],    
+    ['min_delta',           st.session_state.min_delta],
+    ['backend_selection',   st.session_state.backend_selection],    
     ]
 
 if st.session_state.backend_selection=='MLflow': 
@@ -333,17 +344,17 @@ with st.expander("Show model graph"):
     #Load the data  
     if st.button('Load Data'):
         x, y, data_loader = load_data(st.session_state.checkpoints)
-        y = flatten(y)
-        loaders = data_loader.convert_to_torch([x, y])
+        
+        shape   = x.shape
+        y       = flatten(y)
+        loaders = data_loader.convert_to_torch([x, y])        
 
-        shape = x.shape
+        try:
+            estimator = define_estimator(loaders)
 
-        #try:
-        estimator = define_estimator(loaders)
-
-    #graph = model_graph(estimator.model, shape)
-    #st.graphviz_chart(graph.build_dot())
-    #except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
+            graph = model_graph(estimator.model, shape)
+            st.graphviz_chart(graph.build_dot())
+        except: st.error('ValueError: Incorrect data shape, please edit the shape or load the data.')
 
 with st.expander("Show model code"):            
     st.code(inspect.getsource(model), language='python')    
@@ -352,10 +363,34 @@ with st.expander("Show model code"):
 
     if st.button('Edit'):
         estimator_path = inspect.getsourcefile(model)
-        st.info(f'Location: {estimator_path}')
+        st.info(f'Location: {estimator_path}')                
+
+        port     = st.session_state.edit_port
+        host     = 'localhost'
+        jnt_list = None
         
-        os.system(f"jupyter notebook {estimator_path} --NotebookApp.password='' --NotebookApp.token='' --no-browser --port={st.session_state.edit_port:n} &")
-        webbrowser.open(f"http://localhost:{st.session_state.edit_port:n}/edit/cnn3d_estimator.py", new=2)
+        for port in range(port,port+1000):            
+            a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            check    = a_socket.connect_ex((host, port))
+                                    
+            if check == 0:                            
+                if jnt_list == None: jnt_list = subprocess.run(f"jupyter notebook list", shell=True, capture_output=True, text=True)
+                if f"{port}" in jnt_list.stdout:
+                    st.warning(f"Port {port} is taken by another jupyter notebook: "\
+                                "closing it and opening a new one", icon="⚠️",)                    
+                    subprocess.run(f"fuser -k {port}/tcp", shell=True)       
+                    break                                                 
+            else: break
+            
+            print(f"Port {port} is taken")
+            
+        if port != st.session_state.edit_port: 
+            st.warning(f"Entered port {st.session_state.edit_port} was taken: opened at the next available port {port}", icon="⚠️",)
+        subprocess.run(f"jupyter notebook {estimator_path} --NotebookApp.password='' --NotebookApp.token='' --no-browser --port={port} &", shell=True)
+        time.sleep(1)
+
+        st.info(f'Running at: http://{host}:{port}/edit/cnn3d_estimator.py')        
+        # webbrowser.open(f"http://{host}:{port}/edit/cnn3d_estimator.py", new=2)        
 
 st.markdown("---")
 if st.button("Run experiment"):
@@ -370,17 +405,26 @@ if st.button("Run experiment"):
 
     st.success(f'Total runtime: {(time.time()-start):.2f} s')
 
-if st.session_state.backend_selection == 'MLflow':
-    if st.button("MLflow tracking"):
-        webbrowser.open('http://%s:%s'%(st.session_state.mlflow_host, st.session_state.mlflow_port), new=2)
+if st.session_state.backend_selection == 'MLflow':        
+    port = st.session_state.mlflow_port
+    host = st.session_state.mlflow_host
+    
+    a_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    check    = a_socket.connect_ex((host, port))
+                            
+    if check == 0:
+        st.info(f"MLflow running at: http://{host}:{port}")
+        
+    else: 
+        st.info(f"MLflow is not running yet at {host}:{port}  \n  "\
+                 "__Run experiment__ above to start it")
+    # webbrowser.open(f'http://{host}:{port}', new=2)
 
 st.sidebar.markdown("---")
 
 with st.sidebar.expander('Super Secret'):
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        if st.button('❄️'):
-            st.snow()
+        if st.button('❄️'): st.snow()
     with col2:
-        if st.button('🎈'):
-            st.balloons()
+        if st.button('🎈'): st.balloons()

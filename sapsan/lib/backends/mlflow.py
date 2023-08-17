@@ -1,11 +1,9 @@
 import mlflow
 from threading import Thread
 import os
-import sys
 import time
 import socket
 from contextlib import closing
-import signal
 
 from sapsan.core.models import ExperimentBackend
 
@@ -17,31 +15,27 @@ class MLflowBackend(ExperimentBackend):
         self.host = host
         self.port = port
         
-        self.mlflow_url = "http://%s:%s"%(self.host, self.port)
+        self.mlflow_url = f"http://{self.host}:{self.port}"
         
         mlflow.set_tracking_uri(self.mlflow_url)
         if self.check_open_port():
-            print("%s:%s is busy, checking if it is MLflow..."%(self.host, self.port))
+            print(f"{self.host}:{self.port} is busy, checking if it is MLflow...")
                 
-            # set timeout after 30 seconds if can't write to host:port
-            signal.signal(signal.SIGALRM, self.handler_timeout)            
-            signal.alarm(30)
-            
-            try: self.experiment_id = mlflow.set_experiment(name)                
-            except Exception as e: sys.exit(e)
-            
-            signal.alarm(0)
-                                                                
-            print("mlflow ui is already running at %s:%s"%(self.host, self.port))
+            try: 
+                self.experiment_id = mlflow.set_experiment(name)                
+            except:                
+                raise Exception("port is busy with something other than MLflow!")             
+                                                                            
+            print(f"{self.host}:{self.port} is MLflow")
         else:
             print("starting mlflow ui, please wait ...")
             self.start_ui()
             self.experiment_id = mlflow.set_experiment(name)
-            print("MLflow ui is running at %s:%s"%(self.host, self.port))
+            print(f"MLflow ui is running at {self.host}:{self.port}")
     
     def start_ui(self):
-        mlflow_thread = Thread(target=
-                       os.system("mlflow ui --host %s --port %s &"%(self.host, self.port)))
+        mlflow_thread = Thread(target = os.system, 
+                               args   = (f"mlflow ui --host {self.host} --port {self.port} &",))
         mlflow_thread.start()
         time.sleep(3)
         
@@ -80,7 +74,3 @@ class MLflowBackend(ExperimentBackend):
             if sock.connect_ex((self.host, self.port)) == 0:
                 return True
             else: return False
-            
-    def handler_timeout(self, signum, frame):
-        raise Exception("\n\nERROR: selected port seems busy with something other than MLflow! "+
-                        "Please select another port.\n") 

@@ -1,7 +1,7 @@
 [sapsan_config]
 experiment_name = CNN experiment
 mlflow_host = localhost
-mlflow_port = 9000
+mlflow_port = 5000
 edit_port = 8601
 input_size = (32,32,32)
 sample_to = (16,16,16)
