@@ -1,6 +1,4 @@
-import shutil
 import unittest
-import os
 
 from .notebook_runner import run_notebook
 from sapsan import __path__
@@ -13,7 +11,8 @@ class TestExamples(unittest.TestCase):
 				'picae_example.ipynb', 
 				'krr_example.ipynb',
 				'pimlturb_diagonal_example.ipynb',
-                'pimlturb1d_example.ipynb']
+                'pimlturb1d_example.ipynb',
+                'plotting_examples.ipynb']
 
     def test_examples(self):
         """Tests examples"""       

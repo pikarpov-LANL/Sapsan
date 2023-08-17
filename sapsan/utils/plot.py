@@ -240,7 +240,7 @@ def log_plot(show_log       = True,
     
     data_valid = np.genfromtxt(valid_log_path, delimiter=delimiter, 
                                skip_header=1, dtype=np.float32)
-    
+        
     if len(data.shape)==1: data = np.array([data]); data_valid = np.array([data_valid])
 
     if epoch_column == None: plot_data['epoch'] = np.linspace(1,len(data),len(data), dtype=int)
