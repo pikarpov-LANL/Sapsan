@@ -4,6 +4,10 @@ import jupytext
 import nbformat
 import pytest
 import shutil
+import glob
+
+import sys
+sys.path.append("../../../")
 
 from sapsan._version import __version__
 from sapsan import __path__
@@ -23,82 +27,82 @@ from sapsan.core.cli.templates.actions import (TEST_TEMPLATE, PYPI_TEMPLATE,
 
 
 def create_init(path: str):
-    with open("{path}/__init__.py".format(path=path), "w") as file:
+    with open(f"{path}/__init__.py", "w") as file:
         file.write("")
 
 def setup_project(name: str, ddp: bool):
     click.echo("Created...")
     os.mkdir(name)
-    click.echo("Project Folder:             {name}/".format(name=name))
+    click.echo(f"Project Folder:             {name}/")
 
-    os.mkdir("./{name}/data".format(name=name))
-    click.echo("Data Folder:                {name}/data/".format(name=name))
+    os.mkdir(f"./{name}/data")
+    click.echo(f"Data Folder:                {name}/data/")
 
-    with open("./{name}/{name}_estimator.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}_estimator.py", "w") as file:
         file.write(get_estimator_template(name))
-        click.echo("Estimator Template:         {name}/{name}_estimator.py".format(name=name))
+        click.echo(f"Estimator Template:         {name}/{name}_estimator.py")
         
-    with open("./{name}/{name}.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}.py", "w") as file:
         file.write(get_notebook_template(name))
 
-    ntbk = jupytext.read("./{name}/{name}.py".format(name=name)) 
-    nbformat.write(ntbk, "./{name}/{name}.ipynb".format(name=name))
-    os.remove("./{name}/{name}.py".format(name=name))
-    click.echo("Jupyter Notebook Template:  {name}/{name}.ipynb".format(name=name))
+    ntbk = jupytext.read(f"./{name}/{name}.py") 
+    nbformat.write(ntbk, f"./{name}/{name}.ipynb")
+    os.remove(f"./{name}/{name}.py")
+    click.echo(f"Jupyter Notebook Template:  {name}/{name}.ipynb")
     
-    with open("./{name}/Dockerfile".format(name=name), "w") as file:
+    with open(f"./{name}/Dockerfile", "w") as file:
         file.write(get_dockerfile_template(name))
-        click.echo("Docker Template:            {name}/Dockerfile".format(name=name))
+        click.echo(f"Docker Template:            {name}/Dockerfile")
         
-    with open("./{name}/Makefile".format(name=name), "w") as file:
+    with open(f"./{name}/Makefile", "w") as file:
         file.write(get_makefile_template(name))
-        click.echo("Docker Makefile:            {name}/Makefile".format(name=name))
+        click.echo(f"Docker Makefile:            {name}/Makefile")
         
     if ddp:
         click.echo("-----")
-        click.echo("Get Pytorch Backend = True: {name}/torch_backend.py".format(name=name))
-        shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./{name}/".format(name=name))
+        click.echo(f"Get Pytorch Backend = True: {name}/torch_backend.py")
+        shutil.copy(f"{__path__[0]}/lib/estimator/torch_backend.py", f"./{name}/")
     
 
 def setup_package(name: str):
     os.mkdir(name)
-    os.mkdir('./{name}/.github'.format(name=name))
-    os.mkdir('./{name}/.github/workflows'.format(name=name))
-    os.mkdir("./{name}/tests/".format(name=name))
-    os.mkdir("./{name}/{name}".format(name=name))
-    os.mkdir("./{name}/{name}/estimator".format(name=name))
-    os.mkdir("./{name}/{name}/dataset".format(name=name))
-    os.mkdir("./{name}/{name}/experiment".format(name=name))
+    os.mkdir(f"./{name}/.github")
+    os.mkdir(f"./{name}/.github/workflows")
+    os.mkdir(f"./{name}/tests/")
+    os.mkdir(f"./{name}/{name}")
+    os.mkdir(f"./{name}/{name}/estimator")
+    os.mkdir(f"./{name}/{name}/dataset")
+    os.mkdir(f"./{name}/{name}/experiment")
     click.echo("Folders has been created.")
 
-    create_init("./{name}/tests".format(name=name))
-    create_init("./{name}/{name}".format(name=name))
-    create_init("./{name}/{name}/estimator".format(name=name))
-    create_init("./{name}/{name}/dataset".format(name=name))
-    create_init("./{name}/{name}/experiment".format(name=name))
+    create_init(f"./{name}/tests")
+    create_init(f"./{name}/{name}")
+    create_init(f"./{name}/{name}/estimator")
+    create_init(f"./{name}/{name}/dataset")
+    create_init(f"./{name}/{name}/experiment")
     click.echo("Marked folders as packages.")
 
-    with open("./{name}/{name}/_version.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}/_version.py", "w") as file:
         file.write("__version__ = v0.0.1")
         click.echo("Created version file.")
 
-    with open("./{name}/{name}_estimator.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}_estimator.py", "w") as file:
         file.write(get_estimator_template(name))
         click.echo("Created estimator file.")
         
-    with open("./{name}/{name}.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}.py", "w") as file:
         file.write(get_notebook_template(name))
 
-    ntbk = jupytext.read("./{name}/{name}.py".format(name=name)) 
-    nbformat.write(ntbk, "./{name}/{name}.ipynb".format(name=name))
-    os.remove("./{name}/{name}.py".format(name=name))
+    ntbk = jupytext.read(f"./{name}/{name}.py") 
+    nbformat.write(ntbk, f"./{name}/{name}.ipynb")
+    os.remove(f"./{name}/{name}.py")
     click.echo("Jupyter Notebook Template to run everything from")
 
-    with open("./{name}/{name}/dataset/{name}_dataset.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}/dataset/{name}_dataset.py", "w") as file:
         file.write(get_dataset_template(name))
         click.echo("Created dataset file.")
 
-    with open("./{name}/{name}/experiment/{name}_experiment.py".format(name=name), "w") as file:
+    with open(f"./{name}/{name}/experiment/{name}_experiment.py", "w") as file:
         file.write(get_experiment_template(name))
         click.echo("Created experiment file.")
 
@@ -106,38 +110,38 @@ def setup_package(name: str):
     #    file.write(get_runner_template(name))
     #    click.echo("Created runner file.")
 
-    with open("./{name}/Dockerfile".format(name=name), "w") as file:
+    with open(f"./{name}/Dockerfile", "w") as file:
         file.write(get_dockerfile_template(name))
         click.echo("Created docker file.")
         
-    with open("./{name}/Makefile".format(name=name), "w") as file:
+    with open(f"./{name}/Makefile", "w") as file:
         file.write(get_makefile_template(name))
-        click.echo("Docker Makefile:            {name}/Makefile".format(name=name))
+        click.echo(f"Docker Makefile:            {name}/Makefile")
 
-    with open("./{name}/setup.py".format(name=name), "w") as file:
+    with open(f"./{name}/setup.py", "w") as file:
         file.write(get_setup_template(name))
         click.echo("Created setup file.")
 
-    with open("./{name}/README.md".format(name=name), "w") as file:
+    with open(f"./{name}/README.md", "w") as file:
         file.write(get_readme_template(name))
         click.echo("Created readme.")
 
-    with open("./{name}/tests/test_estimator.py".format(name=name), "w") as file:
+    with open(f"./{name}/tests/test_estimator.py", "w") as file:
         file.write(get_tests_template(name))
         click.echo("Created tests.")
 
-    with open("./{name}/requirements.txt".format(name=name), "w") as file:
+    with open(f"./{name}/requirements.txt", "w") as file:
         requirements="sapsan = %s"%(__version__.strip("v"))
         file.write(requirements)
         click.echo("Created requirements file.")
 
-    with open("./{name}/.github/release-drafter.yml".format(name=name), "w") as file:
+    with open(f"./{name}/.github/release-drafter.yml", "w") as file:
         file.write(RELEASE_DRAFTER_TEMPLATE)
-    with open("./{name}/.github/workflows/release-drafter.yml".format(name=name), "w") as file:
+    with open(f"./{name}/.github/workflows/release-drafter.yml", "w") as file:
         file.write(RELEASE_DRAFTER_WORKFLOW_TEMPLATE)
-    with open("./{name}/.github/workflows/pythonpackage.yml".format(name=name), "w") as file:
+    with open(f"./{name}/.github/workflows/pythonpackage.yml", "w") as file:
         file.write(TEST_TEMPLATE)
-    with open("./{name}/.github/workflows/pypi-release.yml".format(name=name), "w") as file:
+    with open(f"./{name}/.github/workflows/pypi-release.yml", "w") as file:
         file.write(PYPI_TEMPLATE)
 
     click.echo("Created github actions.")
@@ -178,24 +182,25 @@ def test():
 @sapsan.command("get_examples", help="Copy examples to your working directory")    
 def get_examples():
     dir_name = "sapsan_examples"
-    if os.path.isdir("./{dir_name}".format(dir_name=dir_name)):
+    if os.path.isdir(f"./{dir_name}"):
         click.echo("./sapsan_examples folder exists - please delete or try a different path")
     else:
-        notebooks = ['cnn_example.ipynb', 'picae_example.ipynb','krr_example.ipynb']
-        os.mkdir("./{dir_name}".format(dir_name=dir_name))
-        for nt in notebooks:
-            shutil.copy("{path}/{dir_name}/{nt}".format(path=__path__[0], dir_name="examples", nt=nt), 
-                        "./{dir_name}/{nt}".format(dir_name=dir_name, nt=nt))
-        shutil.copytree("{path}/{dir_name}/data".format(path=__path__[0],dir_name="examples"), 
-                        "./{dir_name}/data".format(dir_name=dir_name))
-        shutil.copytree("{path}/{dir_name}/GUI".format(path=__path__[0],dir_name="examples"), 
-                        "./{dir_name}/GUI".format(dir_name=dir_name))
+        os.mkdir(f"./{dir_name}")
+        
+        for notebook in glob.glob(f"{__path__[0]}/examples/*.ipynb"):
+            shutil.copy(notebook, f"./{dir_name}/{notebook.split('/')[-1]}")
+            
+        shutil.copytree(f"{__path__[0]}/examples/data", f"./{dir_name}/data")
+        shutil.copytree(f"{__path__[0]}/examples/GUI", f"./{dir_name}/GUI")
+        
         click.echo("Done, check out ./sapsan_examples")   
         
 @sapsan.command("get_torch_backend", help="Copy torch_backend.py to your working directory")
 def get_torch_backend():    
-    shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./")
+    shutil.copy(f"{__path__[0]}/lib/estimator/torch_backend.py", "./")
+    click.echo("Copied torch_backend.py!")
 
 @sapsan.command("gtb", help="Copy torch_backend.py to your working directory")
 def gtb():    
-    shutil.copy("{path}/lib/estimator/torch_backend.py".format(path=__path__[0]), "./")    
+    shutil.copy(f"{__path__[0]}/lib/estimator/torch_backend.py", "./")  
+    click.echo("Copied torch_backend.py!")  
