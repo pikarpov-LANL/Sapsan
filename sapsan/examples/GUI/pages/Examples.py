@@ -2,7 +2,6 @@ import os
 import sys
 import inspect
 import time
-import json
 import inspect
 import numpy as np
 from pathlib import Path
@@ -19,7 +18,6 @@ import subprocess
 from io import BytesIO
 from threading import Thread
 
-import torch
 import streamlit as st
 from streamlit.runtime.scriptrunner.script_run_context import add_script_run_ctx
 
@@ -71,15 +69,12 @@ def run_experiment():
 
     #Load the data 
     x, y, data_loader = load_data(st.session_state.checkpoints)
-    y = flatten(y)
-    shape = x.shape
+    y       = flatten(y)
     loaders = data_loader.convert_to_torch([x, y])
 
     st.write("Dataset loaded...")
 
     estimator = define_estimator(loaders)
-    #graph = model_graph(estimator.model, shape)
-    #st.graphviz_chart(graph.build_dot())
 
     #Set the experiment
     training_experiment = Train(backend         = tracking_backend,

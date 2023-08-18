@@ -12,6 +12,14 @@ from .graph import Graph, Node
 from . import transforms as ht
 import torch
 
+# From https://github.com/pytorch/pytorch/blob/2efe4d809fdc94501fc38bf429e9a8d4205b51b6/torch/utils/tensorboard/_pytorch_graph.py#L384
+def _node_get(node: torch._C.Node, key: str):
+    """Gets attributes of a node which is polymorphic over return type."""
+    sel = node.kindOf(key)
+    return getattr(node, sel)(key)
+
+torch._C.Node.__getitem__ = _node_get
+
 # PyTorch Graph Transforms
 FRAMEWORK_TRANSFORMS = [
     # Hide onnx: prefix
@@ -72,7 +80,8 @@ def import_graph(hl_graph, model, args, input_names=None, verbose=False):
         # Op
         op = torch_node.kind()
         # Parameters
-        params = {k: torch_node[k] for k in torch_node.attributeNames()} 
+        params = {k: torch_node[k] for k in torch_node.attributeNames()}
+        
         # Inputs/outputs
         # TODO: inputs = [i.unique() for i in node.inputs()]
         outputs = [o.unique() for o in torch_node.outputs()]
