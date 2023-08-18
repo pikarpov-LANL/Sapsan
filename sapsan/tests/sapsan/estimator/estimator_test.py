@@ -29,43 +29,43 @@ class TestCnnEstimator(unittest.TestCase):
    
 
     def test_cnn3d_save_and_load(self):
-        estimator = CNN3d(config = CNN3dConfig(n_epochs = 1),
+        estimator = CNN3d(config  = CNN3dConfig(n_epochs = 1),
                           loaders = self.default_loaders('torch'))
         estimator.model = estimator.train()
         estimator.save(self.resources_path)
         
         loaded_estimator = load_estimator.load(self.resources_path, 
-                               estimator=CNN3d(config=CNN3dConfig(),
-                                               loaders=self.default_loaders('torch')),
-                               load_saved_config=True)
+                               estimator = CNN3d(config  = CNN3dConfig(),
+                                                 loaders = self.default_loaders('torch')),
+                               load_saved_config = True)
         
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
     
     
     def test_picae_save_and_load(self):
-        estimator = PICAE(config = PICAEConfig(n_epochs = 1),
+        estimator = PICAE(config  = PICAEConfig(n_epochs = 1),
                           loaders = self.default_loaders('torch'))
         estimator.model = estimator.train()
         estimator.save(self.resources_path)
         
         loaded_estimator = load_estimator.load(self.resources_path, 
-                               estimator=PICAE(config=PICAEConfig(),
-                                               loaders=self.default_loaders('torch')),
-                               load_saved_config=True)
+                               estimator = PICAE(config  = PICAEConfig(),
+                                                 loaders = self.default_loaders('torch')),
+                               load_saved_config = True)
 
         self.assertEqual(estimator.config.n_epochs, loaded_estimator.config.n_epochs)
     
     
     def test_krr_save_and_load(self):
-        estimator = KRR(config = KRRConfig(gamma=0.1, alpha=0.2),
+        estimator = KRR(config  = KRRConfig(gamma=0.1, alpha=0.2),
                         loaders = self.default_loaders('sklearn'))
         estimator.model = estimator.train()
         estimator.save(self.resources_path)
 
         loaded_estimator = load_sklearn_estimator.load(self.resources_path, 
-                               estimator=KRR(config=KRRConfig(),
-                                           loaders=self.default_loaders('sklearn')),
-                               load_saved_config=True)
+                               estimator = KRR(config  = KRRConfig(),
+                                               loaders = self.default_loaders('sklearn')),
+                               load_saved_config = True)
         
         self.assertEqual(estimator.config.gamma, loaded_estimator.config.gamma)
         self.assertEqual(estimator.config.alpha, loaded_estimator.config.alpha)         
