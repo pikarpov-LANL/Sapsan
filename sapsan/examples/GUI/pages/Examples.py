@@ -326,7 +326,7 @@ if st.session_state.backend_selection=='MLflow':
     show_config.append(['mlflow_port', st.session_state.mlflow_port])
 
 with st.expander("Show configuration"):    
-    st.table(pd.DataFrame(show_config, columns=["Key", "Value"]))
+    st.table(pd.DataFrame(show_config, columns=["Key", "Value"]).astype(str))
 
 with st.expander("Show model graph"):    
     st.write('Please load the data first or enter the data shape manualy, comma separated.')
